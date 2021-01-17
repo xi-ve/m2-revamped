@@ -1,6 +1,7 @@
 #include "mem.h"
 void sdk::util::c_mem::setup()
 {
+    sdk::util::c_log::Instance().duo("[ c_mem::setup completed ]\n");
 }
 
 bool sdk::util::c_mem::is_valid(uint32_t adr, size_t field_mem_size)
@@ -40,12 +41,11 @@ sdk::util::t_size sdk::util::c_mem::get_section(const char* section, HMODULE bas
 
 size_t sdk::util::c_mem::find_size(uint32_t address)
 {
-    if (!this->is_valid(address, 0x1256)) return 0;
-    for (auto a = 0; a < 0x1256; a += 1)
+    for (auto a = address; a < address + 0x1256; a += 1)
     {
         auto cur = address + a;
         auto b = *(byte*)(cur);
-        auto b2 = *(byte*)(cur+1);
+        auto b2 = *(byte*)(cur + 1);
         if (b == 0xc3 && b2 == 0x55) return a - address;
         if (b == 0xc3 && b2 == 0xcc) return a - address;
         if (b == 0xc2 && b2 == 0x04) return a - address;

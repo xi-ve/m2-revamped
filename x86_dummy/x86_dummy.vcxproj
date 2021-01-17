@@ -163,6 +163,10 @@
     <ClCompile Include="main\main.cpp" />
     <ClCompile Include="main\singleton.h" />
     <ClCompile Include="main\startup.cpp" />
+    <ClCompile Include="sdk\util\config.cpp" />
+    <ClCompile Include="sdk\util\crc32.cpp" />
+    <ClCompile Include="sdk\util\disassembler.cpp" />
+    <ClCompile Include="sdk\util\fn_discover.cpp" />
     <ClCompile Include="sdk\util\log.cpp" />
     <ClCompile Include="sdk\util\mem.cpp" />
     <ClCompile Include="sdk\util\threading.cpp" />
@@ -186,10 +190,16 @@
     <ClInclude Include="lib\capstone\include\platform.h" />
     <ClInclude Include="lib\capstone\include\windowsce\intrin.h" />
     <ClInclude Include="lib\capstone\include\windowsce\stdint.h" />
+    <ClInclude Include="lib\crc32\crc32.h" />
+    <ClInclude Include="lib\json\json.h" />
     <ClInclude Include="lib\minhook\MinHook.h" />
     <ClInclude Include="main\inc.h" />
     <ClInclude Include="main\startup.h" />
     <ClInclude Include="main\win_strct.h" />
+    <ClInclude Include="sdk\util\config.h" />
+    <ClInclude Include="sdk\util\crc32.h" />
+    <ClInclude Include="sdk\util\disassembler.h" />
+    <ClInclude Include="sdk\util\fn_discover.h" />
     <ClInclude Include="sdk\util\log.h" />
     <ClInclude Include="sdk\util\mem.h" />
     <ClInclude Include="sdk\util\threading.h" />

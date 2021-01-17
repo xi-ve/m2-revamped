@@ -1,9 +1,8 @@
 #include "startup.h"
 void main::s_startup::setup()
 {
-	sdk::util::c_log::Instance().setup();
 	this->console();
-	sdk::util::c_log::Instance().duo("[ startup executed ]\n");
+	sdk::util::c_log::Instance().duo("[ starting memory init ... ]\n");
 }
 void main::s_startup::console()
 {

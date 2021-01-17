@@ -64,7 +64,11 @@ void __stdcall sdk::util::core_worker()
 
 void __stdcall sdk::util::init_worker()
 {
+	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
+	sdk::util::c_mem::Instance().setup();
+	sdk::util::c_config::Instance().setup();
+	sdk::util::c_fn_discover::Instance().setup();
 }
 
 bool sdk::util::c_thread::spawn(LPTHREAD_START_ROUTINE fn, void* param)
