@@ -194,6 +194,7 @@
     <ClCompile Include="main\main.cpp" />
     <ClCompile Include="main\singleton.h" />
     <ClCompile Include="main\startup.cpp" />
+    <ClCompile Include="sdk\util\address_gathering.cpp" />
     <ClCompile Include="sdk\util\config.cpp" />
     <ClCompile Include="sdk\util\crc32.cpp" />
     <ClCompile Include="sdk\util\disassembler.cpp" />
@@ -256,6 +257,10 @@
     <ClInclude Include="main\inc.h" />
     <ClInclude Include="main\startup.h" />
     <ClInclude Include="main\win_strct.h" />
+    <ClInclude Include="sdk\game\functions.h" />
+    <ClInclude Include="sdk\game\offsets.h" />
+    <ClInclude Include="sdk\game\utils.h" />
+    <ClInclude Include="sdk\util\address_gathering.h" />
     <ClInclude Include="sdk\util\config.h" />
     <ClInclude Include="sdk\util\crc32.h" />
     <ClInclude Include="sdk\util\disassembler.h" />

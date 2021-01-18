@@ -22,14 +22,18 @@ namespace sdk
 		{
 			struct s_info_entry
 			{
-				s_info_entry(){}
+				s_info_entry()
+				{
+					address = 0;
+					strings = {};
+				}
 				s_info_entry(uint32_t a, std::vector<std::string> b)
 				{
 					address = a;
 					strings = b;
 				}
-				uint32_t					address;
-				std::vector<std::string>	strings;
+				uint32_t					address = 0;
+				std::vector<std::string>	strings = {};
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(s_info_entry, address, strings);
 			};
 		}

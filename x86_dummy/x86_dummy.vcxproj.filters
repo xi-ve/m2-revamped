@@ -123,6 +123,9 @@
     <ClCompile Include="lib\zydis\Zydis\Zydis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sdk\util\address_gathering.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main\inc.h">
@@ -303,6 +306,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lib\zydis\ZycoreExportConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\offsets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\util\address_gathering.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

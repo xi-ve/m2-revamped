@@ -20,6 +20,7 @@ bool sdk::util::c_fn_discover::is_ascii(const std::string& in)
 const char* sdk::util::c_fn_discover::get_exe_path()
 {
 	char* buffer = (char*)malloc(256);
+	if (!buffer) return "";
 	GetModuleFileNameA(0, buffer, 256);
 	return buffer;
 }
@@ -181,7 +182,7 @@ bool sdk::util::c_fn_discover::data_section()
 		if (reg.validator != 1) continue;
 		if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
 		if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
-		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strlen(reg.str_ptr->string) > 54) continue;
+		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
 		this->fns_py.push_back({ addr, { reg.str_ptr->string } });
 	}
 
