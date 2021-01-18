@@ -8,6 +8,7 @@ namespace sdk
 		typedef int(__stdcall* _NtSetInformationThread)(_In_ HANDLE, _In_ THREAD_INFORMATION_CLASS, _In_ PVOID, _In_ ULONG);
 
 		extern void __stdcall core_worker();
+		extern void __stdcall ui_worker();
 		extern void __stdcall init_worker();
 
 		typedef void(__fastcall* t_generic_function)();

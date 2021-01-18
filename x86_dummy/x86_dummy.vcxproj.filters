@@ -126,6 +126,9 @@
     <ClCompile Include="sdk\util\address_gathering.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="main\ui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main\inc.h">
@@ -318,6 +321,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sdk\util\address_gathering.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\nuklear\nuklear.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="main\ui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\nuklear\nuklear_d3d9.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

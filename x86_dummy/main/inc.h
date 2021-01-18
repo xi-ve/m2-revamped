@@ -18,8 +18,9 @@
 #include <atomic>
 #include <regex>
 #include <sstream>
-
+#include <d3d9.h>
 //libs
+#pragma comment(lib, "d3d9.lib")
 #include <zydis/Zydis/Zydis.h>
 #include <zydis/Zycore/LibC.h>
 #pragma comment(lib, "zydis/Zydis.lib")
@@ -43,4 +44,5 @@
 #include <game/functions.h>
 #include <game/utils.h>
 #include <util/fn_discover.h>
+#include <ui.h>
 #include <startup.h>
