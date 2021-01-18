@@ -50,6 +50,7 @@ namespace sdk
 			void			load_db();
 		private:
 			t_list			fns;
+			t_list			fns_py;
 			bool			text_section();
 			bool			data_section();
 		public:

@@ -4624,6 +4624,7 @@ std::size_t hash(const BasicJsonType& j)
         case BasicJsonType::value_t::discarded:
         {
             return combine(type, 0);
+            break;
         }
 
         case BasicJsonType::value_t::object:

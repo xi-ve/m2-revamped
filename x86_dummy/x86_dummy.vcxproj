@@ -77,8 +77,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
-    <IncludePath>$(ProjectDir)lib\zydis\;$(ProjectDir)lib;$(ProjectDir)sdk;$(ProjectDir)sdk\util;$(ProjectDir)main;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)lib/nanogui/ext/;$(ProjectDir)lib/nanogui/ext/glad/include/;$(ProjectDir)lib\nanogui\include;$(ProjectDir)lib\zydis\;$(ProjectDir)lib;$(ProjectDir)sdk;$(ProjectDir)sdk\util;$(ProjectDir)main;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(ProjectDir)lib/nanogui/ext/;$(ReferencePath)</ReferencePath>
+    <PublicIncludeDirectories>$(ProjectDir)lib/nanogui/ext;$(PublicIncludeDirectories)</PublicIncludeDirectories>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -189,7 +191,6 @@
     <ClCompile Include="lib\zydis\Zydis\String.c" />
     <ClCompile Include="lib\zydis\Zydis\Utils.c" />
     <ClCompile Include="lib\zydis\Zydis\Zydis.c" />
-    <ClCompile Include="lib\zydis\Zydis\ZydisPE.c" />
     <ClCompile Include="main\main.cpp" />
     <ClCompile Include="main\singleton.h" />
     <ClCompile Include="main\startup.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="lib\zydis\API\Synchronization.h" />
     <ClInclude Include="lib\zydis\API\Terminal.h" />
     <ClInclude Include="lib\zydis\API\Thread.h" />
+    <ClInclude Include="lib\zydis\ZycoreExportConfig.h" />
     <ClInclude Include="lib\zydis\Zycore\Allocator.h" />
     <ClInclude Include="lib\zydis\Zycore\API\Memory.h" />
     <ClInclude Include="lib\zydis\Zycore\API\Synchronization.h" />
@@ -227,6 +229,7 @@
     <ClInclude Include="lib\zydis\Zycore\Types.h" />
     <ClInclude Include="lib\zydis\Zycore\Vector.h" />
     <ClInclude Include="lib\zydis\Zycore\Zycore.h" />
+    <ClInclude Include="lib\zydis\ZydisExportConfig.h" />
     <ClInclude Include="lib\zydis\Zydis\Decoder.h" />
     <ClInclude Include="lib\zydis\Zydis\DecoderTypes.h" />
     <ClInclude Include="lib\zydis\Zydis\Formatter.h" />

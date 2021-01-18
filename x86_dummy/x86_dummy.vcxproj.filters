@@ -123,9 +123,6 @@
     <ClCompile Include="lib\zydis\Zydis\Zydis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lib\zydis\Zydis\ZydisPE.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main\inc.h">
@@ -300,6 +297,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lib\zydis\Zydis\Zydis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\zydis\ZydisExportConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\zydis\ZycoreExportConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

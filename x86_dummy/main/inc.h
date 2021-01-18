@@ -1,4 +1,6 @@
 #pragma once
+#define NANOGUI_USE_OPENGL 1
+#define _GLFW_WIN32 1
 #define MICROSOFT_WINDOWS_WINBASE_H_DEFINE_INTERLOCKED_CPLUSPLUS_OVERLOADS 0
 #define _CRT_SECURE_NO_WARNINGS
 #include <Windows.h>
@@ -25,6 +27,7 @@
 #include <minhook/MinHook.h>
 #pragma comment(lib, "minhook/libMinHook.lib")
 #include <json/json.h>
+//#include <nanogui/nanogui.h>
 //cheat predefs
 #include <win_strct.h>
 //cheat core
@@ -36,5 +39,8 @@
 #include <util/disassembler.h>
 #include <util/threading.h>
 #include <util/config.h>
+#include <game/offsets.h>
+#include <game/functions.h>
+#include <game/utils.h>
 #include <util/fn_discover.h>
 #include <startup.h>

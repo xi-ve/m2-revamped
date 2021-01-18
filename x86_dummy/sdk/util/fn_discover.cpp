@@ -108,8 +108,6 @@ bool sdk::util::c_fn_discover::text_section()
 {
 	auto current_crc32 = this->get_crc();
 	auto conf_crc32 = sdk::util::c_config::Instance().get_var("dynamics", "last_file_crc");
-	sdk::util::c_log::Instance().duo("[ current file crc %04x ]\n", current_crc32);
-	sdk::util::c_log::Instance().duo("[ cached  file crc %04x ]\n", std::stoul(conf_crc32->container));
 	if (std::stoul(conf_crc32->container) != current_crc32)
 	{		
 		sdk::util::c_log::Instance().duo("[ new file detected, %04x to %04x ]\n[ running dynamics system, please wait ]\n", std::stoul(conf_crc32->container), current_crc32);
@@ -138,6 +136,7 @@ doit:
 			for (auto b : a->listing) this->fns.push_back({ b.first,b.second });			
 		}
 		sdk::util::c_log::Instance().duo("[ found %i total dynamics ]\n", this->fns.size());
+		if (!this->fns.size()) return 0;
 		this->save_db();
 		conf_crc32->container = std::to_string(current_crc32);
 		sdk::util::c_config::Instance().save();
@@ -153,6 +152,42 @@ doit:
 
 bool sdk::util::c_fn_discover::data_section()
 {
+	sdk::util::c_log::Instance().duo("[ py dynamics system started ]\n");
+	
+	auto base = GetModuleHandleA(0);
+	auto data_section = sdk::util::c_mem::Instance().get_section(".data", base);
+
+	struct s_string_container
+	{
+		char string[32] = "";
+	};
+	struct s_function_container
+	{
+		uint32_t function = 0;
+	};
+	struct s_register
+	{
+		s_string_container*		str_ptr = 0;
+		uint32_t				fnc_ptr = 0;
+		uint8_t					validator = 0;
+	};
+
+	for (auto a = data_section.first; a < data_section.first + data_section.second; a += 1)
+	{
+		auto addr = a + (uintptr_t)base;
+		if (!sdk::util::c_mem::Instance().is_valid(addr, sizeof(s_register))) continue;
+		auto reg = s_register();
+		if (!ReadProcessMemory(GetCurrentProcess(), (void*)addr, &reg, sizeof(s_register), nullptr)) continue;
+		if (reg.validator != 1) continue;
+		if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
+		if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
+		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strlen(reg.str_ptr->string) > 54) continue;
+		this->fns_py.push_back({ addr, { reg.str_ptr->string } });
+	}
+
+	if (!this->fns_py.size()) return 0;
+	sdk::util::c_log::Instance().duo("[ py dynamics system completed with %i results ]\n", this->fns_py.size());
+
 	return 1;
 }
 
