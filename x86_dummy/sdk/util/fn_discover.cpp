@@ -65,34 +65,30 @@ void sdk::util::worker_thread(s_mem* mem)
 	auto rdata_section = sdk::util::c_mem::Instance().get_section(".rdata", base);
 	auto max_text = (uintptr_t)base + text_section.first + text_section.second;
 	auto max_rdata = (uintptr_t)base + rdata_section.first + rdata_section.second;
-	sdk::util::c_log::Instance().print("[ starting worker for block %04x to %04x ]\n", mem->start, mem->end);
-	for (auto a = mem->start; a < mem->end; a += 1)
+	
+	MEMORY_BASIC_INFORMATION m_info;
+	auto page_size = VirtualQueryEx(GetCurrentProcess(), (void*)(mem->start + (uintptr_t)base), &m_info, sizeof(m_info));
+
+	if (m_info.State != MEM_COMMIT) { mem->done = 1; return; }
+	if (m_info.Protect & PAGE_NOACCESS) { mem->done = 1; return; }
+
+	sdk::util::c_log::Instance().duo("[ (%04x) mem page: %04x, %04x ]\n", mem->start, (uint32_t)m_info.AllocationBase + mem->start, ((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize));
+
+	auto i_fun_count = 0;
+
+	for (auto a = (uint32_t)m_info.AllocationBase + mem->start; a < ((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize); a++)
 	{
-		if (!sdk::util::c_mem::Instance().is_valid((a + (uintptr_t)base), 0x4)) continue;
-		auto byte_0 = *(byte*)((a + (uintptr_t)base));
-		auto byte_1 = *(byte*)((a + (uintptr_t)base + 1));
-		auto byte_2 = *(byte*)((a + (uintptr_t)base + 2));
-		if (byte_0 == 0x55 && byte_1 == 0x8B && byte_2 == 0xEC)
-		{
-			auto fn_size = sdk::util::c_mem::Instance().find_size(((uintptr_t)base + a));
-			//sdk::util::c_log::Instance().duo("[ fn: %04x, size: %04x ]\n", a, fn_size);
-			if (!fn_size) continue;
-			auto fn_pushes = sdk::util::c_disassembler::Instance().get_pushes((a + (uintptr_t)base), fn_size);
-			if (fn_pushes.empty()) continue;
-			//sdk::util::c_log::Instance().duo("[ fn: %04x, size: %04x, pushes: %i ]\n", a, fn_size, fn_pushes.size());
-			for (auto b : fn_pushes)
-			{
-				if (b < (rdata_section.first + (uintptr_t)base) || b > max_rdata) continue;
-				char cstring[256] = "\0";
-				memcpy((void*)cstring, (void*)b, 256);
-				if (!cstring || !sdk::util::c_fn_discover::Instance().is_ascii(cstring)) continue;
-				mem->listing[(uintptr_t)base + a].push_back(cstring);
-			}
-			a += fn_size;
+		uint8_t b[4] = { 0,0,0,0 };
+		memcpy(b, (void*)a, 4);
+		if (!b) continue;
+		if (b[0] == 0x55 && b[1] == 0x8B && b[2] == 0xEC)
+		{			
+			i_fun_count++;
 		}
 	}
+
 	mem->done = 1;
-	sdk::util::c_log::Instance().duo("[ worker %04x to %04x has finished with %i results ]\n", mem->start, mem->end, mem->listing.size());
+	sdk::util::c_log::Instance().duo("[ worker %04x to %04x has finished with %i results ]\n", mem->start, mem->end, i_fun_count);
 }
 
 bool sdk::util::c_fn_discover::text_section()
@@ -116,6 +112,7 @@ bool sdk::util::c_fn_discover::text_section()
 			worker_data.push_back(p);
 			sdk::util::c_thread::Instance().spawn((LPTHREAD_START_ROUTINE)sdk::util::worker_thread, p);
 			block_next += per_block_size;
+			std::this_thread::sleep_for(500ms);
 		}
 		while (1)
 		{

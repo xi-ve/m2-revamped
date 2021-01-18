@@ -15,6 +15,7 @@
 #include <functional>
 #include <atomic>
 #include <regex>
+#include <sstream>
 
 //libs
 #include <capstone/include/capstone/capstone.h>
