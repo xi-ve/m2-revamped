@@ -77,7 +77,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
-    <IncludePath>$(ProjectDir)lib;$(ProjectDir)sdk;$(ProjectDir)sdk\util;$(ProjectDir)main;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)lib\zydis\;$(ProjectDir)lib;$(ProjectDir)sdk;$(ProjectDir)sdk\util;$(ProjectDir)main;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,7 +114,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <ExceptionHandling>Sync</ExceptionHandling>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <Optimization>MaxSpeed</Optimization>
@@ -163,6 +163,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="lib\zydis\Zycore\Allocator.c" />
+    <ClCompile Include="lib\zydis\Zycore\API\Memory.c" />
+    <ClCompile Include="lib\zydis\Zycore\API\Synchronization.c" />
+    <ClCompile Include="lib\zydis\Zycore\API\Terminal.c" />
+    <ClCompile Include="lib\zydis\Zycore\API\Thread.c" />
+    <ClCompile Include="lib\zydis\Zycore\ArgParse.c" />
+    <ClCompile Include="lib\zydis\Zycore\Bitset.c" />
+    <ClCompile Include="lib\zydis\Zycore\Format.c" />
+    <ClCompile Include="lib\zydis\Zycore\List.c" />
+    <ClCompile Include="lib\zydis\Zycore\String.c" />
+    <ClCompile Include="lib\zydis\Zycore\Vector.c" />
+    <ClCompile Include="lib\zydis\Zycore\Zycore.c" />
+    <ClCompile Include="lib\zydis\Zydis\Decoder.c" />
+    <ClCompile Include="lib\zydis\Zydis\DecoderData.c" />
+    <ClCompile Include="lib\zydis\Zydis\Formatter.c" />
+    <ClCompile Include="lib\zydis\Zydis\FormatterATT.c" />
+    <ClCompile Include="lib\zydis\Zydis\FormatterBase.c" />
+    <ClCompile Include="lib\zydis\Zydis\FormatterBuffer.c" />
+    <ClCompile Include="lib\zydis\Zydis\FormatterIntel.c" />
+    <ClCompile Include="lib\zydis\Zydis\MetaInfo.c" />
+    <ClCompile Include="lib\zydis\Zydis\Mnemonic.c" />
+    <ClCompile Include="lib\zydis\Zydis\Register.c" />
+    <ClCompile Include="lib\zydis\Zydis\SharedData.c" />
+    <ClCompile Include="lib\zydis\Zydis\String.c" />
+    <ClCompile Include="lib\zydis\Zydis\Utils.c" />
+    <ClCompile Include="lib\zydis\Zydis\Zydis.c" />
+    <ClCompile Include="lib\zydis\Zydis\ZydisPE.c" />
     <ClCompile Include="main\main.cpp" />
     <ClCompile Include="main\singleton.h" />
     <ClCompile Include="main\startup.cpp" />
@@ -175,27 +202,54 @@
     <ClCompile Include="sdk\util\threading.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lib\capstone\include\capstone\arm.h" />
-    <ClInclude Include="lib\capstone\include\capstone\arm64.h" />
-    <ClInclude Include="lib\capstone\include\capstone\capstone.h" />
-    <ClInclude Include="lib\capstone\include\capstone\evm.h" />
-    <ClInclude Include="lib\capstone\include\capstone\m680x.h" />
-    <ClInclude Include="lib\capstone\include\capstone\m68k.h" />
-    <ClInclude Include="lib\capstone\include\capstone\mips.h" />
-    <ClInclude Include="lib\capstone\include\capstone\platform.h" />
-    <ClInclude Include="lib\capstone\include\capstone\ppc.h" />
-    <ClInclude Include="lib\capstone\include\capstone\sparc.h" />
-    <ClInclude Include="lib\capstone\include\capstone\systemz.h" />
-    <ClInclude Include="lib\capstone\include\capstone\tms320c64x.h" />
-    <ClInclude Include="lib\capstone\include\capstone\x86.h" />
-    <ClInclude Include="lib\capstone\include\capstone\xcore.h" />
-    <ClInclude Include="lib\capstone\include\fn_size.h" />
-    <ClInclude Include="lib\capstone\include\platform.h" />
-    <ClInclude Include="lib\capstone\include\windowsce\intrin.h" />
-    <ClInclude Include="lib\capstone\include\windowsce\stdint.h" />
     <ClInclude Include="lib\crc32\crc32.h" />
     <ClInclude Include="lib\json\json.h" />
     <ClInclude Include="lib\minhook\MinHook.h" />
+    <ClInclude Include="lib\zydis\API\Memory.h" />
+    <ClInclude Include="lib\zydis\API\Synchronization.h" />
+    <ClInclude Include="lib\zydis\API\Terminal.h" />
+    <ClInclude Include="lib\zydis\API\Thread.h" />
+    <ClInclude Include="lib\zydis\Zycore\Allocator.h" />
+    <ClInclude Include="lib\zydis\Zycore\API\Memory.h" />
+    <ClInclude Include="lib\zydis\Zycore\API\Synchronization.h" />
+    <ClInclude Include="lib\zydis\Zycore\API\Terminal.h" />
+    <ClInclude Include="lib\zydis\Zycore\API\Thread.h" />
+    <ClInclude Include="lib\zydis\Zycore\ArgParse.h" />
+    <ClInclude Include="lib\zydis\Zycore\Bitset.h" />
+    <ClInclude Include="lib\zydis\Zycore\Comparison.h" />
+    <ClInclude Include="lib\zydis\Zycore\Defines.h" />
+    <ClInclude Include="lib\zydis\Zycore\Format.h" />
+    <ClInclude Include="lib\zydis\Zycore\LibC.h" />
+    <ClInclude Include="lib\zydis\Zycore\List.h" />
+    <ClInclude Include="lib\zydis\Zycore\Object.h" />
+    <ClInclude Include="lib\zydis\Zycore\Status.h" />
+    <ClInclude Include="lib\zydis\Zycore\String.h" />
+    <ClInclude Include="lib\zydis\Zycore\Types.h" />
+    <ClInclude Include="lib\zydis\Zycore\Vector.h" />
+    <ClInclude Include="lib\zydis\Zycore\Zycore.h" />
+    <ClInclude Include="lib\zydis\Zydis\Decoder.h" />
+    <ClInclude Include="lib\zydis\Zydis\DecoderTypes.h" />
+    <ClInclude Include="lib\zydis\Zydis\Formatter.h" />
+    <ClInclude Include="lib\zydis\Zydis\FormatterBuffer.h" />
+    <ClInclude Include="lib\zydis\Zydis\Generated\EnumInstructionCategory.h" />
+    <ClInclude Include="lib\zydis\Zydis\Generated\EnumISAExt.h" />
+    <ClInclude Include="lib\zydis\Zydis\Generated\EnumISASet.h" />
+    <ClInclude Include="lib\zydis\Zydis\Generated\EnumMnemonic.h" />
+    <ClInclude Include="lib\zydis\Zydis\Generated\EnumRegister.h" />
+    <ClInclude Include="lib\zydis\Zydis\Internal\DecoderData.h" />
+    <ClInclude Include="lib\zydis\Zydis\Internal\FormatterATT.h" />
+    <ClInclude Include="lib\zydis\Zydis\Internal\FormatterBase.h" />
+    <ClInclude Include="lib\zydis\Zydis\Internal\FormatterIntel.h" />
+    <ClInclude Include="lib\zydis\Zydis\Internal\SharedData.h" />
+    <ClInclude Include="lib\zydis\Zydis\Internal\String.h" />
+    <ClInclude Include="lib\zydis\Zydis\MetaInfo.h" />
+    <ClInclude Include="lib\zydis\Zydis\Mnemonic.h" />
+    <ClInclude Include="lib\zydis\Zydis\Register.h" />
+    <ClInclude Include="lib\zydis\Zydis\SharedTypes.h" />
+    <ClInclude Include="lib\zydis\Zydis\ShortString.h" />
+    <ClInclude Include="lib\zydis\Zydis\Status.h" />
+    <ClInclude Include="lib\zydis\Zydis\Utils.h" />
+    <ClInclude Include="lib\zydis\Zydis\Zydis.h" />
     <ClInclude Include="main\inc.h" />
     <ClInclude Include="main\startup.h" />
     <ClInclude Include="main\win_strct.h" />
@@ -208,8 +262,23 @@
     <ClInclude Include="sdk\util\threading.h" />
   </ItemGroup>
   <ItemGroup>
-    <Library Include="lib\capstone\capstone.lib" />
     <Library Include="lib\minhook\libMinHook.lib" />
+    <Library Include="lib\zydis\Zycore.lib" />
+    <Library Include="lib\zydis\Zydis.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="lib\zydis\Zydis\Generated\AccessedFlags.inc" />
+    <None Include="lib\zydis\Zydis\Generated\DecoderTables.inc" />
+    <None Include="lib\zydis\Zydis\Generated\EncodableInstructions.inc" />
+    <None Include="lib\zydis\Zydis\Generated\EnumInstructionCategory.inc" />
+    <None Include="lib\zydis\Zydis\Generated\EnumISAExt.inc" />
+    <None Include="lib\zydis\Zydis\Generated\EnumISASet.inc" />
+    <None Include="lib\zydis\Zydis\Generated\EnumMnemonic.inc" />
+    <None Include="lib\zydis\Zydis\Generated\EnumRegister.inc" />
+    <None Include="lib\zydis\Zydis\Generated\FormatterStrings.inc" />
+    <None Include="lib\zydis\Zydis\Generated\InstructionDefinitions.inc" />
+    <None Include="lib\zydis\Zydis\Generated\InstructionEncodings.inc" />
+    <None Include="lib\zydis\Zydis\Generated\OperandDefinitions.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

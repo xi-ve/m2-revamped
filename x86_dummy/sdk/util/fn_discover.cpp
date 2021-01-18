@@ -74,21 +74,34 @@ void sdk::util::worker_thread(s_mem* mem)
 
 	sdk::util::c_log::Instance().duo("[ (%04x) mem page: %04x, %04x ]\n", mem->start, (uint32_t)m_info.AllocationBase + mem->start, ((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize));
 
-	auto i_fun_count = 0;
+	auto fns = std::vector<std::pair<uint32_t, uint8_t*>>();
 
 	for (auto a = (uint32_t)m_info.AllocationBase + mem->start; a < ((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize); a++)
 	{
-		uint8_t b[4] = { 0,0,0,0 };
-		memcpy(b, (void*)a, 4);
+		uint8_t b[0x10] = { };
+		memcpy(b, (void*)a, 0x10);
 		if (!b) continue;
-		if (b[0] == 0x55 && b[1] == 0x8B && b[2] == 0xEC)
-		{			
-			i_fun_count++;
+		if (b[0] == 0x55 && b[1] == 0x8B && b[2] == 0xEC) fns.push_back({ a, b });
+	}
+
+	for (auto&& a : fns)
+	{
+		auto size_of_function = sdk::util::c_mem::Instance().find_size(a.first);
+		if (!size_of_function) continue;
+		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, (uint32_t)((uint32_t)m_info.AllocationBase + mem->start));
+		if (!asm_fn.size()) continue;
+		for (auto b : asm_fn)
+		{
+			if (!b || IsBadCodePtr((FARPROC)b)) continue;
+			char cstring[0x256] = { };
+			if (!ReadProcessMemory(GetCurrentProcess(), (void*)b, cstring, 0x128, nullptr)) continue;
+			if (!cstring || !sdk::util::c_fn_discover::Instance().is_ascii(cstring)) continue;
+			mem->listing[a.first].push_back(cstring);
 		}
 	}
 
 	mem->done = 1;
-	sdk::util::c_log::Instance().duo("[ worker %04x to %04x has finished with %i results ]\n", mem->start, mem->end, i_fun_count);
+	sdk::util::c_log::Instance().duo("[ worker %04x to %04x has finished with %i fns and %i fns with size ]\n", mem->start, mem->end, fns.size(), mem->listing.size());
 }
 
 bool sdk::util::c_fn_discover::text_section()
@@ -100,23 +113,22 @@ bool sdk::util::c_fn_discover::text_section()
 	if (std::stoul(conf_crc32->container) != current_crc32)
 	{		
 		sdk::util::c_log::Instance().duo("[ new file detected, %04x to %04x ]\n[ running dynamics system, please wait ]\n", std::stoul(conf_crc32->container), current_crc32);
+doit:
 		auto base = GetModuleHandleA(0);
 		auto text_section = sdk::util::c_mem::Instance().get_section(".text", base);
 		auto rdata_section = sdk::util::c_mem::Instance().get_section(".rdata", base);
-		auto per_block_size = (text_section.first + text_section.second) / 8;
-		auto block_next = 0x800;
+		auto per_block_size = (text_section.first + text_section.second);
+		auto block_next = 0x1000;
 		std::vector<sdk::util::s_mem*> worker_data;
-		for (auto a = 0; a < 8; a++)//fixme: error when using more than 1 thread!
+		for (auto a = 0; a < 1; a++)
 		{
 			auto p = new sdk::util::s_mem(block_next, block_next + per_block_size);
 			worker_data.push_back(p);
 			sdk::util::c_thread::Instance().spawn((LPTHREAD_START_ROUTINE)sdk::util::worker_thread, p);
 			block_next += per_block_size;
-			std::this_thread::sleep_for(500ms);
 		}
 		while (1)
 		{
-			std::this_thread::sleep_for(1s);
 			auto all_done = true;
 			for (auto a : worker_data) if (!a->done) all_done = false;
 			if (all_done) break;
@@ -134,6 +146,7 @@ bool sdk::util::c_fn_discover::text_section()
 	{
 		sdk::util::c_log::Instance().duo("[ loading generated dynamics ]\n");
 		this->load_db();
+		if (this->fns.size() < 2) goto doit;
 	}
 	return 1;
 }

@@ -18,8 +18,10 @@
 #include <sstream>
 
 //libs
-#include <capstone/include/capstone/capstone.h>
-#pragma comment(lib, "capstone/capstone.lib")
+#include <zydis/Zydis/Zydis.h>
+#include <zydis/Zycore/LibC.h>
+#pragma comment(lib, "zydis/Zydis.lib")
+#pragma comment(lib, "zydis/Zycore.lib")
 #include <minhook/MinHook.h>
 #pragma comment(lib, "minhook/libMinHook.lib")
 #include <json/json.h>
