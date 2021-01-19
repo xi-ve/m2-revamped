@@ -121,6 +121,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -188,7 +189,6 @@
     <ClCompile Include="lib\zydis\Zydis\Mnemonic.c" />
     <ClCompile Include="lib\zydis\Zydis\Register.c" />
     <ClCompile Include="lib\zydis\Zydis\SharedData.c" />
-    <ClCompile Include="lib\zydis\Zydis\String.c" />
     <ClCompile Include="lib\zydis\Zydis\Utils.c" />
     <ClCompile Include="lib\zydis\Zydis\Zydis.c" />
     <ClCompile Include="main\main.cpp" />

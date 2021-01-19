@@ -114,9 +114,6 @@
     <ClCompile Include="lib\zydis\Zydis\SharedData.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lib\zydis\Zydis\String.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="lib\zydis\Zydis\Utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
