@@ -33,6 +33,7 @@
 #define ZYCORE_THREAD_H
 
 #ifndef ZYAN_NO_LIBC
+#define MICROSOFT_WINDOWS_WINBASE_H_DEFINE_INTERLOCKED_CPLUSPLUS_OVERLOADS 1
 
 #include <ZycoreExportConfig.h>
 #include <Zycore/Defines.h>

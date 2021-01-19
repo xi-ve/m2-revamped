@@ -40,6 +40,8 @@ namespace sdk
 		typedef std::vector<json_fn_discover::s_info_entry> t_list;
 		class c_fn_discover : public s<c_fn_discover>
 		{
+		private:
+			bool			should_gen_fn_list = true;
 		public:
 			bool			is_ascii(const std::string& in);
 		private:

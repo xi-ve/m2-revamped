@@ -39,7 +39,7 @@ void sdk::util::c_fn_discover::save_db()
 		auto jobj = nlohmann::json();
 		jobj["address"] = a.address;
 		jobj["strings"] = a.strings;
-		this->ofstream << jobj << "\n" ;
+		this->ofstream << jobj << "\n";
 	}
 	this->ofstream.close();
 }
@@ -66,7 +66,7 @@ void sdk::util::worker_thread(s_mem* mem)
 	auto rdata_section = sdk::util::c_mem::Instance().get_section(".rdata", base);
 	auto max_text = (uintptr_t)base + text_section.first + text_section.second;
 	auto max_rdata = (uintptr_t)base + rdata_section.first + rdata_section.second;
-	
+
 	MEMORY_BASIC_INFORMATION m_info;
 	auto page_size = VirtualQueryEx(GetCurrentProcess(), (void*)(mem->start + (uintptr_t)base), &m_info, sizeof(m_info));
 
@@ -110,7 +110,7 @@ bool sdk::util::c_fn_discover::text_section()
 	auto current_crc32 = this->get_crc();
 	auto conf_crc32 = sdk::util::c_config::Instance().get_var("dynamics", "last_file_crc");
 	if (std::stoul(conf_crc32->container) != current_crc32)
-	{		
+	{
 		sdk::util::c_log::Instance().duo("[ new file detected, %04x to %04x ]\n[ running dynamics system, please wait ]\n", std::stoul(conf_crc32->container), current_crc32);
 doit:
 		auto base = GetModuleHandleA(0);
@@ -134,7 +134,7 @@ doit:
 		}
 		for (auto a : worker_data)
 		{
-			for (auto b : a->listing) this->fns.push_back({ b.first,b.second });			
+			for (auto b : a->listing) this->fns.push_back({ b.first,b.second });
 		}
 		sdk::util::c_log::Instance().duo("[ found %i total dynamics ]\n", this->fns.size());
 		if (!this->fns.size()) return 0;
@@ -154,9 +154,10 @@ doit:
 bool sdk::util::c_fn_discover::data_section()
 {
 	sdk::util::c_log::Instance().duo("[ py dynamics system started ]\n");
-	
+
 	auto base = GetModuleHandleA(0);
 	auto data_section = sdk::util::c_mem::Instance().get_section(".data", base);
+	auto text_section = sdk::util::c_mem::Instance().get_section(".text", base);
 
 	struct s_string_container
 	{
@@ -168,7 +169,7 @@ bool sdk::util::c_fn_discover::data_section()
 	};
 	struct s_register
 	{
-		s_string_container*		str_ptr = 0;
+		s_string_container* str_ptr = 0;
 		uint32_t				fnc_ptr = 0;
 		uint8_t					validator = 0;
 	};
@@ -183,11 +184,36 @@ bool sdk::util::c_fn_discover::data_section()
 		if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
 		if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
 		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
-		this->fns_py.push_back({ addr, { reg.str_ptr->string } });
+		this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });
 	}
 
 	if (!this->fns_py.size()) return 0;
 	sdk::util::c_log::Instance().duo("[ py dynamics system completed with %i results ]\n", this->fns_py.size());
+
+	if (this->should_gen_fn_list)
+	{
+		this->ofstream.open("M2++_PY_FN_DUMP.DB");
+		for (auto&& a : this->fns_py)
+		{			
+			auto calls = sdk::util::c_disassembler::Instance().get_calls(a.address, 0, text_section.first + (uint32_t)base);
+			auto pushes = sdk::util::c_disassembler::Instance().get_pushes(a.address, 0, 0x10);
+			auto offsets = sdk::util::c_disassembler::Instance().get_custom(a.address, 0, text_section.first + (uint32_t)base, text_section.first + text_section.second + (uint32_t)base, { "push" });
+
+			this->ofstream << sdk::util::c_log::Instance().string("[ function: %04x, python name: %s ]\n", a.address, a.strings[0].c_str());
+
+			if (calls.empty()) this->ofstream << "[ no calls ]\n\n";
+			else for (auto b : calls) this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]\n", b);
+			
+			if (pushes.empty()) this->ofstream << "[ no pushes ]\n\n";
+			else for (auto b : pushes) this->ofstream << sdk::util::c_log::Instance().string("[ push: %04x ]\n", b);
+
+			if (offsets.empty()) this->ofstream << "[ no offsets ]\n\n";
+			else for (auto b : offsets) this->ofstream << sdk::util::c_log::Instance().string("[ offset: %04x ]\n", b);
+
+			this->ofstream << "\n";			
+		}
+		this->ofstream.close();
+	}
 
 	return 1;
 }

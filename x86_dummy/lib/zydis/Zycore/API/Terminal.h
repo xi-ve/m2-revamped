@@ -31,6 +31,7 @@
 
 #ifndef ZYCORE_TERMINAL_H
 #define ZYCORE_TERMINAL_H
+#define MICROSOFT_WINDOWS_WINBASE_H_DEFINE_INTERLOCKED_CPLUSPLUS_OVERLOADS 1
 
 #include <ZycoreExportConfig.h>
 #include <Zycore/LibC.h>

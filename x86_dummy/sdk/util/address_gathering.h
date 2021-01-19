@@ -9,7 +9,7 @@ namespace sdk
 		private:
 			uint32_t		get_func(const char* string_ref);
 		public:
-			void setup();
+			void			setup();
 		};
 	}
 }
