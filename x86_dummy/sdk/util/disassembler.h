@@ -14,11 +14,12 @@ namespace sdk
 			void		setup();
 			t_asm_res	get_pushes(uint32_t address, size_t size = 0, size_t min = 0xFFF);
 			t_asm_res	get_adds(uint32_t address, size_t size = 0, size_t min = 0xFFF);
-			t_asm_res	get_calls(uint32_t address, size_t size = 0, size_t min = 0xFFF);
+			t_asm_res	get_calls(uint32_t address, size_t size = 0, size_t min = 0xFFF, BOOL ripr = false);
 			t_asm_res	get_jumps(uint32_t address, size_t size = 0, size_t min = 0xFFF);
 			t_asm_res	get_offsets(uint32_t address, size_t size = 0, size_t min = 0x10, size_t max = 0xFFFF);
 			t_asm_res	get_custom(uint32_t address, size_t size = 0, size_t min = 0x10, size_t max = 0xFFFF, std::vector<std::string> opcodes = {"push", "lea"});
 			t_asm_raw	dump_asm(uint32_t address, size_t size = 0);
+			uint32_t	convert_rip(uint32_t start, int offset);
 		};
 	}
 }

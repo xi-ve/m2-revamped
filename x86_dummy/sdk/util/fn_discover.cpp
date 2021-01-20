@@ -59,6 +59,20 @@ void sdk::util::c_fn_discover::load_db()
 	this->fstream.close();
 }
 
+uint32_t sdk::util::c_fn_discover::get_fn_py(const char* fn_name)
+{
+	for (auto a : this->fns_py) if (fn_name == a.strings[0].c_str()) return a.address;
+	sdk::util::c_log::Instance().duo("[ failed to get py fn %s ]\n", fn_name);
+	return 0;
+}
+
+uint32_t sdk::util::c_fn_discover::get_fn(const char* fn_str_ref)
+{
+	for (auto a : this->fns) if (fn_str_ref == a.strings[0].c_str()) return a.address;
+	sdk::util::c_log::Instance().duo("[ failed to find reference for %s ]\n", fn_str_ref);
+	return 0;
+}
+
 void sdk::util::worker_thread(s_mem* mem)
 {
 	auto base = GetModuleHandleA(0);
@@ -102,7 +116,7 @@ void sdk::util::worker_thread(s_mem* mem)
 	}
 
 	mem->done = 1;
-	sdk::util::c_log::Instance().duo("[ worker %04x to %04x has finished with %i fns and %i fns with size ]\n", mem->start, mem->end, fns.size(), mem->listing.size());
+	sdk::util::c_log::Instance().duo("[ worker %04x to %04x has finished with %i fns and %i fns with strings ]\n", mem->start, mem->end, fns.size(), mem->listing.size());
 }
 
 bool sdk::util::c_fn_discover::text_section()
@@ -184,30 +198,104 @@ bool sdk::util::c_fn_discover::data_section()
 		if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
 		if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
 		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
-		this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });
+		this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });	
 	}
 
 	if (!this->fns_py.size()) return 0;
 	sdk::util::c_log::Instance().duo("[ py dynamics system completed with %i results ]\n", this->fns_py.size());
+
+	auto has_refs = [this](uint32_t a, sdk::util::t_list l) -> std::vector<std::string>
+	{
+		for (auto w : l)
+		{
+			if (w.address == a && w.strings.size()) return w.strings;
+		}
+		return {};
+	};
 
 	if (this->should_gen_fn_list)
 	{
 		this->ofstream.open("M2++_PY_FN_DUMP.DB");
 		for (auto&& a : this->fns_py)
 		{			
-			auto calls = sdk::util::c_disassembler::Instance().get_calls(a.address, 0, text_section.first + (uint32_t)base);
+			auto calls = sdk::util::c_disassembler::Instance().get_calls(a.address, 0, text_section.first);
 			auto pushes = sdk::util::c_disassembler::Instance().get_pushes(a.address, 0, 0x10);
-			auto offsets = sdk::util::c_disassembler::Instance().get_custom(a.address, 0, text_section.first + (uint32_t)base, text_section.first + text_section.second + (uint32_t)base, { "push" });
+			auto offsets = sdk::util::c_disassembler::Instance().get_custom(a.address, 0, text_section.first, text_section.first + text_section.second, { "push" });
+			auto asm_raw = sdk::util::c_disassembler::Instance().dump_asm(a.address);
 
 			this->ofstream << sdk::util::c_log::Instance().string("[ function: %04x, python name: %s ]\n", a.address, a.strings[0].c_str());
 
-			if (calls.empty()) this->ofstream << "[ no calls ]\n\n";
-			else for (auto b : calls) this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]\n", b);
+			/*std::stringstream rasm; rasm << "[ function asm: ]\n";
+			for (auto b : asm_raw)
+			{
+				rasm << b << "\n";
+			}
+			this->ofstream << rasm.str().c_str();*/
+
+			if (calls.empty()) this->ofstream << "[ no calls ]\n";
+			else for (auto b : calls)
+			{
+				auto strings_in_call = has_refs(b, this->fns);
+				if (strings_in_call.empty())
+				{
+					this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]\n", b);
+				}
+				else
+				{
+					std::stringstream s; s << "";
+					for (auto c : strings_in_call) if (c.size() > 4) s << c.c_str() << ", ";
+
+					this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]~[ direct refs: %s ]\n", b, s.str().c_str());
+				}
+
+				auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(b, 0, text_section.first);
+				if (calls_inside.size())
+				{
+					std::stringstream sss; sss << "";
+					std::stringstream table; table << "";
+					for (auto c : calls_inside)
+					{
+						auto str_inside = has_refs(c, this->fns);
+						auto movs_inside = sdk::util::c_disassembler::Instance().get_custom(c, 0, data_section.first, data_section.first + data_section.second, { "mov" });
+						auto calls_in_in = sdk::util::c_disassembler::Instance().get_calls(c, 0, text_section.first);
+
+						if (str_inside.size())
+						{
+							sss << "[ " << std::hex << c << std::dec << " ]~[ ";
+							for (auto d : str_inside)
+							{
+								if (d.size() > 2)
+								{
+									sss << d.c_str() << ", ";
+								}
+							}
+							sss << "] ";
+						}
+						/*if (movs_inside.size() == 1 && !calls_in_in.size())
+						{
+							for (auto d : movs_inside)
+							{
+								auto p = *(uint32_t*)(d);
+								if (!p || IsBadCodePtr((FARPROC)p)) continue;
+								auto inp = *(uint32_t*)(p);
+								if (!inp || IsBadCodePtr((FARPROC)inp)) continue;
+								auto bc = (sdk::util::_base_class*)(p);
+								if (!bc || !bc->pVFTable) continue;
+								auto rtti_info = sdk::util::get(bc);
+								if (!rtti_info || !rtti_info->pTypeDescriptor) continue;
+								table << "[ table ref: " << std::hex << c << "=>" << d << std::dec << " " << rtti_info->pTypeDescriptor->pname << " ]\n";
+							}
+						}*/
+					}
+					if (sss.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string("[ indirect refs: %s ]\n", sss.str().c_str());
+					if (table.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string(table.str().c_str());
+				}
+			}
 			
-			if (pushes.empty()) this->ofstream << "[ no pushes ]\n\n";
+			if (pushes.empty()) this->ofstream << "[ no pushes ]\n";
 			else for (auto b : pushes) this->ofstream << sdk::util::c_log::Instance().string("[ push: %04x ]\n", b);
 
-			if (offsets.empty()) this->ofstream << "[ no offsets ]\n\n";
+			if (offsets.empty()) this->ofstream << "[ no offsets ]\n";
 			else for (auto b : offsets) this->ofstream << sdk::util::c_log::Instance().string("[ offset: %04x ]\n", b);
 
 			this->ofstream << "\n";			

@@ -18,35 +18,28 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t
 	ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
 
 	ZydisFormatter formatter;
-	if (!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL)) ||
-		!ZYAN_SUCCESS(ZydisFormatterSetProperty(&formatter,
-		ZYDIS_FORMATTER_PROP_FORCE_SEGMENT, ZYAN_TRUE)) ||
-		!ZYAN_SUCCESS(ZydisFormatterSetProperty(&formatter,
-		ZYDIS_FORMATTER_PROP_FORCE_SIZE, ZYAN_TRUE))) return ret;
-	
+	if (!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL))) return ret;
 
+	/*
+	ZYDIS_FORMATTER_PROP_FORCE_RELATIVE_RIPREL
+	*/
+	
+	ZyanU64 runtime_address = address;
+	ZyanUSize offset = 0;
+	const ZyanUSize length = size - 1;
 	ZydisDecodedInstruction instruction;
-	ZyanStatus status;
-	ZyanUSize read_offset = 0;
-	ZyanUSize buffer_size = size - 1;
-	ZyanUSize buffer_remaining = 0;
-	ZyanUSize read_offset_base = 0;
-	char format_buffer[256];
-	
-	while ((status = ZydisDecoderDecodeBuffer(&decoder, cbytes + read_offset,
-		   buffer_size - read_offset, &instruction)) != ZYDIS_STATUS_NO_MORE_DATA)
+	while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, cbytes + offset, length - offset,
+		   &instruction)))
 	{
-		const ZyanU64 runtime_address = read_offset_base + read_offset;
+		// Format & print the binary instruction structure to human readable format
+		char buffer[256];
+		ZydisFormatterFormatInstruction(&formatter, &instruction, buffer, sizeof(buffer),
+										runtime_address);
 
-		if (!ZYAN_SUCCESS(status)) break;
-		ZydisFormatterFormatInstruction(&formatter, &instruction, format_buffer,
-										sizeof(format_buffer), runtime_address);
+		ret.push_back(buffer);
 
-		ret.push_back(format_buffer);
-
-		//sdk::util::c_log::Instance().duo("%s\n", format_buffer);
-
-		read_offset += instruction.length;
+		offset += instruction.length;
+		runtime_address += instruction.length;
 	}
 
 	return ret;
@@ -109,7 +102,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_adds(uint32_t address, size_
 	return ret;
 }
 
-sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size_t size, size_t min)
+sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size_t size, size_t min, BOOL ripr)
 {
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
 	auto raw_asm = this->get_asm(address, size);
@@ -131,7 +124,8 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 			{
 				auto hex = std::stoull(b, nullptr, 16);
 				if (hex > data1_max || hex < min) continue;
-				ret.push_back((uint32_t)hex);
+				if (!ripr) ret.push_back((uint32_t)hex);
+				else ret.push_back(this->convert_rip((uint32_t)hex, 1));
 			}
 		}
 	}
@@ -232,4 +226,20 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::dump_asm(uint32_t address, size_
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
 	auto raw_asm = this->get_asm(address, size);
 	return raw_asm;
+}
+
+uint32_t sdk::util::c_disassembler::convert_rip(uint32_t start, int offset)
+{
+	BYTE bResult[0x8] = { 0x0 };
+	memcpy(bResult, (PVOID)(start + offset), 0x4);
+
+	if (bResult[3] == 0xFF)
+	{
+		bResult[4] = 0xFF;
+		bResult[5] = 0xFF;
+		bResult[6] = 0xFF;
+		bResult[7] = 0xFF;
+	}
+
+	return (start + offset + *((PDWORD32)bResult) + 0x4);
 }

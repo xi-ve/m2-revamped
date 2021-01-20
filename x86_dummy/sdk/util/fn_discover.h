@@ -60,6 +60,9 @@ namespace sdk
 			bool			text_section();
 			bool			data_section();
 		public:
+			uint32_t		get_fn_py(const char* fn_name);
+			uint32_t		get_fn(const char* fn_str_ref);
+		public:
 			void			setup();
 		};
 	}

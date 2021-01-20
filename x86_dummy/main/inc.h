@@ -43,6 +43,7 @@
 #include <game/offsets.h>
 #include <game/functions.h>
 #include <game/utils.h>
+#include <util/rtti.h>
 #include <util/fn_discover.h>
 #include <ui.h>
 #include <startup.h>
