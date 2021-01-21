@@ -4,6 +4,7 @@ void sdk::util::c_fn_discover::setup()
 {
 	auto text_res = this->text_section();
 	auto data_res = this->data_section();
+	//auto singletons = this->singletons();
 	if (!text_res) { sdk::util::c_log::Instance().duo("[ text discovery failed! ]\n"); return; }
 	if (!data_res) { sdk::util::c_log::Instance().duo("[ data discovery failed! ]\n"); return; }
 	sdk::util::c_log::Instance().duo("[ c_fn_discover::setup completed ]\n");
@@ -61,9 +62,43 @@ void sdk::util::c_fn_discover::load_db()
 
 uint32_t sdk::util::c_fn_discover::get_fn_py(const char* fn_name)
 {
-	for (auto a : this->fns_py) if (fn_name == a.strings[0].c_str()) return a.address;
+	for (auto a : this->fns_py) if (strstr(a.strings.front().c_str(), fn_name)) return a.address;
 	sdk::util::c_log::Instance().duo("[ failed to get py fn %s ]\n", fn_name);
 	return 0;
+}
+
+bool sdk::util::c_fn_discover::is_python_fn(uint32_t address)
+{
+	auto pbase = GetModuleHandleA("python27.dll");
+	if (!pbase) pbase = GetModuleHandleA("python22.dll");
+	if (!pbase) { sdk::util::c_log::Instance().duo("[ failed to get py instance ]\n"); return 0; }
+	
+	MODULEINFO inf;
+	K32GetModuleInformation(GetCurrentProcess(), pbase, &inf, sizeof(inf));
+
+	auto pmax = (uintptr_t)pbase + inf.SizeOfImage;
+
+	if (address > (uintptr_t)pbase && address < pmax) return 1;
+	return 0;
+}
+
+bool sdk::util::c_fn_discover::singletons()
+{
+	auto base = GetModuleHandleA(0);
+	auto text_section = sdk::util::c_mem::Instance().get_section(".text", base);
+	auto rdata_section = sdk::util::c_mem::Instance().get_section(".rdata", base);
+	auto max_text = (uintptr_t)base + text_section.first + text_section.second;
+	auto max_rdata = (uintptr_t)base + rdata_section.first + rdata_section.second;
+
+	sdk::util::c_log::Instance().duo("[ gathering singletons ]\n");
+
+	for (auto&& a : this->offs_singletons)
+	{
+		sdk::util::c_log::Instance().duo("[ potential singleton fn: %04x ]\n", a.address);
+	}
+
+	sdk::util::c_log::Instance().duo("[ singletons completed ]\n");
+	return 1;
 }
 
 uint32_t sdk::util::c_fn_discover::get_fn(const char* fn_str_ref)
@@ -73,11 +108,43 @@ uint32_t sdk::util::c_fn_discover::get_fn(const char* fn_str_ref)
 	return 0;
 }
 
+uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports)
+{
+	auto origin_fn_size = sdk::util::c_mem::Instance().find_size(origin);
+	if (!origin_fn_size) return 0;
+	auto fns_in_origin = sdk::util::c_disassembler::Instance().get_calls(origin, origin_fn_size, 0, skip_py_exports);
+	if (!fns_in_origin.size()) return 0;
+	for (auto&& a : fns_in_origin)
+	{		
+
+		auto inside_fn_size = sdk::util::c_mem::Instance().find_size(a);
+		if (!inside_fn_size || inside_fn_size > approx_size_max || inside_fn_size < approx_size_min) continue;
+		auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
+		if (no_calls_inside) if (!calls_inside.empty()) continue;
+		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
+		if (approx_off_movs)
+		{
+			auto off_pushes_inside = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0, 0, { "mov" });
+			if (off_pushes_inside.size() < approx_off_movs) continue;
+		}
+		sdk::util::c_log::Instance().duo("[ found res for: %04x => %04x, size: %04x, calls: %i ]\n", origin, a, inside_fn_size, calls_inside.size());
+		return a;
+	}
+	return 0;
+}
+
+void sdk::util::c_fn_discover::add_singleton(uint32_t address)
+{
+	for (auto a : this->offs_singletons) if (a.address == address) return;
+	this->offs_singletons.push_back({ address, {} });
+}
+
 void sdk::util::worker_thread(s_mem* mem)
 {
 	auto base = GetModuleHandleA(0);
 	auto text_section = sdk::util::c_mem::Instance().get_section(".text", base);
 	auto rdata_section = sdk::util::c_mem::Instance().get_section(".rdata", base);
+	auto data1_section = sdk::util::c_mem::Instance().get_section(".data1", base);
 	auto max_text = (uintptr_t)base + text_section.first + text_section.second;
 	auto max_rdata = (uintptr_t)base + rdata_section.first + rdata_section.second;
 
@@ -104,7 +171,11 @@ void sdk::util::worker_thread(s_mem* mem)
 		auto size_of_function = sdk::util::c_mem::Instance().find_size(a.first);
 		if (!size_of_function) continue;
 		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, (uint32_t)((uint32_t)m_info.AllocationBase + mem->start));
-		if (!asm_fn.size()) continue;
+		if (!asm_fn.size())
+		{
+			//todo: rtti 9b singleton fn dtc
+			continue;
+		}
 		for (auto b : asm_fn)
 		{
 			if (!b || IsBadCodePtr((FARPROC)b)) continue;
@@ -198,7 +269,7 @@ bool sdk::util::c_fn_discover::data_section()
 		if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
 		if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
 		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
-		this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });	
+		this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });
 	}
 
 	if (!this->fns_py.size()) return 0;
@@ -217,88 +288,91 @@ bool sdk::util::c_fn_discover::data_section()
 	{
 		this->ofstream.open("M2++_PY_FN_DUMP.DB");
 		for (auto&& a : this->fns_py)
-		{			
+		{
+			if (a.strings.empty()) continue;
+
 			auto calls = sdk::util::c_disassembler::Instance().get_calls(a.address, 0, text_section.first);
 			auto pushes = sdk::util::c_disassembler::Instance().get_pushes(a.address, 0, 0x10);
 			auto offsets = sdk::util::c_disassembler::Instance().get_custom(a.address, 0, text_section.first, text_section.first + text_section.second, { "push" });
-			auto asm_raw = sdk::util::c_disassembler::Instance().dump_asm(a.address);
 
 			this->ofstream << sdk::util::c_log::Instance().string("[ function: %04x, python name: %s ]\n", a.address, a.strings[0].c_str());
-
-			/*std::stringstream rasm; rasm << "[ function asm: ]\n";
-			for (auto b : asm_raw)
-			{
-				rasm << b << "\n";
-			}
-			this->ofstream << rasm.str().c_str();*/
 
 			if (calls.empty()) this->ofstream << "[ no calls ]\n";
 			else for (auto b : calls)
 			{
-				auto strings_in_call = has_refs(b, this->fns);
-				if (strings_in_call.empty())
+				if (this->should_gen_advanced_str_refs)
 				{
-					this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]\n", b);
+					auto strings_in_call = has_refs(b, this->fns);
+					if (strings_in_call.empty())
+					{
+						this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]\n", b);
+					}
+					else
+					{
+						std::stringstream s; s << "";
+						for (auto c : strings_in_call) if (c.size() > 4) s << c.c_str() << ", ";
+
+						this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]~[ direct refs: %s ]\n", b, s.str().c_str());
+					}
+
+					auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(b, 0, text_section.first);
+					if (calls_inside.size())
+					{
+						std::stringstream sss; sss << "";
+						std::stringstream table; table << "";
+						for (auto c : calls_inside)
+						{
+							auto str_inside = has_refs(c, this->fns);
+							//auto movs_inside = sdk::util::c_disassembler::Instance().get_custom(c, 0, data_section.first + (uintptr_t)base, data_section.first + data_section.second + (uintptr_t)base, { "mov" });
+							//auto calls_in_in = sdk::util::c_disassembler::Instance().get_calls(c, 0, text_section.first + (uintptr_t)base);
+
+							if (str_inside.size())
+							{
+								sss << "[ " << std::hex << c << std::dec << " ]~[ ";
+								for (auto d : str_inside)
+								{
+									if (d.size() > 2)
+									{
+										sss << d.c_str() << ", ";
+									}
+								}
+								sss << "] ";
+							}
+							//if (movs_inside.size())
+							//{
+							//	for (auto d : movs_inside)
+							//	{
+							//		auto p = *(uint32_t*)(d);
+							//		if (!p || IsBadCodePtr((FARPROC)p)) continue;					
+							//		sdk::util::c_log::Instance().duo("[ %04x %04x ]\n", d, p);
+							//		//auto bc = (sdk::util::_base_class*)(p);
+							//		auto w = new sdk::util::_base_class();
+							//		memcpy(w, (void*)p, sizeof(sdk::util::_base_class));
+							//		if (!w) continue;
+							//		//if (!bc || !bc->pVFTable || IsBadCodePtr((FARPROC)bc) || IsBadCodePtr((FARPROC)bc->pVFTable)) continue;
+							//		auto rtti_info = sdk::util::get(w);
+							//		if (!rtti_info || !rtti_info->pTypeDescriptor || IsBadCodePtr((FARPROC)rtti_info) || IsBadCodePtr((FARPROC)rtti_info->pTypeDescriptor)) continue;
+							//		table << "[ table ref: " << std::hex << c << "=>" << d << std::dec << " " << rtti_info->pTypeDescriptor->pname << " ]\n";
+							//	}
+							//}
+						}
+						if (sss.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string("[ indirect refs: %s ]\n", sss.str().c_str());
+						if (table.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string(table.str().c_str());
+					}
 				}
 				else
 				{
-					std::stringstream s; s << "";
-					for (auto c : strings_in_call) if (c.size() > 4) s << c.c_str() << ", ";
-
-					this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]~[ direct refs: %s ]\n", b, s.str().c_str());
-				}
-
-				auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(b, 0, text_section.first);
-				if (calls_inside.size())
-				{
-					std::stringstream sss; sss << "";
-					std::stringstream table; table << "";
-					for (auto c : calls_inside)
-					{
-						auto str_inside = has_refs(c, this->fns);
-						auto movs_inside = sdk::util::c_disassembler::Instance().get_custom(c, 0, data_section.first, data_section.first + data_section.second, { "mov" });
-						auto calls_in_in = sdk::util::c_disassembler::Instance().get_calls(c, 0, text_section.first);
-
-						if (str_inside.size())
-						{
-							sss << "[ " << std::hex << c << std::dec << " ]~[ ";
-							for (auto d : str_inside)
-							{
-								if (d.size() > 2)
-								{
-									sss << d.c_str() << ", ";
-								}
-							}
-							sss << "] ";
-						}
-						/*if (movs_inside.size() == 1 && !calls_in_in.size())
-						{
-							for (auto d : movs_inside)
-							{
-								auto p = *(uint32_t*)(d);
-								if (!p || IsBadCodePtr((FARPROC)p)) continue;
-								auto inp = *(uint32_t*)(p);
-								if (!inp || IsBadCodePtr((FARPROC)inp)) continue;
-								auto bc = (sdk::util::_base_class*)(p);
-								if (!bc || !bc->pVFTable) continue;
-								auto rtti_info = sdk::util::get(bc);
-								if (!rtti_info || !rtti_info->pTypeDescriptor) continue;
-								table << "[ table ref: " << std::hex << c << "=>" << d << std::dec << " " << rtti_info->pTypeDescriptor->pname << " ]\n";
-							}
-						}*/
-					}
-					if (sss.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string("[ indirect refs: %s ]\n", sss.str().c_str());
-					if (table.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string(table.str().c_str());
+					this->ofstream << sdk::util::c_log::Instance().string("[ call to: %04x ]\n", b);
 				}
 			}
-			
+
 			if (pushes.empty()) this->ofstream << "[ no pushes ]\n";
 			else for (auto b : pushes) this->ofstream << sdk::util::c_log::Instance().string("[ push: %04x ]\n", b);
 
 			if (offsets.empty()) this->ofstream << "[ no offsets ]\n";
 			else for (auto b : offsets) this->ofstream << sdk::util::c_log::Instance().string("[ offset: %04x ]\n", b);
 
-			this->ofstream << "\n";			
+			this->ofstream << "\n";
 		}
 		this->ofstream.close();
 	}

@@ -75,6 +75,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_mem::Instance().setup();
 	sdk::util::c_config::Instance().setup();
 	sdk::util::c_fn_discover::Instance().setup();
+	sdk::util::c_address_gathering::Instance().setup();
 	sdk::util::ui_worker();
 }
 

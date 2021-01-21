@@ -8,7 +8,7 @@ namespace sdk
 		{
 			struct _vftable
 			{
-				void* pmethods[];
+				void* pmethods;
 			}*pVFTable;
 		};
 		struct _TypeDescriptor {
@@ -33,7 +33,7 @@ namespace sdk
 			unsigned long attributes;
 			unsigned long numBaseClasses;
 			struct _RTTIBaseClassArray {
-				_RTTIBaseClassDescriptor* ppBaseClassDescriptor[];
+				_RTTIBaseClassDescriptor* ppBaseClassDescriptor;
 			}*pppBaseClassDescriptor;
 		};
 		struct _RTTICompleteObjectLocator {
@@ -44,5 +44,18 @@ namespace sdk
 			_RTTIClassHierarchyDescriptor* pClassHierarchyDescriptor;
 		};
 		_RTTICompleteObjectLocator* get(_base_class* instance);
+		typedef void (*vtable_ptr)(void);
+		static inline const vtable_ptr* get_vtable(void* obj)
+		{
+			return *(const vtable_ptr**)obj;
+		}
+
+		static inline const _RTTICompleteObjectLocator* get_obj_locator(void* cppobj)
+		{
+			const vtable_ptr* vtable = get_vtable(cppobj);
+			if (!vtable) return 0;
+			if (!vtable[0]) return 0;
+			return (const _RTTICompleteObjectLocator*)vtable[-1];
+		}
 	}
 }

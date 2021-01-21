@@ -73,7 +73,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_pushes(uint32_t address, siz
 	return ret;
 }
 
-sdk::util::t_asm_res sdk::util::c_disassembler::get_adds(uint32_t address, size_t size, size_t min)
+sdk::util::t_asm_res sdk::util::c_disassembler::get_addrs(uint32_t address, size_t size, size_t min)
 {
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
 	auto raw_asm = this->get_asm(address, size);
@@ -102,14 +102,16 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_adds(uint32_t address, size_
 	return ret;
 }
 
-sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size_t size, size_t min, BOOL ripr)
+sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size_t size, size_t min, BOOL skip_py_exports)
 {
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
+	auto text_sec = sdk::util::c_mem::Instance().get_section(".text", base);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
+	auto text_max = (uintptr_t)base + text_sec.first + text_sec.second;
 	if (!min) min = (uintptr_t)base;
 	auto ret = sdk::util::t_asm_res();
 	for (auto a : raw_asm)
@@ -123,9 +125,9 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 			for (auto b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
-				if (hex > data1_max || hex < min) continue;
-				if (!ripr) ret.push_back((uint32_t)hex);
-				else ret.push_back(this->convert_rip((uint32_t)hex, 1));
+				if (hex > text_max || hex < min) continue;
+				if (skip_py_exports) if (sdk::util::c_fn_discover::Instance().is_python_fn(hex)) continue;
+				ret.push_back(hex);
 			}
 		}
 	}
@@ -198,7 +200,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 	auto base = GetModuleHandleA(0);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
-	if (!min) min = (uintptr_t)base;
+	if (!min) min = (uintptr_t)base + data1_sec.first;
 	auto ret = sdk::util::t_asm_res();
 	for (auto &a : raw_asm)
 	{

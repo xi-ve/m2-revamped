@@ -7,7 +7,7 @@ namespace sdk
 		class c_log : public s<c_log>
 		{
 		private:
-			const char*		log_file = "LOG_M2++.TXT";
+			const char*		log_file = "M2++_LOG.TXT";
 			std::ofstream	fstream;
 			void			to_console(const char* in);
 			void			to_file(const char* in);

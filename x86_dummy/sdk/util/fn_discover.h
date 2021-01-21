@@ -38,10 +38,12 @@ namespace sdk
 			};
 		}
 		typedef std::vector<json_fn_discover::s_info_entry> t_list;
+		typedef std::vector<uint32_t>						t_addrs;
 		class c_fn_discover : public s<c_fn_discover>
 		{
 		private:
-			bool			should_gen_fn_list = true;
+			bool			should_gen_fn_list = false;
+			bool			should_gen_advanced_str_refs = false;
 		public:
 			bool			is_ascii(const std::string& in);
 		private:
@@ -57,11 +59,17 @@ namespace sdk
 		private:
 			t_list			fns;
 			t_list			fns_py;
+			t_list			offs_singletons;
 			bool			text_section();
 			bool			data_section();
+			bool			singletons();
 		public:
+			bool			is_python_fn(uint32_t address);
 			uint32_t		get_fn_py(const char* fn_name);
 			uint32_t		get_fn(const char* fn_str_ref);
+			uint32_t		discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls = 0/*min cnt*/, size_t approx_off_movs = 0/*min cnt*/, bool no_calls_inside = false, bool no_off_push_inside = false, bool skip_py_exports = true);
+		public:
+			void			add_singleton(uint32_t address);
 		public:
 			void			setup();
 		};
