@@ -20,10 +20,6 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t
 	ZydisFormatter formatter;
 	if (!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL))) return ret;
 
-	/*
-	ZYDIS_FORMATTER_PROP_FORCE_RELATIVE_RIPREL
-	*/
-	
 	ZyanU64 runtime_address = address;
 	ZyanUSize offset = 0;
 	const ZyanUSize length = size - 1;
@@ -31,7 +27,6 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t
 	while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, cbytes + offset, length - offset,
 		   &instruction)))
 	{
-		// Format & print the binary instruction structure to human readable format
 		char buffer[256];
 		ZydisFormatterFormatInstruction(&formatter, &instruction, buffer, sizeof(buffer),
 										runtime_address);
@@ -126,8 +121,8 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 			{
 				auto hex = std::stoull(b, nullptr, 16);
 				if (hex > text_max || hex < min) continue;
-				if (skip_py_exports) if (sdk::util::c_fn_discover::Instance().is_python_fn(hex)) continue;
-				ret.push_back(hex);
+				if (skip_py_exports) if (sdk::util::c_fn_discover::Instance().is_python_fn((uint32_t)hex)) continue;
+				ret.push_back((uint32_t)hex);
 			}
 		}
 	}
@@ -171,6 +166,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base;
+	if (!max) max = data1_max;
 	auto ret = sdk::util::t_asm_res();
 	for (auto &a : raw_asm)
 	{
@@ -184,7 +180,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 			for (auto &b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
-				if (hex > data1_max || hex < min) continue;
+				if (hex > data1_max || hex < min || hex > max) continue;
 				ret.push_back((uint32_t)hex);
 			}
 		}
@@ -198,9 +194,11 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
+	auto data_sec = sdk::util::c_mem::Instance().get_section(".data", base);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
-	if (!min) min = (uintptr_t)base + data1_sec.first;
+	if (!min) min = (uintptr_t)base + data_sec.first;
+	if (!max) max = data1_max;
 	auto ret = sdk::util::t_asm_res();
 	for (auto &a : raw_asm)
 	{
@@ -215,7 +213,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 			for (auto &b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
-				if (hex > data1_max || hex < min) continue;
+				if (hex > data1_max || hex < min || hex > max) continue;
 				ret.push_back((uint32_t)hex);
 			}
 		}

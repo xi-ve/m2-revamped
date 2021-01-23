@@ -10,10 +10,11 @@ namespace sdk
 		private:
 			
 		public:
-			size_t	find_size(uint32_t address);
-			bool	is_valid(uint32_t address, size_t range);
-			t_size	get_section(const char* section, HMODULE base_module);
-			void	setup();
+			size_t		find_size(uint32_t address);
+			bool		is_valid(uint32_t address, size_t range);
+			t_size		get_section(const char* section, HMODULE base_module);
+			uint32_t	find_pattern(uint32_t start, const char* sig);
+			void		setup();
 		};
 	}
 }

@@ -116,18 +116,19 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 	if (!fns_in_origin.size()) return 0;
 	for (auto&& a : fns_in_origin)
 	{		
-
 		auto inside_fn_size = sdk::util::c_mem::Instance().find_size(a);
 		if (!inside_fn_size || inside_fn_size > approx_size_max || inside_fn_size < approx_size_min) continue;
 		auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
+		//sdk::util::c_log::Instance().duo("[ scanning: %04x => %04x, size: %04x, calls: %i ]\n", origin, a, inside_fn_size, calls_inside.size());
 		if (no_calls_inside) if (!calls_inside.empty()) continue;
 		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
 		if (approx_off_movs)
 		{
 			auto off_pushes_inside = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0, 0, { "mov" });
+			//sdk::util::c_log::Instance().duo("[ scanning: %04x => %04x, size: %04x, movs: %i ]\n", origin, a, inside_fn_size, off_pushes_inside.size());
 			if (off_pushes_inside.size() < approx_off_movs) continue;
 		}
-		sdk::util::c_log::Instance().duo("[ found res for: %04x => %04x, size: %04x, calls: %i ]\n", origin, a, inside_fn_size, calls_inside.size());
+		//sdk::util::c_log::Instance().duo("[ found res for: %04x => %04x, size: %04x, calls: %i ]\n", origin, a, inside_fn_size, calls_inside.size());
 		return a;
 	}
 	return 0;

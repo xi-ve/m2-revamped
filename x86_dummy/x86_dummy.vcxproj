@@ -195,6 +195,7 @@
     <ClCompile Include="main\singleton.h" />
     <ClCompile Include="main\startup.cpp" />
     <ClCompile Include="main\ui.cpp" />
+    <ClCompile Include="sdk\game\offsets.cpp" />
     <ClCompile Include="sdk\util\address_gathering.cpp" />
     <ClCompile Include="sdk\util\config.cpp" />
     <ClCompile Include="sdk\util\crc32.cpp" />
@@ -274,6 +275,7 @@
     <ClInclude Include="sdk\util\mem.h" />
     <ClInclude Include="sdk\util\rtti.h" />
     <ClInclude Include="sdk\util\threading.h" />
+    <ClInclude Include="sdk\util\xor.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\minhook\libMinHook.lib" />
