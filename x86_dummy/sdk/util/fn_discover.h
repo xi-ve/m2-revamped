@@ -54,8 +54,11 @@ namespace sdk
 			uint32_t		get_crc();
 		private:
 			const char*		file_name = "M2++_DYNAMICS.DB";
-			void			save_db();
-			void			load_db();
+			const char*		py_file_name = "M2++_PY_DYNAMICS.DB";
+			void			save_fn_db();
+			void			load_fn_db();
+			void			save_py_fn_db();
+			void			load_py_fn_db();
 		private:
 			t_list			fns;
 			t_list			fns_py;

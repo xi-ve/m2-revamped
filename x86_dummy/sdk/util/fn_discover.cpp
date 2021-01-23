@@ -32,21 +32,37 @@ uint32_t sdk::util::c_fn_discover::get_crc()
 	return sdk::util::c_crc32::Instance().get_crc_raw(path);
 }
 
-void sdk::util::c_fn_discover::save_db()
+void sdk::util::c_fn_discover::save_fn_db()
 {
+	auto base = (uintptr_t)GetModuleHandleA(0);
 	this->ofstream.open(this->file_name);
 	for (auto a : this->fns)
 	{
 		auto jobj = nlohmann::json();
-		jobj["address"] = a.address;
+		jobj["address"] = a.address - base;
 		jobj["strings"] = a.strings;
 		this->ofstream << jobj << "\n";
 	}
 	this->ofstream.close();
 }
 
-void sdk::util::c_fn_discover::load_db()
+void sdk::util::c_fn_discover::save_py_fn_db()
 {
+	auto base = (uintptr_t)GetModuleHandleA(0);
+	this->ofstream.open(this->py_file_name);
+	for (auto a : this->fns_py)
+	{
+		auto jobj = nlohmann::json();
+		jobj["address"] = a.address - base;
+		jobj["strings"] = a.strings;
+		this->ofstream << jobj << "\n";
+	}
+	this->ofstream.close();
+}
+
+void sdk::util::c_fn_discover::load_fn_db()
+{
+	auto base = (uintptr_t)GetModuleHandleA(0);
 	this->fstream.open(this->file_name);
 	if (!this->fstream.is_open()) { sdk::util::c_log::Instance().duo("[ failed to open fn_discover DB ]\n"); return; }
 	std::string buffer;
@@ -54,9 +70,27 @@ void sdk::util::c_fn_discover::load_db()
 	{
 		auto strct_obj = sdk::util::json_fn_discover::s_info_entry();
 		json::parse(buffer).get_to(strct_obj);
+		strct_obj.address += base;
 		this->fns.push_back(strct_obj);
 	}
 	sdk::util::c_log::Instance().duo("[ loaded %i dynamics objects ]\n", this->fns.size());
+	this->fstream.close();
+}
+
+void sdk::util::c_fn_discover::load_py_fn_db()
+{
+	auto base = (uintptr_t)GetModuleHandleA(0);
+	this->fstream.open(this->py_file_name);
+	if (!this->fstream.is_open()) { sdk::util::c_log::Instance().duo("[ failed to open py_fn_discover DB ]\n"); return; }
+	std::string buffer;
+	while (std::getline(this->fstream, buffer))
+	{
+		auto strct_obj = sdk::util::json_fn_discover::s_info_entry();
+		json::parse(buffer).get_to(strct_obj);
+		strct_obj.address += base;
+		this->fns_py.push_back(strct_obj);
+	}
+	sdk::util::c_log::Instance().duo("[ loaded %i py dynamics objects ]\n", this->fns_py.size());
 	this->fstream.close();
 }
 
@@ -103,7 +137,7 @@ bool sdk::util::c_fn_discover::singletons()
 
 uint32_t sdk::util::c_fn_discover::get_fn(const char* fn_str_ref)
 {
-	for (auto a : this->fns) if (fn_str_ref == a.strings[0].c_str()) return a.address;
+	for (auto a : this->fns) for (auto b : a.strings) if (strstr(b.c_str(), fn_str_ref)) return a.address;	
 	sdk::util::c_log::Instance().duo("[ failed to find reference for %s ]\n", fn_str_ref);
 	return 0;
 }
@@ -119,7 +153,7 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 		auto inside_fn_size = sdk::util::c_mem::Instance().find_size(a);
 		if (!inside_fn_size || inside_fn_size > approx_size_max || inside_fn_size < approx_size_min) continue;
 		auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
-		//sdk::util::c_log::Instance().duo("[ scanning: %04x => %04x, size: %04x, calls: %i ]\n", origin, a, inside_fn_size, calls_inside.size());
+		sdk::util::c_log::Instance().duo("[ scanning: %04x => %04x, size: %04x, calls: %i ]\n", origin, a, inside_fn_size, calls_inside.size());
 		if (no_calls_inside) if (!calls_inside.empty()) continue;
 		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
 		if (approx_off_movs)
@@ -224,14 +258,14 @@ doit:
 		}
 		sdk::util::c_log::Instance().duo("[ found %i total dynamics ]\n", this->fns.size());
 		if (!this->fns.size()) return 0;
-		this->save_db();
+		this->save_fn_db();
 		conf_crc32->container = std::to_string(current_crc32);
 		sdk::util::c_config::Instance().save();
 	}
 	else
 	{
 		sdk::util::c_log::Instance().duo("[ loading generated dynamics ]\n");
-		this->load_db();
+		this->load_fn_db();
 		if (this->fns.size() < 2) goto doit;
 	}
 	return 1;
@@ -239,6 +273,17 @@ doit:
 
 bool sdk::util::c_fn_discover::data_section()
 {
+	this->fstream.open(this->py_file_name);
+	if (this->fstream.is_open())
+	{
+		this->fstream.close();
+		this->load_py_fn_db();
+		if (!this->fns_py.size()) goto yes;
+		return 1;
+	}
+yes:
+	this->fstream.close();
+
 	sdk::util::c_log::Instance().duo("[ py dynamics system started ]\n");
 
 	auto base = GetModuleHandleA(0);
@@ -377,6 +422,8 @@ bool sdk::util::c_fn_discover::data_section()
 		}
 		this->ofstream.close();
 	}
+
+	this->save_py_fn_db();
 
 	return 1;
 }

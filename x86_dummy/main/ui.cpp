@@ -199,7 +199,10 @@ void main::c_ui::work()
 		if (nk_begin(ctx, "M2++", nk_rect(0, 0, 350, 550), 0))
 		{
 			nk_layout_row_static(ctx, 30, 50, 3);
-			nk_button_label(ctx, "w1");
+			if (nk_button_label(ctx, "test1"))
+			{
+				
+			}
 			nk_button_label(ctx, "w2");
 			nk_button_label(ctx, "w3");			
 		}

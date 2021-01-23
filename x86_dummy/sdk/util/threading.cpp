@@ -70,6 +70,7 @@ void __stdcall sdk::util::ui_worker()
 
 void __stdcall sdk::util::init_worker()
 {
+	Py_Initialize();
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
 	sdk::util::c_mem::Instance().setup();

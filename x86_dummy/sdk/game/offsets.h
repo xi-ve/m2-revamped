@@ -21,6 +21,8 @@ namespace sdk
 			extern uint32_t		off_IP;
 			extern uint32_t		off_PORT;
 			extern uint32_t		off_SOCKET;
+			extern uint32_t		off_USERNAME;
+			extern uint32_t		off_PASSWORD;
 		}
 	}
 }
