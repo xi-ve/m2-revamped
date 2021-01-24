@@ -3,7 +3,9 @@
 #define _GLFW_WIN32 1
 #define MICROSOFT_WINDOWS_WINBASE_H_DEFINE_INTERLOCKED_CPLUSPLUS_OVERLOADS 1
 #define _CRT_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
+#include <WinSock2.h>
 #include <Windows.h>
 #include <vector>
 #include <TlHelp32.h>
@@ -21,6 +23,7 @@
 #include <sstream>
 #include <d3d9.h>
 //libs
+#pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "d3d9.lib")
 #include <zydis/Zydis/Zydis.h>
 #include <zydis/Zycore/LibC.h>

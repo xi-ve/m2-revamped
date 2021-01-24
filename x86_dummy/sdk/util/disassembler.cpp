@@ -22,14 +22,13 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t
 
 	ZyanU64 runtime_address = address;
 	ZyanUSize offset = 0;
-	const ZyanUSize length = size - 1;
+	const ZyanUSize length = size;
 	ZydisDecodedInstruction instruction;
-	while (ZYAN_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, cbytes + offset, length - offset,
-		   &instruction)))
+	ZyanStatus sta = 0;
+	while (ZYAN_SUCCESS(sta = ZydisDecoderDecodeBuffer(&decoder, cbytes + offset, length - offset, &instruction)))
 	{
 		char buffer[256];
-		ZydisFormatterFormatInstruction(&formatter, &instruction, buffer, sizeof(buffer),
-										runtime_address);
+		ZydisFormatterFormatInstruction(&formatter, &instruction, buffer, sizeof(buffer), runtime_address);
 
 		ret.push_back(buffer);
 
@@ -49,7 +48,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_pushes(uint32_t address, siz
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto ret = sdk::util::t_asm_res();
-	for (auto &a : raw_asm)
+	for (auto& a : raw_asm)
 	{
 		if (a.empty()) continue;
 		if (a.find(XorStr("push")) != std::string::npos)
@@ -78,7 +77,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_addrs(uint32_t address, size
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base;
 	auto ret = sdk::util::t_asm_res();
-	for (auto &a : raw_asm)
+	for (auto& a : raw_asm)
 	{
 		if (a.empty()) continue;
 		if (a.find(XorStr("push")) != std::string::npos)
@@ -86,7 +85,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_addrs(uint32_t address, size
 			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
-			for (auto &b : match)
+			for (auto& b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
 				if (hex > data1_max || hex < min) continue;
@@ -138,6 +137,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_jumps(uint32_t address, size
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto ret = sdk::util::t_asm_res();
+	if (!min) min = (uintptr_t)base;
 	for (auto a : raw_asm)
 	{
 		if (a.empty()) continue;
@@ -168,7 +168,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 	if (!min) min = (uintptr_t)base;
 	if (!max) max = data1_max;
 	auto ret = sdk::util::t_asm_res();
-	for (auto &a : raw_asm)
+	for (auto& a : raw_asm)
 	{
 		if (a.empty()) continue;
 		if (a.find(XorStr("push")) != std::string::npos ||
@@ -177,7 +177,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
-			for (auto &b : match)
+			for (auto& b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
 				if (hex > data1_max || hex < min || hex > max) continue;
@@ -200,7 +200,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 	if (!min) min = (uintptr_t)base + data_sec.first;
 	if (!max) max = data1_max;
 	auto ret = sdk::util::t_asm_res();
-	for (auto &a : raw_asm)
+	for (auto& a : raw_asm)
 	{
 		if (a.empty()) continue;
 		auto needed = false;
@@ -210,7 +210,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
-			for (auto &b : match)
+			for (auto& b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
 				if (hex > data1_max || hex < min || hex > max) continue;
@@ -224,6 +224,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 sdk::util::t_asm_raw sdk::util::c_disassembler::dump_asm(uint32_t address, size_t size)
 {
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
+	sdk::util::c_log::Instance().duo("[ %04x - %04x ]\n", address, size);
 	auto raw_asm = this->get_asm(address, size);
 	return raw_asm;
 }

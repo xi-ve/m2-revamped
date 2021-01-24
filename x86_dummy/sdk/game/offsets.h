@@ -11,6 +11,7 @@ namespace sdk
 		namespace pointer_offsets
 		{
 			extern uint32_t		off_CAccountConnector;
+			extern uint32_t		off_CPythonNetworkStream;
 		}
 		namespace actor_offsets
 		{
@@ -23,6 +24,9 @@ namespace sdk
 			extern uint32_t		off_SOCKET;
 			extern uint32_t		off_USERNAME;
 			extern uint32_t		off_PASSWORD;
+			extern uint32_t		off_PASSCODE;
+			extern uint32_t		off_NETWORKING_PHASE;
+			extern uint32_t		off_IS_CONNECTED;
 		}
 	}
 }

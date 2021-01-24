@@ -196,6 +196,7 @@
     <ClCompile Include="main\startup.cpp" />
     <ClCompile Include="main\ui.cpp" />
     <ClCompile Include="sdk\game\offsets.cpp" />
+    <ClCompile Include="sdk\game\utils.cpp" />
     <ClCompile Include="sdk\util\address_gathering.cpp" />
     <ClCompile Include="sdk\util\config.cpp" />
     <ClCompile Include="sdk\util\crc32.cpp" />

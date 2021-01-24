@@ -53,8 +53,8 @@ namespace sdk
 			const char*		get_exe_path();
 			uint32_t		get_crc();
 		private:
-			const char*		file_name = XorStr("M2++_DYNAMICS.DB");
-			const char*		py_file_name = XorStr("M2++_PY_DYNAMICS.DB");
+			const char*		file_name = "M2++_DYNAMICS.DB";
+			const char*		py_file_name = "M2++_PY_DYNAMICS.DB";
 			void			save_fn_db();
 			void			load_fn_db();
 			void			save_py_fn_db();
@@ -70,7 +70,7 @@ namespace sdk
 			bool			is_python_fn(uint32_t address);
 			uint32_t		get_fn_py(const char* fn_name);
 			uint32_t		get_fn(const char* fn_str_ref);
-			uint32_t		discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls = 0/*min cnt*/, size_t approx_off_movs = 0/*min cnt*/, bool no_calls_inside = false, bool no_off_push_inside = false, bool skip_py_exports = true);
+			uint32_t		discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls = 0/*min cnt*/, size_t approx_off_movs = 0/*min cnt*/, bool no_calls_inside = false, bool no_off_push_inside = false, bool skip_py_exports = true, bool shoul_reverse_calls = false, bool should_include_jmp = false);
 		public:
 			void			add_singleton(uint32_t address);
 		public:

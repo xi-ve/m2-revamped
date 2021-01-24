@@ -81,19 +81,78 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	sdk::util::c_log::Instance().duo(XorStr("[ SetLoginInfo: %04x ]\n"), CAccountConnector_SetLoginInfo);
 
-	auto CAccountConnector_Set = sdk::util::c_fn_discover::Instance().discover_fn(CAccountConnector_SetLoginInfo, 0x20, 0x50, 2, 0, 0, 1);
-	if (!CAccountConnector_Set) return this->error_out(__LINE__);
+	auto CAccountConnector_Set = sdk::util::c_disassembler::Instance().get_calls(CAccountConnector_SetLoginInfo, 0, 0);
+	if (!CAccountConnector_Set.size()) return this->error_out(__LINE__);
 
-	auto CAccountConnector_Set_off = sdk::util::c_disassembler::Instance().get_custom(CAccountConnector_Set, 0, 0x50, 0xFF, { "mov", "add", "push", "lea" });
+	auto CAccountConnector_Set_off = sdk::util::c_disassembler::Instance().get_custom(CAccountConnector_Set[CAccountConnector_Set.size() - 2], 0, 0x50, 0xFF, { "mov", "add", "push", "lea" });
 	if (CAccountConnector_Set_off.empty()) return this->error_out(__LINE__);
 
 	sdk::game::connection_offsets::off_USERNAME = CAccountConnector_Set_off.front();
 	sdk::game::connection_offsets::off_PASSWORD = CAccountConnector_Set_off[1];
+	if (CAccountConnector_Set_off.size() > 2) sdk::game::connection_offsets::off_PASSCODE = CAccountConnector_Set_off[2];
+
+	sdk::game::func::c_funcs::Instance().f_SetLoginInfo_accnet = decltype(sdk::game::func::c_funcs::Instance().f_SetLoginInfo_accnet)(CAccountConnector_Set[CAccountConnector_Set.size() - 2]);
+	sdk::game::func::c_funcs::Instance().f_SetLoginInfo_pynet = decltype(sdk::game::func::c_funcs::Instance().f_SetLoginInfo_pynet)(CAccountConnector_Set[CAccountConnector_Set.size() - 3]);
+
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SetLoginInfo_accnet: %04x ]\n"), CAccountConnector_Set[CAccountConnector_Set.size() - 2]);
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SetLoginInfo_pynet : %04x ]\n"), CAccountConnector_Set[CAccountConnector_Set.size() - 3]);
 
 	sdk::util::c_log::Instance().duo(XorStr("[ off_USERNAME: %04x ]\n"), sdk::game::connection_offsets::off_USERNAME);
 	sdk::util::c_log::Instance().duo(XorStr("[ off_PASSWORD: %04x ]\n"), sdk::game::connection_offsets::off_PASSWORD);
+	if (CAccountConnector_Set_off.size() > 2) sdk::util::c_log::Instance().duo(XorStr("[ off_PASSCODE: %04x ]\n"), sdk::game::connection_offsets::off_PASSCODE);
 
-	//py funcs setlogininfo<<
+	//
+
+	auto CPythonNetworkStream_SetMarkServer = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetMarkServer"));
+	if (!CPythonNetworkStream_SetMarkServer) return this->error_out(__LINE__);
+	auto CPythonNetworkStream_SetMarkServer_calls = sdk::util::c_disassembler::Instance().get_calls(CPythonNetworkStream_SetMarkServer, 0, 0);
+	if (CPythonNetworkStream_SetMarkServer_calls.empty())
+	{
+		CPythonNetworkStream_SetMarkServer_calls = sdk::util::c_disassembler::Instance().get_jumps(CPythonNetworkStream_SetMarkServer, 0, 0);
+		if (CPythonNetworkStream_SetMarkServer_calls.empty()) return this->error_out(__LINE__);
+	}
+
+	auto CPythonNetworkStream_instance = this->find_singleton_or_instance(CPythonNetworkStream_SetMarkServer);
+	if (!CPythonNetworkStream_instance) return this->error_out(__LINE__);
+
+	sdk::game::pointer_offsets::off_CPythonNetworkStream = CPythonNetworkStream_instance;
+	sdk::game::func::c_funcs::Instance().f_SetMarkServer = decltype(sdk::game::func::c_funcs::Instance().f_SetMarkServer)(CPythonNetworkStream_SetMarkServer_calls[CPythonNetworkStream_SetMarkServer_calls.size() - 2]);
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SetMarkServer: %04x ]\n"), CPythonNetworkStream_SetMarkServer_calls[CPythonNetworkStream_SetMarkServer_calls.size() - 2]);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonNetworkStream: %04x ]\n"), CPythonNetworkStream_instance);
+
+	//
+
+	auto CPythonNetworkStream_SetOffLinePhase = sdk::util::c_fn_discover::Instance().get_fn(XorStr("## Network - OffLine Phase ##"));
+	if (!CPythonNetworkStream_SetOffLinePhase) return this->error_out(__LINE__);
+
+	auto CPythonNetworkStream_SetOffLinePhase_off = sdk::util::c_disassembler::Instance().get_custom(CPythonNetworkStream_SetOffLinePhase, 0, 0x50, 0x1FF, { "mov", "add", "push", "lea" });
+	if (CPythonNetworkStream_SetOffLinePhase_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::connection_offsets::off_NETWORKING_PHASE = CPythonNetworkStream_SetOffLinePhase_off.front();
+	sdk::util::c_log::Instance().duo(XorStr("[ off_NETWORKING_PHASE: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase_off.front());
+
+	//
+
+	auto CNetworkStream_IsOnline = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("IsConnect"));
+	if (!CNetworkStream_IsOnline) return this->error_out(__LINE__);
+
+	auto CNetworkStream_IsOnline_ = sdk::util::c_fn_discover::Instance().discover_fn(CNetworkStream_IsOnline, 0x2, 0x4);
+	if (!CNetworkStream_IsOnline_) return this->error_out(__LINE__);
+
+	auto CNetworkStream_IsOnline_off = sdk::util::c_disassembler::Instance().get_custom(CNetworkStream_IsOnline_, 0, 0x20, 0xFF, { "mov", "add", "push", "lea" });
+	if (CNetworkStream_IsOnline_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::connection_offsets::off_IS_CONNECTED = CNetworkStream_IsOnline_off.front();
+	sdk::util::c_log::Instance().duo(XorStr("[ off_IS_CONNECTED: %04x ]\n"), CNetworkStream_IsOnline_off.front());
+
+	//
+
+	auto CPythonNetworkStream_SendSelectCharacterPacket = sdk::util::c_fn_discover::Instance().get_fn("SendSelectCharacterPacket - Error");
+	if (!CPythonNetworkStream_SendSelectCharacterPacket) return this->error_out(__LINE__);
+
+	sdk::game::func::c_funcs::Instance().f_SendSelectCharacter = decltype(sdk::game::func::c_funcs::Instance().f_SendSelectCharacter)(CPythonNetworkStream_SendSelectCharacterPacket);
+	
+	sdk::util::c_log::Instance().duo(XorStr("[ CPythonNetworkStream_SendSelectCharacterPacket: %04x ]\n"), CPythonNetworkStream_SendSelectCharacterPacket);
 
 	return 1;
 }

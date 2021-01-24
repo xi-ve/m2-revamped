@@ -142,17 +142,33 @@ uint32_t sdk::util::c_fn_discover::get_fn(const char* fn_str_ref)
 	return 0;
 }
 
-uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports)
+uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp)
 {
 	auto origin_fn_size = sdk::util::c_mem::Instance().find_size(origin);
 	if (!origin_fn_size) return 0;
 	auto fns_in_origin = sdk::util::c_disassembler::Instance().get_calls(origin, origin_fn_size, 0, skip_py_exports);
 	if (!fns_in_origin.size()) return 0;
+	if (shoul_reverse_calls) std::reverse(fns_in_origin.begin(), fns_in_origin.end());
 	for (auto&& a : fns_in_origin)
 	{		
 		auto inside_fn_size = sdk::util::c_mem::Instance().find_size(a);
 		if (!inside_fn_size || inside_fn_size > approx_size_max || inside_fn_size < approx_size_min) continue;
-		auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
+		auto calls_inside = sdk::util::t_asm_res();
+		if (should_include_jmp)
+		{
+			calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
+			
+			auto list_jmps = sdk::util::c_disassembler::Instance().get_jumps(a, origin_fn_size, 0);
+			for (auto a : list_jmps)
+			{
+				sdk::util::c_log::Instance().duo("[ jmp: %04x ]\n", a);
+				calls_inside.push_back(a);
+			}
+		}
+		else
+		{
+			calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
+		}
 		sdk::util::c_log::Instance().duo(XorStr("[ scanning: %04x => %04x, size: %04x, calls: %i ]\n"), origin, a, inside_fn_size, calls_inside.size());
 		if (no_calls_inside) if (!calls_inside.empty()) continue;
 		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
@@ -332,7 +348,7 @@ yes:
 
 	if (this->should_gen_fn_list)
 	{
-		this->ofstream.open(XorStr("M2++_PY_FN_DUMP.DB"));
+		this->ofstream.open("M2++_PY_FN_DUMP.DB");
 		for (auto&& a : this->fns_py)
 		{
 			if (a.strings.empty()) continue;

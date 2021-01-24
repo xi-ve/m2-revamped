@@ -132,6 +132,9 @@
     <ClCompile Include="sdk\game\offsets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sdk\game\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main\inc.h">
