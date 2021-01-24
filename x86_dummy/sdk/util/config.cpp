@@ -5,7 +5,7 @@ void sdk::util::c_config::setup()
 	this->registrant();
 	this->load();
 	this->save();
-	sdk::util::c_log::Instance().duo("[ c_config::setup completed ]\n");
+	sdk::util::c_log::Instance().duo(XorStr("[ c_config::setup completed ]\n"));
 }
 
 void sdk::util::c_config::add_variable(std::string h, std::string v, std::string c, uint8_t t)
@@ -15,13 +15,13 @@ void sdk::util::c_config::add_variable(std::string h, std::string v, std::string
 
 void sdk::util::c_config::registrant()
 {
-	this->add_variable("dynamics", "last_file_crc", "0", CONF_TYPE_STR);
+	this->add_variable(XorStr("dynamics"), XorStr("last_file_crc"), "0", CONF_TYPE_STR);
 }
 
 bool sdk::util::c_config::save()
 {
 	this->fstream.open(this->file_name);
-	if (!this->fstream.is_open()) { util::c_log::Instance().duo("[ failed to open conf stream ]\n"); return 0; }
+	if (!this->fstream.is_open()) { util::c_log::Instance().duo(XorStr("[ failed to open conf stream ]\n")); return 0; }
 	for (auto a : this->conf_variables)
 	{
 		if (a->variable.empty() || a->header.empty()) continue;
@@ -33,14 +33,14 @@ bool sdk::util::c_config::save()
 		this->fstream << jobj << "\n";
 	}
 	this->fstream.close();
-	util::c_log::Instance().print("[ saved config ]\n");
+	util::c_log::Instance().print(XorStr("[ saved config ]\n"));
 	return 1;
 }
 
 bool sdk::util::c_config::load()
 {
 	this->ifstream.open(this->file_name);
-	if (!this->ifstream.is_open()) { util::c_log::Instance().duo("[ failed to open conf stream ]\n"); return 0; }
+	if (!this->ifstream.is_open()) { util::c_log::Instance().duo(XorStr("[ failed to open conf stream ]\n")); return 0; }
 	std::string s;
 	while (std::getline(this->ifstream, s))
 	{
@@ -61,13 +61,13 @@ bool sdk::util::c_config::load()
 		}
 	}
 	this->ifstream.close();
-	util::c_log::Instance().print("[ loaded config ]\n");
+	util::c_log::Instance().print(XorStr("[ loaded config ]\n"));
 	return 1;
 }
 
 sdk::util::t_conf_var sdk::util::c_config::get_var(const char* h, const char* v)
 {
 	for (auto&& a : this->conf_variables) if (a->header == h && a->variable == v) return a;
-	sdk::util::c_log::Instance().duo("[ failed to find %s, %s ]\n", h, v);
+	sdk::util::c_log::Instance().duo(XorStr("[ failed to find %s, %s ]\n"), h, v);
 	return nullptr;
 }

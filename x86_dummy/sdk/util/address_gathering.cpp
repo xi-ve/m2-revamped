@@ -2,13 +2,13 @@
 void sdk::util::c_address_gathering::setup()
 {
 	auto r = this->gather_connection_related();
-	if (!r) { sdk::util::c_log::Instance().duo("[ failed gather_connection_related ]\n"); return; }
-	sdk::util::c_log::Instance().duo("[ c_address_gathering::setup completed ]\n");
+	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_connection_related ]\n")); return; }
+	sdk::util::c_log::Instance().duo(XorStr("[ c_address_gathering::setup completed ]\n"));
 }
 
 bool sdk::util::c_address_gathering::error_out(int line)
 {
-	sdk::util::c_log::Instance().duo("[ failed on: %i ]\n", line);
+	sdk::util::c_log::Instance().duo(XorStr("[ failed on: %i ]\n"), line);
 	return 1;
 }
 
@@ -19,13 +19,13 @@ uint32_t sdk::util::c_address_gathering::find_singleton_or_instance(uint32_t f)
 	auto singleton_fn = sdk::util::c_fn_discover::Instance().discover_fn(f, 0x8, 0x9, 0, 1, 1, 0, 1);
 	if (singleton_fn)
 	{
-		auto off_inside = sdk::util::c_disassembler::Instance().get_custom(singleton_fn, 0, 0, 0, { "mov" });
+		auto off_inside = sdk::util::c_disassembler::Instance().get_custom(singleton_fn, 0, 0, 0, { XorStr("mov") });
 		if (off_inside.empty()) return 0;
 		off = off_inside.front();
 	}
 	else
 	{
-		auto off_inside = sdk::util::c_disassembler::Instance().get_custom(f, 0, 0, 0, { "mov" });
+		auto off_inside = sdk::util::c_disassembler::Instance().get_custom(f, 0, 0, 0, { XorStr("mov") });
 		if (off_inside.empty()) return 0;
 		off = off_inside.front();
 	}
@@ -35,7 +35,7 @@ uint32_t sdk::util::c_address_gathering::find_singleton_or_instance(uint32_t f)
 
 bool sdk::util::c_address_gathering::gather_connection_related()
 {
-	auto connectaccountserver_fn = sdk::util::c_fn_discover::Instance().get_fn_py("ConnectToAccountServer");
+	auto connectaccountserver_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("ConnectToAccountServer"));
 	if (!connectaccountserver_fn) return this->error_out(__LINE__);
 	auto CAccountConnector_connect = sdk::util::c_fn_discover::Instance().discover_fn(connectaccountserver_fn, 0x50, 0x70, 4);
 	if (!CAccountConnector_connect) return this->error_out(__LINE__);
@@ -46,7 +46,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	auto offsets = sdk::util::c_disassembler::Instance().get_custom(CAccountConnector_connect, 0, 0xA0, 0xFF, { "mov", "add", "push", "lea" });
 	if (!((int)offsets.size() >= 2)) return this->error_out(__LINE__);
 
-	auto CNetworkStream__Connect = sdk::util::c_fn_discover::Instance().get_fn("error != WSAEWOULDBLOCK");
+	auto CNetworkStream__Connect = sdk::util::c_fn_discover::Instance().get_fn(XorStr("error != WSAEWOULDBLOCK"));
 	if (!CNetworkStream__Connect) return this->error_out(__LINE__);
 	auto CNetworkStream__Connect_off = sdk::util::c_disassembler::Instance().get_custom(CNetworkStream__Connect, 0, 0x40, 0xA0, { "mov", "add", "push", "lea" });
 	if (!CNetworkStream__Connect_off.size()) return this->error_out(__LINE__);
@@ -57,29 +57,29 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	sdk::game::pointer_offsets::off_CAccountConnector = CAccountConnector_instance;
 	sdk::game::func::c_funcs::Instance().f_ConnectToAccountServer = decltype(sdk::game::func::c_funcs::Instance().f_ConnectToAccountServer)(CAccountConnector_connect);
 
-	sdk::util::c_log::Instance().duo("[ off_IP        : %04x ]\n", sdk::game::connection_offsets::off_IP);
-	sdk::util::c_log::Instance().duo("[ off_PORT      : %04x ]\n", sdk::game::connection_offsets::off_PORT);
-	sdk::util::c_log::Instance().duo("[ off_SOCKET    : %04x ]\n", sdk::game::connection_offsets::off_SOCKET);
-	sdk::util::c_log::Instance().duo("[ connector fn  : %04x ]\n", CAccountConnector_connect);
-	sdk::util::c_log::Instance().duo("[ connector inst: %04x ]\n", CAccountConnector_instance);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_IP        : %04x ]\n"), sdk::game::connection_offsets::off_IP);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_PORT      : %04x ]\n"), sdk::game::connection_offsets::off_PORT);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SOCKET    : %04x ]\n"), sdk::game::connection_offsets::off_SOCKET);
+	sdk::util::c_log::Instance().duo(XorStr("[ connector fn  : %04x ]\n"), CAccountConnector_connect);
+	sdk::util::c_log::Instance().duo(XorStr("[ connector inst: %04x ]\n"), CAccountConnector_instance);
 
 	//
 
-	auto directenter_fn = sdk::util::c_fn_discover::Instance().get_fn_py("DirectEnter");
+	auto directenter_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("DirectEnter"));
 	if (!directenter_fn)  return this->error_out(__LINE__);
 	auto dodirectenter_fn = sdk::util::c_fn_discover::Instance().discover_fn(directenter_fn, 0x30, 0x65, 2, 0);
 	if (!dodirectenter_fn) return this->error_out(__LINE__);
 
 	sdk::game::func::c_funcs::Instance().f_Connect = decltype(sdk::game::func::c_funcs::Instance().f_Connect)(dodirectenter_fn);
 
-	sdk::util::c_log::Instance().duo("[ dodirectenter fn: %04x ]\n", dodirectenter_fn);
+	sdk::util::c_log::Instance().duo(XorStr("[ dodirectenter fn: %04x ]\n"), dodirectenter_fn);
 
 	//
 
-	auto CAccountConnector_SetLoginInfo = sdk::util::c_fn_discover::Instance().get_fn_py("SetLoginInfo");
+	auto CAccountConnector_SetLoginInfo = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetLoginInfo"));
 	if (!CAccountConnector_SetLoginInfo) return this->error_out(__LINE__);
 
-	sdk::util::c_log::Instance().duo("[ SetLoginInfo: %04x ]\n", CAccountConnector_SetLoginInfo);
+	sdk::util::c_log::Instance().duo(XorStr("[ SetLoginInfo: %04x ]\n"), CAccountConnector_SetLoginInfo);
 
 	auto CAccountConnector_Set = sdk::util::c_fn_discover::Instance().discover_fn(CAccountConnector_SetLoginInfo, 0x20, 0x50, 2, 0, 0, 1);
 	if (!CAccountConnector_Set) return this->error_out(__LINE__);
@@ -90,8 +90,8 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	sdk::game::connection_offsets::off_USERNAME = CAccountConnector_Set_off.front();
 	sdk::game::connection_offsets::off_PASSWORD = CAccountConnector_Set_off[1];
 
-	sdk::util::c_log::Instance().duo("[ off_USERNAME: %04x ]\n", sdk::game::connection_offsets::off_USERNAME);
-	sdk::util::c_log::Instance().duo("[ off_PASSWORD: %04x ]\n", sdk::game::connection_offsets::off_PASSWORD);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_USERNAME: %04x ]\n"), sdk::game::connection_offsets::off_USERNAME);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_PASSWORD: %04x ]\n"), sdk::game::connection_offsets::off_PASSWORD);
 
 	//py funcs setlogininfo<<
 

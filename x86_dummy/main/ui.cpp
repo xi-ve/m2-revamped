@@ -73,7 +73,7 @@ void main::c_ui::create_device(HWND d)
 
 	{/* first try to create Direct3D9Ex device if possible (on Windows 7+) */
 		typedef HRESULT WINAPI Direct3DCreate9ExPtr(UINT, IDirect3D9Ex**);
-		Direct3DCreate9ExPtr* Direct3DCreate9Ex = (Direct3DCreate9ExPtr*)GetProcAddress(GetModuleHandleA("d3d9.dll"), "Direct3DCreate9Ex");
+		Direct3DCreate9ExPtr* Direct3DCreate9Ex = (Direct3DCreate9ExPtr*)GetProcAddress(GetModuleHandleA(XorStr("d3d9.dll")), XorStr("Direct3DCreate9Ex"));
 		if (Direct3DCreate9Ex) {
 			IDirect3D9Ex* d3d9ex;
 			if (SUCCEEDED(Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex))) {
@@ -128,7 +128,7 @@ void main::c_ui::setup()
 	wc.lpszClassName = L"      ";
 	RegisterClassW(&wc);
 
-	sdk::util::c_log::Instance().duo("[ starting ui ]\n");
+	sdk::util::c_log::Instance().duo(XorStr("[ starting ui ]\n"));
 
 	AdjustWindowRectEx(&rect, style, FALSE, exstyle);
 
@@ -176,7 +176,7 @@ void main::c_ui::setup()
 	table[NK_COLOR_TAB_HEADER] = nk_rgba(181, 45, 69, 220);
 	nk_style_from_table(ctx, table);
 #endif
-	sdk::util::c_log::Instance().duo("[ ui setup complete ]\n");
+	sdk::util::c_log::Instance().duo(XorStr("[ ui setup complete ]\n"));
 }
 
 void main::c_ui::work()
@@ -196,15 +196,13 @@ void main::c_ui::work()
 		nk_input_end(ctx);
 
 		/* GUI */
-		if (nk_begin(ctx, "M2++", nk_rect(0, 0, 350, 550), 0))
+		if (nk_begin(ctx, XorStr("M2++"), nk_rect(0, 0, 350, 550), 0))
 		{
 			nk_layout_row_static(ctx, 30, 50, 3);
-			if (nk_button_label(ctx, "test1"))
+			if (nk_button_label(ctx, XorStr("test1")))
 			{
 				
-			}
-			nk_button_label(ctx, "w2");
-			nk_button_label(ctx, "w3");			
+			}		
 		}
 		nk_end(ctx);
 		{

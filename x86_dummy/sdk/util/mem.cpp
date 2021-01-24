@@ -1,7 +1,7 @@
 #include "mem.h"
 void sdk::util::c_mem::setup()
 {
-	sdk::util::c_log::Instance().duo("[ c_mem::setup completed ]\n");
+	sdk::util::c_log::Instance().duo(XorStr("[ c_mem::setup completed ]\n"));
 }
 
 bool sdk::util::c_mem::is_valid(uint32_t adr, size_t field_mem_size)

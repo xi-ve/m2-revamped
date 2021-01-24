@@ -46,15 +46,15 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_pushes(uint32_t address, siz
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto ret = sdk::util::t_asm_res();
 	for (auto &a : raw_asm)
 	{
 		if (a.empty()) continue;
-		if (a.find("push") != std::string::npos)
+		if (a.find(XorStr("push")) != std::string::npos)
 		{
-			std::regex rex("0[xX][0-9a-fA-F]+"); std::smatch match;
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
 			for (auto b : match)
@@ -74,16 +74,16 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_addrs(uint32_t address, size
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base;
 	auto ret = sdk::util::t_asm_res();
 	for (auto &a : raw_asm)
 	{
 		if (a.empty()) continue;
-		if (a.find("push") != std::string::npos)
+		if (a.find(XorStr("push")) != std::string::npos)
 		{
-			std::regex rex("0[xX][0-9a-fA-F]+"); std::smatch match;
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
 			for (auto &b : match)
@@ -103,8 +103,8 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
-	auto text_sec = sdk::util::c_mem::Instance().get_section(".text", base);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
+	auto text_sec = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto text_max = (uintptr_t)base + text_sec.first + text_sec.second;
 	if (!min) min = (uintptr_t)base;
@@ -112,9 +112,9 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 	for (auto a : raw_asm)
 	{
 		if (a.empty()) continue;
-		if (a.find("call") != std::string::npos)
+		if (a.find(XorStr("call")) != std::string::npos)
 		{
-			std::regex rex("0[xX][0-9a-fA-F]+"); std::smatch match;
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
 			for (auto b : match)
@@ -135,15 +135,15 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_jumps(uint32_t address, size
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto ret = sdk::util::t_asm_res();
 	for (auto a : raw_asm)
 	{
 		if (a.empty()) continue;
-		if (a.find("jmp") != std::string::npos)
+		if (a.find(XorStr("jmp")) != std::string::npos)
 		{
-			std::regex rex("0[xX][0-9a-fA-F]+"); std::smatch match;
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
 			for (auto b : match)
@@ -163,7 +163,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base;
 	if (!max) max = data1_max;
@@ -171,10 +171,10 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 	for (auto &a : raw_asm)
 	{
 		if (a.empty()) continue;
-		if (a.find("push") != std::string::npos ||
-			a.find("lea") != std::string::npos)
+		if (a.find(XorStr("push")) != std::string::npos ||
+			a.find(XorStr("lea")) != std::string::npos)
 		{
-			std::regex rex("0[xX][0-9a-fA-F]+"); std::smatch match;
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
 			for (auto &b : match)
@@ -194,8 +194,8 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
-	auto data_sec = sdk::util::c_mem::Instance().get_section(".data", base);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(".data1", base);
+	auto data_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data"), base);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base + data_sec.first;
 	if (!max) max = data1_max;
@@ -207,7 +207,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 		for (auto b : opcodes) if (strstr(a.c_str(), b.c_str())) { needed = true; break; }
 		if (needed)
 		{
-			std::regex rex("0[xX][0-9a-fA-F]+"); std::smatch match;
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
 			auto has = std::regex_search(a, match, rex);
 			if (!has) continue;
 			for (auto &b : match)

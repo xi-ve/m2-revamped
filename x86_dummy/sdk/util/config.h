@@ -33,7 +33,7 @@ namespace sdk
 		class c_config : public s<c_config>
 		{
 		private:
-			std::string		file_name = "M2++_CONF.TXT";
+			std::string		file_name = XorStr("M2++_CONF.TXT");
 			t_conf			conf_variables;
 			std::ofstream	fstream;
 			std::ifstream	ifstream;

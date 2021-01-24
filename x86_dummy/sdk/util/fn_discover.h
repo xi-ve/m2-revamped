@@ -53,8 +53,8 @@ namespace sdk
 			const char*		get_exe_path();
 			uint32_t		get_crc();
 		private:
-			const char*		file_name = "M2++_DYNAMICS.DB";
-			const char*		py_file_name = "M2++_PY_DYNAMICS.DB";
+			const char*		file_name = XorStr("M2++_DYNAMICS.DB");
+			const char*		py_file_name = XorStr("M2++_PY_DYNAMICS.DB");
 			void			save_fn_db();
 			void			load_fn_db();
 			void			save_py_fn_db();

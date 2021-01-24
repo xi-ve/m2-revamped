@@ -91,3 +91,64 @@ public:
 //         To work with them you need a wrapper function that takes a const char*
 //         as parameter and passes it to printf and alike.
 //
+//         The Microsoft Compiler/Linker is not working correctly with variadic 
+//         templates!
+//  
+//         Use the functions below or use std::cout (and similar)!
+//--------------------------------------------------------------------------------
+
+static auto w_printf = [](const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vprintf_s(fmt, args);
+    va_end(args);
+};
+
+static auto w_printf_s = [](const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vprintf_s(fmt, args);
+    va_end(args);
+};
+
+static auto w_sprintf = [](char* buf, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vsprintf(buf, fmt, args);
+    va_end(args);
+};
+
+static auto w_sprintf_ret = [](char* buf, const char* fmt, ...) {
+    int ret;
+    va_list args;
+    va_start(args, fmt);
+    ret = vsprintf(buf, fmt, args);
+    va_end(args);
+    return ret;
+};
+
+static auto w_sprintf_s = [](char* buf, size_t buf_size, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vsprintf_s(buf, buf_size, fmt, args);
+    va_end(args);
+};
+
+static auto w_sprintf_s_ret = [](char* buf, size_t buf_size, const char* fmt, ...) {
+    int ret;
+    va_list args;
+    va_start(args, fmt);
+    ret = vsprintf_s(buf, buf_size, fmt, args);
+    va_end(args);
+    return ret;
+};
+
+//Old functions before I found out about wrapper functions.
+//#define XorStr( s ) ( XorCompileTime::XorString< sizeof(s)/sizeof(char) - 1, __COUNTER__, char >( s, std::make_index_sequence< sizeof(s)/sizeof(char) - 1>() ).decrypt() )
+//#define XorStrW( s ) ( XorCompileTime::XorString< sizeof(s)/sizeof(wchar_t) - 1, __COUNTER__, wchar_t >( s, std::make_index_sequence< sizeof(s)/sizeof(wchar_t) - 1>() ).decrypt() )
+
+//Wrapper functions to work in all functions below
+#define XorStr( s ) []{ constexpr XorCompileTime::XorString< sizeof(s)/sizeof(char) - 1, __COUNTER__, char > expr( s, std::make_index_sequence< sizeof(s)/sizeof(char) - 1>() ); return expr; }().decrypt()
+#define XorStrW( s ) []{ constexpr XorCompileTime::XorString< sizeof(s)/sizeof(wchar_t) - 1, __COUNTER__, wchar_t > expr( s, std::make_index_sequence< sizeof(s)/sizeof(wchar_t) - 1>() ); return expr; }().decrypt()
+
+END_NAMESPACE

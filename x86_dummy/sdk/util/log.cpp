@@ -2,7 +2,7 @@
 void sdk::util::c_log::setup()
 {
 	this->fstream.open(this->log_file);
-	this->fstream << this->string("[ M2++ launched, binary dated: %s ]\n", __TIMESTAMP__);
+	this->fstream << this->string(XorStr("[ M2++ launched, binary dated: %s ]\n"), __TIMESTAMP__);
 	this->fstream.close();
 }
 void sdk::util::c_log::to_console(const char* in)

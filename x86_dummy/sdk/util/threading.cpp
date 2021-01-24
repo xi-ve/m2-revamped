@@ -18,25 +18,25 @@ void sdk::util::c_thread::create_buffer(NtCreateThreadExBuffer* buffer)
 
 HANDLE sdk::util::c_thread::create_ntthread(LPTHREAD_START_ROUTINE fn, void* param)
 {
-	auto ntdll_handle = GetModuleHandleA("ntdll.dll");
+	auto ntdll_handle = GetModuleHandleA(XorStr("ntdll.dll"));
 	if (!ntdll_handle) return 0;
-	auto fn_nt_create_thread_ex = (NtCreateThreadExType)(GetProcAddress(ntdll_handle, "NtCreateThreadEx"));
-	if (!fn_nt_create_thread_ex) { sdk::util::c_log::Instance().duo("[ failed to get NtCreateThreadEx ]\n"); return 0; }
+	auto fn_nt_create_thread_ex = (NtCreateThreadExType)(GetProcAddress(ntdll_handle, XorStr("NtCreateThreadEx")));
+	if (!fn_nt_create_thread_ex) { sdk::util::c_log::Instance().duo(XorStr("[ failed to get NtCreateThreadEx ]\n")); return 0; }
 	auto buffer = NtCreateThreadExBuffer() = {};
 	this->create_buffer(&buffer);
 	HANDLE created_thread = 0;
 	fn_nt_create_thread_ex(&created_thread, 0x1fffff, 0, GetCurrentProcess(), fn, param, 0, 0, 0, 0, &buffer);
-	if (!created_thread) { sdk::util::c_log::Instance().duo("[ failed creating ntthread! ]\n"); return 0; }
+	if (!created_thread) { sdk::util::c_log::Instance().duo(XorStr("[ failed creating ntthread! ]\n")); return 0; }
 	hide_thread(created_thread);
 	return created_thread;
 }
 
 void sdk::util::c_thread::hide_thread(HANDLE target)
 {
-	auto ntdll_handle = GetModuleHandleA("ntdll.dll");
+	auto ntdll_handle = GetModuleHandleA(XorStr("ntdll.dll"));
 	if (!ntdll_handle) return;
-	auto fn_nt_set_information_thread = (_NtSetInformationThread)(GetProcAddress(ntdll_handle, "NtSetInformationThread"));
-	if (!fn_nt_set_information_thread) { sdk::util::c_log::Instance().duo("[ failed to get NtSetInformationThread ]\n"); return; }
+	auto fn_nt_set_information_thread = (_NtSetInformationThread)(GetProcAddress(ntdll_handle, XorStr("NtSetInformationThread")));
+	if (!fn_nt_set_information_thread) { sdk::util::c_log::Instance().duo(XorStr("[ failed to get NtSetInformationThread ]\n")); return; }
 	fn_nt_set_information_thread(target, (THREAD_INFORMATION_CLASS)0x11, 0, 0);
 }
 
@@ -70,7 +70,6 @@ void __stdcall sdk::util::ui_worker()
 
 void __stdcall sdk::util::init_worker()
 {
-	Py_Initialize();
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
 	sdk::util::c_mem::Instance().setup();

@@ -32,6 +32,7 @@
 //cheat predefs
 #include <win_strct.h>
 //cheat core
+#include <util/xor.h>
 #include <singleton.h>
 #include <crc32/crc32.h>
 #include <util/crc32.h>
