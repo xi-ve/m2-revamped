@@ -195,6 +195,7 @@
     <ClCompile Include="main\singleton.h" />
     <ClCompile Include="main\startup.cpp" />
     <ClCompile Include="main\ui.cpp" />
+    <ClCompile Include="sdk\game\accconnector\login.cpp" />
     <ClCompile Include="sdk\game\offsets.cpp" />
     <ClCompile Include="sdk\game\utils.cpp" />
     <ClCompile Include="sdk\util\address_gathering.cpp" />
@@ -264,6 +265,7 @@
     <ClInclude Include="main\startup.h" />
     <ClInclude Include="main\ui.h" />
     <ClInclude Include="main\win_strct.h" />
+    <ClInclude Include="sdk\game\accconnector\login.h" />
     <ClInclude Include="sdk\game\functions.h" />
     <ClInclude Include="sdk\game\offsets.h" />
     <ClInclude Include="sdk\game\utils.h" />

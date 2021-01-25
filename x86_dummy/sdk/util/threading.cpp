@@ -70,12 +70,14 @@ void __stdcall sdk::util::ui_worker()
 
 void __stdcall sdk::util::init_worker()
 {
+	MH_Initialize();
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
 	sdk::util::c_mem::Instance().setup();
 	sdk::util::c_config::Instance().setup();
 	sdk::util::c_fn_discover::Instance().setup();
 	sdk::util::c_address_gathering::Instance().setup();
+	sdk::game::accconnector::c_login::Instance().setup();
 	sdk::util::ui_worker();
 }
 

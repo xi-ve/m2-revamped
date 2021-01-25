@@ -198,53 +198,70 @@ void main::c_ui::work()
 		/* GUI */
 		if (nk_begin(ctx, XorStr("M2++"), nk_rect(0, 0, 350, 550), 0))
 		{
-			auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
-			auto account_connector_base = sdk::game::c_utils::Instance().baseclass_account_connector();
-			if (network_base && account_connector_base)
+			if (sdk::util::c_address_gathering::Instance().done)
 			{
-				char net_phase[16] = "\0";
-				memcpy(net_phase, (void*)(network_base + sdk::game::connection_offsets::off_NETWORKING_PHASE), 16);
-				char cur_username[32] = "\0";
-				memcpy(cur_username, (void*)(account_connector_base + sdk::game::connection_offsets::off_USERNAME), 32);
-				char cur_password[32] = "\0";
-				memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
-				char cur_passcode[32] = "\0";
-				if (sdk::game::connection_offsets::off_PASSCODE) memcpy(cur_passcode, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSCODE), 32);
-				char cur_ip[32] = "\0";
-				memcpy(cur_ip, (void*)(account_connector_base + sdk::game::connection_offsets::off_IP), 32);
+				sdk::game::accconnector::c_login::Instance().work();
 
-				if (!cur_ip || !sdk::util::c_fn_discover::Instance().is_ascii(cur_ip))
+				auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
+				auto account_connector_base = sdk::game::c_utils::Instance().baseclass_account_connector();
+				if (network_base && account_connector_base)
 				{
-					auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_IP);
-					strcpy(cur_ip, r.c_str());
+					char net_phase[16] = "\0";
+					memcpy(net_phase, (void*)(network_base + sdk::game::connection_offsets::off_NETWORKING_PHASE), 16);
+					char cur_username[32] = "\0";
+					memcpy(cur_username, (void*)(account_connector_base + sdk::game::connection_offsets::off_USERNAME), 32);
+					char cur_password[32] = "\0";
+					memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
+					char cur_passcode[32] = "\0";
+					if (sdk::game::connection_offsets::off_PASSCODE) memcpy(cur_passcode, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSCODE), 32);
+					char cur_ip[32] = "\0";
+					memcpy(cur_ip, (void*)(account_connector_base + sdk::game::connection_offsets::off_IP), 32);
+
+					if (!cur_ip || !sdk::util::c_fn_discover::Instance().is_ascii(cur_ip))
+					{
+						auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_IP);
+						strcpy(cur_ip, r.c_str());
+					}
+
+					auto cur_port = *(uint32_t*)(account_connector_base + sdk::game::connection_offsets::off_PORT);
+
+					auto sock_auth_srv = *(sockaddr_in*)(account_connector_base + sdk::game::connection_offsets::off_SOCKET);
+					auto net_ip = inet_ntoa(sock_auth_srv.sin_addr);
+					auto port = htons(sock_auth_srv.sin_port);
+
+					if (net_phase)
+					{
+						nk_layout_row_dynamic(ctx, 26, 1);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network ptr  : %04x"), network_base), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network phase: %s"), net_phase), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("username     : %s"), cur_username), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("password     : %s"), cur_password), NK_TEXT_LEFT);
+						if (sdk::game::connection_offsets::off_PASSCODE) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("passcode     : %s"), cur_passcode), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME IP      : %s"), cur_ip), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME PORT    : %i"), cur_port), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH IP        : %s"), net_ip), NK_TEXT_LEFT);
+						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH PORT      : %i"), port), NK_TEXT_LEFT);
+					}
 				}
 
-				auto cur_port = *(uint32_t*)(account_connector_base + sdk::game::connection_offsets::off_PORT);
-				
-				auto sock_auth_srv = *(sockaddr_in*)(account_connector_base + sdk::game::connection_offsets::off_SOCKET);
-				auto net_ip = inet_ntoa(sock_auth_srv.sin_addr);
-				auto port = htons(sock_auth_srv.sin_port);
-
-				if (net_phase)
+				nk_layout_row_static(ctx, 30, 50, 3);
+				if (nk_button_label(ctx, XorStr("knopp")))
 				{
-					nk_layout_row_dynamic(ctx, 26, 1);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network ptr  : %04x"), network_base), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network phase: %s"), net_phase), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("username     : %s"), cur_username), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("password     : %s"), cur_password), NK_TEXT_LEFT);
-					if (sdk::game::connection_offsets::off_PASSCODE) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("passcode     : %s"), cur_passcode), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME IP      : %s"), cur_ip), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME PORT    : %i"), cur_port), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH IP        : %s"), net_ip), NK_TEXT_LEFT);
-					nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH PORT      : %i"), port), NK_TEXT_LEFT);
+					//sdk::game::accconnector::c_login::Instance().set_account({ "fulmatifyu", "123123123", "", "0", "m2sg-game.tec-interactive.com", "151.80.4.8", "13000", "11000" });
+					sdk::game::accconnector::c_login::Instance().set_details();
+				}
+				nk_layout_row_static(ctx, 30, 50, 3);
+				if (nk_button_label(ctx, XorStr("knopp2")))
+				{
+					sdk::game::accconnector::c_login::Instance().set_connect();
+
+				}
+				nk_layout_row_static(ctx, 30, 50, 3);
+				if (nk_button_label(ctx, XorStr("knopp3")))
+				{
+					sdk::game::accconnector::c_login::Instance().set_character();
 				}
 			}
-
-			nk_layout_row_static(ctx, 30, 50, 3);
-			if (nk_button_label(ctx, XorStr("w")))
-			{
-				
-			}		
 		}
 		nk_end(ctx);
 		{
