@@ -120,7 +120,10 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 			{
 				auto hex = std::stoull(b, nullptr, 16);
 				if (hex > text_max || hex < min) continue;
-				if (skip_py_exports) if (sdk::util::c_fn_discover::Instance().is_python_fn((uint32_t)hex)) continue;
+				if (skip_py_exports)
+				{
+					if (sdk::util::c_fn_discover::Instance().is_python_fn((uint32_t)hex)) continue;
+				}
 				ret.push_back((uint32_t)hex);
 			}
 		}

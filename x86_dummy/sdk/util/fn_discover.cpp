@@ -106,7 +106,7 @@ bool sdk::util::c_fn_discover::is_python_fn(uint32_t address)
 	auto pbase = GetModuleHandleA(XorStr("python27.dll"));
 	if (!pbase) pbase = GetModuleHandleA(XorStr("python22.dll"));
 	if (!pbase) { sdk::util::c_log::Instance().duo(XorStr("[ failed to get py instance ]\n")); return 0; }
-	
+
 	MODULEINFO inf;
 	K32GetModuleInformation(GetCurrentProcess(), pbase, &inf, sizeof(inf));
 
@@ -151,6 +151,7 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 	if (shoul_reverse_calls) std::reverse(fns_in_origin.begin(), fns_in_origin.end());
 	for (auto&& a : fns_in_origin)
 	{		
+		if (!a) continue;
 		auto inside_fn_size = sdk::util::c_mem::Instance().find_size(a);
 		if (!inside_fn_size || inside_fn_size > approx_size_max || inside_fn_size < approx_size_min) continue;
 		auto calls_inside = sdk::util::t_asm_res();
@@ -161,7 +162,7 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 			auto list_jmps = sdk::util::c_disassembler::Instance().get_jumps(a, origin_fn_size, 0);
 			for (auto a : list_jmps)
 			{
-				sdk::util::c_log::Instance().duo("[ jmp: %04x ]\n", a);
+				sdk::util::c_log::Instance().duo(XorStr("[ jmp: %04x ]\n"), a);
 				calls_inside.push_back(a);
 			}
 		}

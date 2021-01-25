@@ -11,7 +11,9 @@ namespace sdk
 		private:
 			uint32_t		find_singleton_or_instance(uint32_t f);
 			bool			gather_connection_related();
+			bool			gather_actor_related();
 		public:
+			bool			done = false;
 			void			setup();
 		};
 	}

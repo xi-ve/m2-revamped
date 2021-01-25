@@ -4,12 +4,13 @@ void sdk::util::c_address_gathering::setup()
 	auto r = this->gather_connection_related();
 	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_connection_related ]\n")); return; }
 	sdk::util::c_log::Instance().duo(XorStr("[ c_address_gathering::setup completed ]\n"));
+	done = true;
 }
 
 bool sdk::util::c_address_gathering::error_out(int line)
 {
 	sdk::util::c_log::Instance().duo(XorStr("[ failed on: %i ]\n"), line);
-	return 1;
+	return 0;
 }
 
 uint32_t sdk::util::c_address_gathering::find_singleton_or_instance(uint32_t f)
@@ -37,8 +38,13 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 {
 	auto connectaccountserver_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("ConnectToAccountServer"));
 	if (!connectaccountserver_fn) return this->error_out(__LINE__);
-	auto CAccountConnector_connect = sdk::util::c_fn_discover::Instance().discover_fn(connectaccountserver_fn, 0x50, 0x70, 4);
-	if (!CAccountConnector_connect) return this->error_out(__LINE__);
+	auto CAccountConnector_connect = sdk::util::c_fn_discover::Instance().discover_fn(connectaccountserver_fn, 0x50, 0x70, 3);
+	if (!CAccountConnector_connect)
+	{
+		auto CAccountConnector_connect_calls = sdk::util::c_disassembler::Instance().get_calls(connectaccountserver_fn, 0, 0, 0);
+		CAccountConnector_connect = CAccountConnector_connect_calls[CAccountConnector_connect_calls.size()-2];
+		if (!CAccountConnector_connect) return this->error_out(__LINE__);
+	}
 
 	auto CAccountConnector_instance = this->find_singleton_or_instance(connectaccountserver_fn);
 	if (!CAccountConnector_instance) return this->error_out(__LINE__);
@@ -68,9 +74,13 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	auto directenter_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("DirectEnter"));
 	if (!directenter_fn)  return this->error_out(__LINE__);
 	auto dodirectenter_fn = sdk::util::c_fn_discover::Instance().discover_fn(directenter_fn, 0x30, 0x65, 2, 0);
-	if (!dodirectenter_fn) return this->error_out(__LINE__);
+	if (!dodirectenter_fn)
+	{
+		dodirectenter_fn = sdk::util::c_fn_discover::Instance().discover_fn(directenter_fn, 0x30, 0x65, 1);
+		if (!dodirectenter_fn) return this->error_out(__LINE__);
+	}
 
-	sdk::game::func::c_funcs::Instance().f_Connect = decltype(sdk::game::func::c_funcs::Instance().f_Connect)(dodirectenter_fn);
+	sdk::game::func::c_funcs::Instance().f_ConnectToGameServer = decltype(sdk::game::func::c_funcs::Instance().f_ConnectToGameServer)(dodirectenter_fn);
 
 	sdk::util::c_log::Instance().duo(XorStr("[ dodirectenter fn: %04x ]\n"), dodirectenter_fn);
 
@@ -123,13 +133,28 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	//
 
 	auto CPythonNetworkStream_SetOffLinePhase = sdk::util::c_fn_discover::Instance().get_fn(XorStr("## Network - OffLine Phase ##"));
-	if (!CPythonNetworkStream_SetOffLinePhase) return this->error_out(__LINE__);
+	if (!CPythonNetworkStream_SetOffLinePhase)
+	{
+		//todo find good alt ref
+		auto SetOfflinePhase_py = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetOfflinePhase"));
+		if (!SetOfflinePhase_py) return this->error_out(__LINE__);
+
+		auto SetOfflinePhase_py_calls = sdk::util::c_disassembler::Instance().get_calls(SetOfflinePhase_py, 0xB, 0, 0);
+		if (SetOfflinePhase_py_calls.empty()) return this->error_out(__LINE__);
+
+		for (auto b : SetOfflinePhase_py_calls) sdk::util::c_log::Instance().duo("[ %04x ]\n", b);
+
+		if (SetOfflinePhase_py_calls.size() > 1) CPythonNetworkStream_SetOffLinePhase = SetOfflinePhase_py_calls[SetOfflinePhase_py_calls.size()-2];
+		else CPythonNetworkStream_SetOffLinePhase = SetOfflinePhase_py_calls.front();
+		if (!CPythonNetworkStream_SetOffLinePhase) return this->error_out(__LINE__);
+	}
 
 	auto CPythonNetworkStream_SetOffLinePhase_off = sdk::util::c_disassembler::Instance().get_custom(CPythonNetworkStream_SetOffLinePhase, 0, 0x50, 0x1FF, { "mov", "add", "push", "lea" });
 	if (CPythonNetworkStream_SetOffLinePhase_off.empty()) return this->error_out(__LINE__);
 
 	sdk::game::connection_offsets::off_NETWORKING_PHASE = CPythonNetworkStream_SetOffLinePhase_off.front();
 	sdk::util::c_log::Instance().duo(XorStr("[ off_NETWORKING_PHASE: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase_off.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ CPythonNetworkStream_SetOffLinePhase: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase);
 
 	//
 
@@ -151,8 +176,20 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	if (!CPythonNetworkStream_SendSelectCharacterPacket) return this->error_out(__LINE__);
 
 	sdk::game::func::c_funcs::Instance().f_SendSelectCharacter = decltype(sdk::game::func::c_funcs::Instance().f_SendSelectCharacter)(CPythonNetworkStream_SendSelectCharacterPacket);
+	sdk::game::func::c_funcs::Instance().o_SendSelectCharacter = CPythonNetworkStream_SendSelectCharacterPacket;
 	
 	sdk::util::c_log::Instance().duo(XorStr("[ CPythonNetworkStream_SendSelectCharacterPacket: %04x ]\n"), CPythonNetworkStream_SendSelectCharacterPacket);
+
+	//
+
+
+
+	return 1;
+}
+
+bool sdk::util::c_address_gathering::gather_actor_related()
+{
+
 
 	return 1;
 }

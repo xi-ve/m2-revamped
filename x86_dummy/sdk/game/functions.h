@@ -18,11 +18,14 @@ namespace sdk
 			{
 			public:
 				t::t_ConnectToAccountServer f_ConnectToAccountServer = 0;	//CAccountConnector
-				t::t_Connect				f_Connect = 0;					//CPythonNetworkStream
+				t::t_Connect				f_ConnectToGameServer = 0;		//CPythonNetworkStream
 				t::t_SetLoginInfo			f_SetLoginInfo_pynet = 0;		//CPythonNetworkStream
 				t::t_SetLoginInfo			f_SetLoginInfo_accnet = 0;		//CAccountConnector
 				t::t_SetMarkServer			f_SetMarkServer = 0;			//CPythonNetworkStream
 				t::t_SendSelectCharacter	f_SendSelectCharacter = 0;		//CPythonCharacterManager
+
+
+				uint32_t					o_SendSelectCharacter = 0;
 			};
 		}
 	}

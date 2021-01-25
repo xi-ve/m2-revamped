@@ -50,5 +50,6 @@
 #include <util/rtti.h>
 #include <util/fn_discover.h>
 #include <util/address_gathering.h>
+#include <game/accconnector/login.h>
 #include <ui.h>
 #include <startup.h>
