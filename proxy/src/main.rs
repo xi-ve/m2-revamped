@@ -38,25 +38,22 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
 fn remove_whitespace(s: &mut String) {
     s.retain(|c| !c.is_whitespace());
 }
-async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
-    let listener = TcpListener::bind("127.0.0.1:1337").await.unwrap();
-    while let Ok((inbound, _)) = listener.accept().await {
-        let mut reader = BufReader::new(inbound);
-        let mut line = String::new();
-        reader.read_line(&mut line).await.unwrap();
-        remove_whitespace(&mut line);
-        println!("adding {}", line);
-        let buf = ips.read().await;
-        let mut ip_find = tokio_stream::iter(buf.iter())
-            .filter(|x| futures::executor::block_on(async { x.read().await.ip_addr == line }));
-        if let Some(ip) = ip_find.next().await {
-            ip.write().await.expire = SystemTime::now() + Duration::from_secs(30);
-        } else {
+async fn process(mut ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>,inbound: TcpStream){
+    let mut reader = BufReader::new(inbound);
+            let mut line = String::new();
+            reader.read_line(&mut line).await.unwrap();
+            remove_whitespace(&mut line);
+            println!("adding {}", line);
             ips.write().await.push(Arc::new(RwLock::new(Ip {
                 ip_addr: line,
                 expire: SystemTime::now() + Duration::from_secs(30),
             })));
-        }
+}
+async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
+    let listener = TcpListener::bind("0.0.0.0:1337").await.unwrap();
+    while let Ok((inbound, _)) = listener.accept().await {
+        tokio::spawn(process(ips.clone(), inbound));
+        
     }
 }
 
