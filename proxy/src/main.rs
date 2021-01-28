@@ -13,24 +13,14 @@ struct Ip {
     expire: SystemTime,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    let listen_addr = env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8081".to_string());
-    let server_addr = env::args()
-        .nth(2)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
-
-    println!("Listening on: {}", listen_addr);
-    println!("Proxying to: {}", server_addr);
-
+async fn proxy(listen_addr: String, server_addr: String) {
+    println!("proxying {} -> {}", listen_addr, server_addr);
     let mut ips: Vec<Arc<Mutex<Ip>>> = Vec::new();
     ips.push(Arc::new(Mutex::new(Ip {
         ip_addr: "192.168.178.131".to_string(),
         expire: SystemTime::now() + Duration::from_secs(30),
     })));
-    let listener = TcpListener::bind(listen_addr).await?;
+    let listener = TcpListener::bind(listen_addr).await.unwrap();
 
     while let Ok((inbound, _)) = listener.accept().await {
         let ip_addr = inbound.peer_addr().unwrap().ip().to_string();
@@ -45,6 +35,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
             tokio::spawn(transfer);
         }
     }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let mut handles = vec![];
+    handles.push(tokio::spawn(proxy(
+        "0.0.0.0:13001".to_string(),
+        "192.168.178.130:13001".to_string(),
+    )));
+    handles.push(tokio::spawn(proxy(
+        "0.0.0.0:1800".to_string(),
+        "192.168.178.130:1800".to_string(),
+    )));
+    futures::future::join_all(handles).await;
     Ok(())
 }
 
