@@ -45,7 +45,7 @@ async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
         let mut line = String::new();
         reader.read_line(&mut line).await.unwrap();
         remove_whitespace(&mut line);
-        println!("{}", line);
+        println!("adding {}", line);
         let buf = ips.read().await;
         let mut ip_find = tokio_stream::iter(buf.iter())
             .filter(|x| futures::executor::block_on(async { x.read().await.ip_addr == line }));
