@@ -1,5 +1,4 @@
 use tokio::io;
-use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_stream::StreamExt;
 
@@ -8,6 +7,9 @@ use std::error::Error;
 use tokio::sync::RwLock;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+use tokio::io::BufReader;
+use tokio::io::AsyncWriteExt;
+use tokio::io::AsyncBufReadExt;
 
 struct Ip {
     ip_addr: String,
@@ -37,15 +39,42 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>,listen_addr: String, serve
         }
     }
 }
+fn remove_whitespace(s: &mut String) {
+    s.retain(|c| !c.is_whitespace());
+}
+async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>){
+    let listener = TcpListener::bind("127.0.0.1:1337").await.unwrap();
+    while let Ok((inbound, _)) = listener.accept().await {
+        let mut reader = BufReader::new(inbound);
+        let mut line = String::new();
+        reader.read_line(&mut line).await.unwrap();
+        remove_whitespace(&mut line);
+        println!("{}",line);
+        let buf = ips.read().await;
+        let mut ip_find = tokio_stream::iter(buf.iter()).filter(
+            |x| futures::executor::block_on(async {
+                x.read().await.ip_addr == line 
+            }  
+            ));
+            if let Some(ip) = ip_find.next().await {
+                ip.write().await.expire = SystemTime::now() + Duration::from_secs(30);
+            }else{
+                ips.write().await.push(Arc::new(RwLock::new(Ip {
+                    ip_addr: line,
+                    expire: SystemTime::now() + Duration::from_secs(30),
+                })));
+            }
+
+        
+        
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles = vec![];
     let ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>> = Arc::new(RwLock::new(Vec::new()));
-    ips.write().await.push(Arc::new(RwLock::new(Ip {
-        ip_addr: "192.168.178.131".to_string(),
-        expire: SystemTime::now() + Duration::from_secs(30),
-    })));
+
     handles.push(tokio::spawn(proxy(ips.clone(),
         "0.0.0.0:13001".to_string(),
         "192.168.178.130:13001".to_string(),
@@ -54,7 +83,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "0.0.0.0:8001".to_string(),
         "192.168.178.130:8001".to_string(),
     )));
-    
+    handles.push(tokio::spawn(admin(ips.clone())));
     futures::future::join_all(handles).await;
     Ok(())
 }
