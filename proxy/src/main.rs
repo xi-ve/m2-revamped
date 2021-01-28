@@ -50,11 +50,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "0.0.0.0:13001".to_string(),
         "192.168.178.130:13001".to_string(),
     )));
-    /*handles.push(tokio::spawn(proxy(ips.clone(),
+    handles.push(tokio::spawn(proxy(ips.clone(),
         "0.0.0.0:8001".to_string(),
         "192.168.178.130:8001".to_string(),
     )));
-    */
+    
     futures::future::join_all(handles).await;
     Ok(())
 }
