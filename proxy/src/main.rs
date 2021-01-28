@@ -22,9 +22,13 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>,listen_addr: String, serve
     while let Ok((inbound, _)) = listener.accept().await {
         let ip_addr = inbound.peer_addr().unwrap().ip().to_string();
         let buf = ips.read().await;
-        let mut ip_find = tokio_stream::iter(buf.iter()).map(|x| futures::executor::block_on(async {if x.read().await.ip_addr == ip_addr { Some(x) }else { None } }));
+        let mut ip_find = tokio_stream::iter(buf.iter()).filter(
+            |x| futures::executor::block_on(async {
+                x.read().await.ip_addr == ip_addr 
+            }  
+            ));
         if let Some(ip) = ip_find.next().await {
-            let transfer = transfer(Arc::clone(ip.unwrap()), inbound, server_addr.clone()).map(|r| {
+            let transfer = transfer(Arc::clone(ip), inbound, server_addr.clone()).map(|r| {
                 if let Err(e) = r {
                     println!("{}", e);
                 }
@@ -86,7 +90,6 @@ async fn transfer(
     };
     let ip_exp = async {
         loop {
-            println!("{:?}","top");
             let lock =ip.read().await; 
             if lock.expire < SystemTime::now() {
                 return Err(std::io::Error::new(
@@ -94,7 +97,6 @@ async fn transfer(
                     format!("{} expired", ip.read().await.ip_addr),
                 ));
             }
-            println!("{:?}","lock");
             
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
