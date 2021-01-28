@@ -16,6 +16,8 @@ void sdk::util::c_config::add_variable(std::string h, std::string v, std::string
 void sdk::util::c_config::registrant()
 {
 	this->add_variable(XorStr("dynamics"), XorStr("last_file_crc"), "0", CONF_TYPE_STR);
+	this->add_variable(XorStr("login"), XorStr("enable"), "0", CONF_TYPE_INT);
+	this->add_variable(XorStr("login"), XorStr("last_character"), "0", CONF_TYPE_STR);
 }
 
 bool sdk::util::c_config::save()

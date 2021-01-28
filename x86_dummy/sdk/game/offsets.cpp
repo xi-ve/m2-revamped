@@ -11,3 +11,5 @@ uint32_t sdk::game::connection_offsets::off_PASSWORD = 0x0;
 uint32_t sdk::game::connection_offsets::off_PASSCODE= 0x0;
 uint32_t sdk::game::connection_offsets::off_NETWORKING_PHASE = 0x0;
 uint32_t sdk::game::connection_offsets::off_IS_CONNECTED = 0x0;
+uint32_t sdk::game::connection_offsets::off_PACKET_SEQUENCE_MODE = 0x0;
+uint32_t sdk::game::connection_offsets::off_SELECT_CHAR_IDX = 0x0;

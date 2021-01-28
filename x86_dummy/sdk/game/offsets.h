@@ -27,6 +27,8 @@ namespace sdk
 			extern uint32_t		off_PASSCODE;
 			extern uint32_t		off_NETWORKING_PHASE;
 			extern uint32_t		off_IS_CONNECTED;
+			extern uint32_t		off_PACKET_SEQUENCE_MODE;
+			extern uint32_t		off_SELECT_CHAR_IDX;
 		}
 	}
 }

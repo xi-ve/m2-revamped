@@ -117,6 +117,21 @@ void main::c_ui::create_device(HWND d)
 	}
 }
 
+void main::c_ui::checkbox(std::string label, std::string varhead, std::string varbod, std::function<void()> fn)
+{
+	int sw = false;
+	auto val = sdk::util::c_config::Instance().get_var(label.c_str(), varhead.c_str());
+	if (!val) return;
+	if (strstr(val->container.c_str(), "1")) sw = 1;
+
+	nk_checkbox_label(ctx, label.c_str(), &sw);
+	nk_layout_row_dynamic(ctx, 20, 1);
+	nk_label(ctx, val->container.c_str(), NK_TEXT_LEFT);
+
+	if (sw) val->container = "1";
+	else val->container = "0";
+}
+
 void main::c_ui::setup()
 {
 	memset(&wc, 0, sizeof(wc));
@@ -133,7 +148,7 @@ void main::c_ui::setup()
 	AdjustWindowRectEx(&rect, style, FALSE, exstyle);
 
 	wnd = CreateWindowExW(exstyle, wc.lpszClassName, L"",
-						  style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
+						  WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
 						  rect.right - rect.left, rect.bottom - rect.top,
 						  NULL, NULL, wc.hInstance, NULL);
 
@@ -144,50 +159,19 @@ void main::c_ui::setup()
 	nk_d3d9_font_stash_begin(&atlas);
 	nk_d3d9_font_stash_end(); }
 
-#ifdef INCLUDE_STYLE
-	struct nk_color table[NK_COLOR_COUNT];
-	table[NK_COLOR_TEXT] = nk_rgba(190, 190, 190, 255);
-	table[NK_COLOR_WINDOW] = nk_rgba(30, 33, 40, 215);
-	table[NK_COLOR_HEADER] = nk_rgba(181, 45, 69, 220);
-	table[NK_COLOR_BORDER] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_BUTTON] = nk_rgba(181, 45, 69, 255);
-	table[NK_COLOR_BUTTON_HOVER] = nk_rgba(190, 50, 70, 255);
-	table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(195, 55, 75, 255);
-	table[NK_COLOR_TOGGLE] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_TOGGLE_HOVER] = nk_rgba(45, 60, 60, 255);
-	table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(181, 45, 69, 255);
-	table[NK_COLOR_SELECT] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_SELECT_ACTIVE] = nk_rgba(181, 45, 69, 255);
-	table[NK_COLOR_SLIDER] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_SLIDER_CURSOR] = nk_rgba(181, 45, 69, 255);
-	table[NK_COLOR_SLIDER_CURSOR_HOVER] = nk_rgba(186, 50, 74, 255);
-	table[NK_COLOR_SLIDER_CURSOR_ACTIVE] = nk_rgba(191, 55, 79, 255);
-	table[NK_COLOR_PROPERTY] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_EDIT] = nk_rgba(51, 55, 67, 225);
-	table[NK_COLOR_EDIT_CURSOR] = nk_rgba(190, 190, 190, 255);
-	table[NK_COLOR_COMBO] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_CHART] = nk_rgba(51, 55, 67, 255);
-	table[NK_COLOR_CHART_COLOR] = nk_rgba(170, 40, 60, 255);
-	table[NK_COLOR_CHART_COLOR_HIGHLIGHT] = nk_rgba(255, 0, 0, 255);
-	table[NK_COLOR_SCROLLBAR] = nk_rgba(30, 33, 40, 255);
-	table[NK_COLOR_SCROLLBAR_CURSOR] = nk_rgba(64, 84, 95, 255);
-	table[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = nk_rgba(70, 90, 100, 255);
-	table[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = nk_rgba(75, 95, 105, 255);
-	table[NK_COLOR_TAB_HEADER] = nk_rgba(181, 45, 69, 220);
-	nk_style_from_table(ctx, table);
-#endif
 	sdk::util::c_log::Instance().duo(XorStr("[ ui setup complete ]\n"));
 }
 
 void main::c_ui::work()
 {
-	bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
 	while (running)
 	{
+		bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
 		/* Input */
 		MSG msg;
 		nk_input_begin(ctx);
-		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+		while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) 
+		{
 			if (msg.message == WM_QUIT)
 				running = 0;
 			TranslateMessage(&msg);
@@ -200,64 +184,75 @@ void main::c_ui::work()
 		{
 			if (sdk::util::c_address_gathering::Instance().done)
 			{
-				sdk::game::accconnector::c_login::Instance().work();
+				nk_layout_row_dynamic(ctx, 20, 1);
+				nk_checkbox_label(ctx, "debug-con", (nk_bool*)&this->debug_serverdata);	
+				nk_layout_row_dynamic(ctx, 20, 1);
+				nk_checkbox_label(ctx, "log-next-login", (nk_bool*)&sdk::game::accconnector::c_login::Instance().should_grab_details);
+				nk_layout_row_dynamic(ctx, 20, 1);
+				this->checkbox("login", "enable", "enable");
 
 				auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
 				auto account_connector_base = sdk::game::c_utils::Instance().baseclass_account_connector();
 				if (network_base && account_connector_base)
 				{
-					char net_phase[16] = "\0";
-					memcpy(net_phase, (void*)(network_base + sdk::game::connection_offsets::off_NETWORKING_PHASE), 16);
-					char cur_username[32] = "\0";
-					memcpy(cur_username, (void*)(account_connector_base + sdk::game::connection_offsets::off_USERNAME), 32);
-					char cur_password[32] = "\0";
-					memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
-					char cur_passcode[32] = "\0";
-					if (sdk::game::connection_offsets::off_PASSCODE) memcpy(cur_passcode, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSCODE), 32);
-					char cur_ip[32] = "\0";
-					memcpy(cur_ip, (void*)(account_connector_base + sdk::game::connection_offsets::off_IP), 32);
-
-					if (!cur_ip || !sdk::util::c_fn_discover::Instance().is_ascii(cur_ip))
+					if (this->debug_serverdata)
 					{
-						auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_IP);
-						strcpy(cur_ip, r.c_str());
-					}
+						char net_phase[16] = "\0";
+						memcpy(net_phase, (void*)(network_base + sdk::game::connection_offsets::off_NETWORKING_PHASE), 16);
+						char cur_username[32] = "\0";
+						memcpy(cur_username, (void*)(account_connector_base + sdk::game::connection_offsets::off_USERNAME), 32);
+						char cur_password[32] = "\0";
+						memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
+						char cur_passcode[32] = "\0";
+						if (sdk::game::connection_offsets::off_PASSCODE) memcpy(cur_passcode, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSCODE), 32);
+						char cur_ip[32] = "\0";
+						memcpy(cur_ip, (void*)(account_connector_base + sdk::game::connection_offsets::off_IP), 32);
 
-					auto cur_port = *(uint32_t*)(account_connector_base + sdk::game::connection_offsets::off_PORT);
+						if (!cur_ip || !sdk::util::c_fn_discover::Instance().is_ascii(cur_ip))
+						{
+							auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_IP);
+							strcpy(cur_ip, r.c_str());
+						}
 
-					auto sock_auth_srv = *(sockaddr_in*)(account_connector_base + sdk::game::connection_offsets::off_SOCKET);
-					auto net_ip = inet_ntoa(sock_auth_srv.sin_addr);
-					auto port = htons(sock_auth_srv.sin_port);
+						auto cur_port = *(uint32_t*)(account_connector_base + sdk::game::connection_offsets::off_PORT);
 
-					if (net_phase)
-					{
-						nk_layout_row_dynamic(ctx, 26, 1);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network ptr  : %04x"), network_base), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network phase: %s"), net_phase), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("username     : %s"), cur_username), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("password     : %s"), cur_password), NK_TEXT_LEFT);
-						if (sdk::game::connection_offsets::off_PASSCODE) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("passcode     : %s"), cur_passcode), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME IP      : %s"), cur_ip), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME PORT    : %i"), cur_port), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH IP        : %s"), net_ip), NK_TEXT_LEFT);
-						nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH PORT      : %i"), port), NK_TEXT_LEFT);
+						auto sock_auth_srv = *(sockaddr_in*)(account_connector_base + sdk::game::connection_offsets::off_SOCKET);
+						auto net_ip = inet_ntoa(sock_auth_srv.sin_addr);
+						auto port = htons(sock_auth_srv.sin_port);
+
+						if (net_phase)
+						{
+							nk_layout_row_dynamic(ctx, 26, 1);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network ptr  : %04x"), network_base), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network phase: %s"), net_phase), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("username     : %s"), cur_username), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("password     : %s"), cur_password), NK_TEXT_LEFT);
+							if (sdk::game::connection_offsets::off_PASSCODE) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("passcode     : %s"), cur_passcode), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME IP      : %s"), cur_ip), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("GAME PORT    : %i"), cur_port), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH IP        : %s"), net_ip), NK_TEXT_LEFT);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("CH PORT      : %i"), port), NK_TEXT_LEFT);
+						}
 					}
 				}
 
-				nk_layout_row_static(ctx, 30, 50, 3);
-				if (nk_button_label(ctx, XorStr("knopp")))
+				nk_layout_row_dynamic(ctx, 30, 1);
+				if (nk_button_label(ctx, XorStr("set")))
 				{
-					//sdk::game::accconnector::c_login::Instance().set_account({ "fulmatifyu", "123123123", "", "0", "m2sg-game.tec-interactive.com", "151.80.4.8", "13000", "11000" });
+					sdk::game::accconnector::c_login::Instance().set_only_details();
+				}
+				nk_layout_row_dynamic(ctx, 30, 1);
+				if (nk_button_label(ctx, XorStr("set&connect")))
+				{
 					sdk::game::accconnector::c_login::Instance().set_details();
 				}
-				nk_layout_row_static(ctx, 30, 50, 3);
-				if (nk_button_label(ctx, XorStr("knopp2")))
+				nk_layout_row_dynamic(ctx, 30, 1);
+				if (nk_button_label(ctx, XorStr("connect")))
 				{
 					sdk::game::accconnector::c_login::Instance().set_connect();
-
 				}
-				nk_layout_row_static(ctx, 30, 50, 3);
-				if (nk_button_label(ctx, XorStr("knopp3")))
+				nk_layout_row_dynamic(ctx, 30, 1);
+				if (nk_button_label(ctx, XorStr("character")))
 				{
 					sdk::game::accconnector::c_login::Instance().set_character();
 				}
@@ -287,8 +282,7 @@ void main::c_ui::work()
 				break;
 			}
 			else if (hr == S_PRESENT_OCCLUDED) {
-			 /* window is not visible, so vsync won't work. Let's sleep a bit to reduce CPU usage */
-				std::this_thread::sleep_for(10ms);
+
 			}
 			NK_ASSERT(SUCCEEDED(hr));
 		}

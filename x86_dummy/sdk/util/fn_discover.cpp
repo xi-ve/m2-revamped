@@ -2,12 +2,32 @@
 using namespace std::chrono;
 void sdk::util::c_fn_discover::setup()
 {
+	this->get_server();
 	auto text_res = this->text_section();
 	auto data_res = this->data_section();
 	//auto singletons = this->singletons();
 	if (!text_res) { sdk::util::c_log::Instance().duo(XorStr("[ text discovery failed! ]\n")); return; }
 	if (!data_res) { sdk::util::c_log::Instance().duo(XorStr("[ data discovery failed! ]\n")); return; }
 	sdk::util::c_log::Instance().duo(XorStr("[ c_fn_discover::setup completed ]\n"));
+}
+
+void sdk::util::c_fn_discover::get_server()
+{
+	char cur_exe[256];
+	GetModuleFileNameA(0, cur_exe, 256);
+
+	auto servers_known = std::vector<std::string>() =
+	{
+		"xaleas",
+		"Celestial World 2.0",
+		"Arithra2"
+	};
+
+	auto cur_server = std::string("generic-server");
+	for (auto a : servers_known) if (strstr(cur_exe, a.c_str())) { cur_server = a; break; }
+	this->server_name = cur_server;
+
+	sdk::util::c_log::Instance().duo("[ server detected as: %s ]\n", this->server_name.c_str());
 }
 
 bool sdk::util::c_fn_discover::is_ascii(const std::string& in)

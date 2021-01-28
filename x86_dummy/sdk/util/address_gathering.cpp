@@ -79,10 +79,14 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 		dodirectenter_fn = sdk::util::c_fn_discover::Instance().discover_fn(directenter_fn, 0x30, 0x65, 1);
 		if (!dodirectenter_fn) return this->error_out(__LINE__);
 	}
+	auto ConnectToGameServer_off = sdk::util::c_disassembler::Instance().get_custom(dodirectenter_fn, 0, 0xFFF, 0xFFFF, { "mov", "add", "push", "lea" });
+	if (!ConnectToGameServer_off.size()) return this->error_out(__LINE__);
 
+	sdk::game::connection_offsets::off_SELECT_CHAR_IDX = ConnectToGameServer_off.front();
 	sdk::game::func::c_funcs::Instance().f_ConnectToGameServer = decltype(sdk::game::func::c_funcs::Instance().f_ConnectToGameServer)(dodirectenter_fn);
 
 	sdk::util::c_log::Instance().duo(XorStr("[ dodirectenter fn: %04x ]\n"), dodirectenter_fn);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SELECT_CHAR_IDX fn: %04x ]\n"), sdk::game::connection_offsets::off_SELECT_CHAR_IDX);
 
 	//
 
@@ -103,14 +107,28 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	sdk::game::func::c_funcs::Instance().f_SetLoginInfo_accnet = decltype(sdk::game::func::c_funcs::Instance().f_SetLoginInfo_accnet)(CAccountConnector_Set[CAccountConnector_Set.size() - 2]);
 	sdk::game::func::c_funcs::Instance().f_SetLoginInfo_pynet = decltype(sdk::game::func::c_funcs::Instance().f_SetLoginInfo_pynet)(CAccountConnector_Set[CAccountConnector_Set.size() - 3]);
+	sdk::game::func::c_funcs::Instance().f_SetLoginInfo_passcode_accnet = decltype(sdk::game::func::c_funcs::Instance().f_SetLoginInfo_passcode_accnet)(CAccountConnector_Set[CAccountConnector_Set.size() - 2]);
+	sdk::game::func::c_funcs::Instance().f_SetLoginInfo_passcode_pynet = decltype(sdk::game::func::c_funcs::Instance().f_SetLoginInfo_passcode_accnet)(CAccountConnector_Set[CAccountConnector_Set.size() - 3]);
 
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SetLoginInfo_accnet: %04x ]\n"), CAccountConnector_Set[CAccountConnector_Set.size() - 2]);
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SetLoginInfo_pynet : %04x ]\n"), CAccountConnector_Set[CAccountConnector_Set.size() - 3]);
 
-	sdk::util::c_log::Instance().duo(XorStr("[ off_USERNAME: %04x ]\n"), sdk::game::connection_offsets::off_USERNAME);
-	sdk::util::c_log::Instance().duo(XorStr("[ off_PASSWORD: %04x ]\n"), sdk::game::connection_offsets::off_PASSWORD);
-	if (CAccountConnector_Set_off.size() > 2) sdk::util::c_log::Instance().duo(XorStr("[ off_PASSCODE: %04x ]\n"), sdk::game::connection_offsets::off_PASSCODE);
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")))//custom swapped params
+	{
+		sdk::game::connection_offsets::off_USERNAME = CAccountConnector_Set_off[1];
+		sdk::game::connection_offsets::off_PASSWORD = CAccountConnector_Set_off[2];
+		sdk::game::connection_offsets::off_PASSCODE = CAccountConnector_Set_off[0];
 
+		sdk::util::c_log::Instance().duo(XorStr("[ xaleas off_USERNAME: %04x ]\n"), sdk::game::connection_offsets::off_PASSWORD);
+		sdk::util::c_log::Instance().duo(XorStr("[ xaleas off_PASSWORD: %04x ]\n"), sdk::game::connection_offsets::off_PASSCODE);
+		sdk::util::c_log::Instance().duo(XorStr("[ xaleas off_PASSCODE: %04x ]\n"), sdk::game::connection_offsets::off_USERNAME);
+	}
+	else
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ off_USERNAME: %04x ]\n"), sdk::game::connection_offsets::off_USERNAME);
+		sdk::util::c_log::Instance().duo(XorStr("[ off_PASSWORD: %04x ]\n"), sdk::game::connection_offsets::off_PASSWORD);
+		if (CAccountConnector_Set_off.size() > 2) sdk::util::c_log::Instance().duo(XorStr("[ off_PASSCODE: %04x ]\n"), sdk::game::connection_offsets::off_PASSCODE);
+	}
 	//
 
 	auto CPythonNetworkStream_SetMarkServer = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetMarkServer"));
@@ -172,7 +190,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	//
 
-	auto CPythonNetworkStream_SendSelectCharacterPacket = sdk::util::c_fn_discover::Instance().get_fn("SendSelectCharacterPacket - Error");
+	auto CPythonNetworkStream_SendSelectCharacterPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendSelectCharacterPacket - Error"));
 	if (!CPythonNetworkStream_SendSelectCharacterPacket) return this->error_out(__LINE__);
 
 	sdk::game::func::c_funcs::Instance().f_SendSelectCharacter = decltype(sdk::game::func::c_funcs::Instance().f_SendSelectCharacter)(CPythonNetworkStream_SendSelectCharacterPacket);
@@ -182,7 +200,20 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	//
 
-
+	auto SetPacketSequenceMode_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetPacketSequenceMode"));
+	if (SetPacketSequenceMode_fn)
+	{
+		auto SetPacketSequenceMode_calls = sdk::util::c_fn_discover::Instance().discover_fn(SetPacketSequenceMode_fn, 0xA, 0xF, 0);
+		if (SetPacketSequenceMode_calls)
+		{
+			auto SetPacketSequenceMode_off = sdk::util::c_disassembler::Instance().get_custom(SetPacketSequenceMode_calls, 0, 0x30, 0xFF, { "mov", "add", "push", "lea" });
+			if (!SetPacketSequenceMode_off.empty())
+			{
+				sdk::game::connection_offsets::off_PACKET_SEQUENCE_MODE = SetPacketSequenceMode_off.front();
+				sdk::util::c_log::Instance().duo(XorStr("[ off_PACKET_SEQUENCE_MODE: %04x ]\n"), SetPacketSequenceMode_off.front());
+			}
+		}
+	}
 
 	return 1;
 }

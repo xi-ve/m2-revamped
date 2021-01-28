@@ -41,6 +41,10 @@ namespace sdk
 		typedef std::vector<uint32_t>						t_addrs;
 		class c_fn_discover : public s<c_fn_discover>
 		{
+		public:
+			std::string		server_name = "";
+		private:
+			void			get_server();
 		private:
 			bool			should_gen_fn_list = false;
 			bool			should_gen_advanced_str_refs = false;

@@ -14,6 +14,7 @@ namespace sdk
 			bool		is_valid(uint32_t address, size_t range);
 			t_size		get_section(const char* section, HMODULE base_module);
 			uint32_t	find_pattern(uint32_t start, const char* sig);
+			uint32_t	find_pattern_directed(uintptr_t moduleAdress, const char* signature);
 			void		setup();
 		};
 	}

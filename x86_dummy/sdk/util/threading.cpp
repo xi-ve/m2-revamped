@@ -68,6 +68,15 @@ void __stdcall sdk::util::ui_worker()
 	main::c_ui::Instance().work();
 }
 
+void patch_cshield(std::string a, char* buf, size_t size, uint32_t offset)
+{
+	if (!(uintptr_t)GetModuleHandleA("CShield.dll")) return;
+	auto cs_checkheader = sdk::util::c_mem::Instance().find_pattern_directed((uintptr_t)GetModuleHandleA("CShield.dll"), a.c_str()) + offset;
+	sdk::util::c_log::Instance().duo("[ %s => %04x ]\n", a.c_str(), cs_checkheader);
+	if (!cs_checkheader || cs_checkheader == offset) return;
+	auto ret_wpm = WriteProcessMemory(GetCurrentProcess(), (void*)cs_checkheader, &buf, size, nullptr);
+}
+
 void __stdcall sdk::util::init_worker()
 {
 	MH_Initialize();
@@ -76,8 +85,22 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_mem::Instance().setup();
 	sdk::util::c_config::Instance().setup();
 	sdk::util::c_fn_discover::Instance().setup();
+
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Arithra2"))
+	{
+		char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
+		patch_cshield("72 ? 8B 75 ? 83 C6 ?", patch2, sizeof(patch2), 0);
+		patch_cshield("75 ? 33 C0 EB ? 1B C0 83 C8 ? 85 C0 74 ? 8D 4D ? 8D 51 ? 90", patch2, sizeof(patch2), 0);
+
+		sdk::game::c_hwid::Instance().setup();
+	}
+
 	sdk::util::c_address_gathering::Instance().setup();
 	sdk::game::accconnector::c_login::Instance().setup();
+	sdk::util::c_thread::Instance().append([]() 
+	{
+		sdk::game::accconnector::c_login::Instance().work();
+	}, 15);
 	sdk::util::ui_worker();
 }
 
