@@ -196,6 +196,7 @@
     <ClCompile Include="main\startup.cpp" />
     <ClCompile Include="main\ui.cpp" />
     <ClCompile Include="sdk\game\accconnector\login.cpp" />
+    <ClCompile Include="sdk\game\char\utils.cpp" />
     <ClCompile Include="sdk\game\hardware_id.cpp" />
     <ClCompile Include="sdk\game\offsets.cpp" />
     <ClCompile Include="sdk\game\utils.cpp" />
@@ -267,6 +268,7 @@
     <ClInclude Include="main\ui.h" />
     <ClInclude Include="main\win_strct.h" />
     <ClInclude Include="sdk\game\accconnector\login.h" />
+    <ClInclude Include="sdk\game\char\utils.h" />
     <ClInclude Include="sdk\game\functions.h" />
     <ClInclude Include="sdk\game\hardware_id.h" />
     <ClInclude Include="sdk\game\offsets.h" />
@@ -277,6 +279,7 @@
     <ClInclude Include="sdk\util\disassembler.h" />
     <ClInclude Include="sdk\util\fn_discover.h" />
     <ClInclude Include="sdk\util\log.h" />
+    <ClInclude Include="sdk\util\maths.h" />
     <ClInclude Include="sdk\util\mem.h" />
     <ClInclude Include="sdk\util\rtti.h" />
     <ClInclude Include="sdk\util\threading.h" />

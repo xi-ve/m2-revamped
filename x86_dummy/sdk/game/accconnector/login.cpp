@@ -101,7 +101,7 @@ void sdk::game::accconnector::c_login::set_grab_details()
 bool __stdcall selectchar(uint32_t ecx, BYTE id)
 {
 	auto py_net = sdk::game::c_utils::Instance().baseclass_networking();
-	sdk::util::c_log::Instance().duo("[ select char: %04x %04x ]\n", py_net, id);
+	//sdk::util::c_log::Instance().duo("[ select char: %04x %04x ]\n", py_net, id);
 	if (!sdk::game::accconnector::c_login::Instance().force_slot) return sdk::game::accconnector::c_login::Instance().f_char(py_net, id);
 	else return sdk::game::accconnector::c_login::Instance().f_char(py_net, std::stoi(sdk::game::accconnector::c_login::Instance().account_selected.slot.c_str()));
 }
@@ -222,6 +222,16 @@ void sdk::game::accconnector::c_login::setup()
 {	
 	this->load_accs();
 
+	if (sdk::game::connection_offsets::off_PASSCODE) this->acccon_passcode = true;
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2"))
+	{
+
+	}
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Kevra"))
+	{
+		this->acccon_passcode = true;
+		this->pynet_passcode = true;
+	}
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Arithra2"))
 	{
 		this->acccon_passcode = true;

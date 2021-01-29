@@ -3,6 +3,8 @@ void sdk::util::c_address_gathering::setup()
 {
 	auto r = this->gather_connection_related();
 	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_connection_related ]\n")); return; }
+	r = this->gather_actor_related();
+	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_actor_related ]\n")); return; }
 	sdk::util::c_log::Instance().duo(XorStr("[ c_address_gathering::setup completed ]\n"));
 	done = true;
 }
@@ -200,6 +202,10 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	//
 
+	//CPythonCharacterManager
+
+	//
+
 	auto SetPacketSequenceMode_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetPacketSequenceMode"));
 	if (SetPacketSequenceMode_fn)
 	{
@@ -220,7 +226,43 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 bool sdk::util::c_address_gathering::gather_actor_related()
 {
+	auto CPythonCharacterManager_FaintTest = sdk::util::c_fn_discover::Instance().get_fn_py("FaintTest");
+	if (!CPythonCharacterManager_FaintTest) this->error_out(__LINE__);
 
+	auto CPythonCharacterManager_instance = this->find_singleton_or_instance(CPythonCharacterManager_FaintTest);
+	if (!CPythonCharacterManager_instance) this->error_out(__LINE__);
+
+	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0xC, 0xE, 0, 0, false, false);;
+	if (!IsFaint_fn) this->error_out(__LINE__);
+
+	auto IsFaint_off = sdk::util::c_disassembler::Instance().get_custom(IsFaint_fn, 0, 0x300, 0x2000, { "mov", "lea", "push" });
+	if (IsFaint_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::actor_offsets::off_FAINT = IsFaint_off.front();
+	sdk::game::actor_offsets::off_SLEEP = IsFaint_off.front() - 0x4;
+	sdk::game::actor_offsets::off_STUN = IsFaint_off.front() + 0x8;
+	sdk::game::actor_offsets::off_DEAD = IsFaint_off.front() + 0xC;
+	sdk::game::pointer_offsets::off_CPythonCharacterManager = CPythonCharacterManager_instance;
+
+	sdk::util::c_log::Instance().duo("[ off_CPythonCharacterManager: %04x ]\n", CPythonCharacterManager_instance);
+	sdk::util::c_log::Instance().duo("[ off_FAINT: %04x ]\n", IsFaint_off.front());
+	sdk::util::c_log::Instance().duo("[ off_SLEEP: %04x ]\n", IsFaint_off.front() - 0x4);
+	sdk::util::c_log::Instance().duo("[ off_STUN : %04x ]\n", IsFaint_off.front() + 0x8);
+	sdk::util::c_log::Instance().duo("[ off_DEAD : %04x ]\n", IsFaint_off.front() + 0xC);
+
+	//
+
+	auto GetInstanceType_fn = sdk::util::c_fn_discover::Instance().get_fn_py("GetInstanceType");
+	if (!GetInstanceType_fn) return this->error_out(__LINE__);
+
+	auto GetInstanceType_calls = sdk::util::c_disassembler::Instance().get_calls(GetInstanceType_fn, 0, 0, 0);
+	if (GetInstanceType_calls.empty()) return this->error_out(__LINE__);
+
+	auto CPythonCharacterManager_GetInstancePtr_off = sdk::util::c_disassembler::Instance().get_custom(GetInstanceType_calls.back(), 0, 0x100, 0x2000, { "mov", "add", "push", "lea" });
+	if (CPythonCharacterManager_GetInstancePtr_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::actor_offsets::off_GRAPHIC_THING = CPythonCharacterManager_GetInstancePtr_off.front();
+	sdk::util::c_log::Instance().duo("[ off_GRAPHIC_THING : %04x ]\n", CPythonCharacterManager_GetInstancePtr_off.front());
 
 	return 1;
 }

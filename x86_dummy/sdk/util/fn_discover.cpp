@@ -20,7 +20,9 @@ void sdk::util::c_fn_discover::get_server()
 	{
 		"xaleas",
 		"Celestial World 2.0",
-		"Arithra2"
+		"Arithra2",
+		"Kevra",
+		"Anoria2"
 	};
 
 	auto cur_server = std::string("generic-server");

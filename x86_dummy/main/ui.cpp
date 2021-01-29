@@ -190,6 +190,10 @@ void main::c_ui::work()
 				nk_checkbox_label(ctx, "log-next-login", (nk_bool*)&sdk::game::accconnector::c_login::Instance().should_grab_details);
 				nk_layout_row_dynamic(ctx, 20, 1);
 				this->checkbox("login", "enable", "enable");
+				nk_layout_row_dynamic(ctx, 20, 1);
+				nk_label(ctx, sdk::util::c_log::Instance().string("alive : %i", sdk::game::chr::c_char::Instance().get_alive().size()), NK_TEXT_LEFT);
+				nk_layout_row_dynamic(ctx, 20, 1);
+				nk_label(ctx, sdk::util::c_log::Instance().string("dead : %i", sdk::game::chr::c_char::Instance().get_dead().size()), NK_TEXT_LEFT);
 
 				auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
 				auto account_connector_base = sdk::game::c_utils::Instance().baseclass_account_connector();
@@ -282,7 +286,8 @@ void main::c_ui::work()
 				break;
 			}
 			else if (hr == S_PRESENT_OCCLUDED) {
-
+			 /* window is not visible, so vsync won't work. Let's sleep a bit to reduce CPU usage */
+				std::this_thread::sleep_for(10ms);
 			}
 			NK_ASSERT(SUCCEEDED(hr));
 		}

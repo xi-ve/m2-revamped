@@ -86,7 +86,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_config::Instance().setup();
 	sdk::util::c_fn_discover::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Arithra2"))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Arithra2") || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2"))
 	{
 		char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
 		patch_cshield("72 ? 8B 75 ? 83 C6 ?", patch2, sizeof(patch2), 0);
@@ -97,10 +97,17 @@ void __stdcall sdk::util::init_worker()
 
 	sdk::util::c_address_gathering::Instance().setup();
 	sdk::game::accconnector::c_login::Instance().setup();
-	sdk::util::c_thread::Instance().append([]() 
+	sdk::game::chr::c_char::Instance().setup();
+
+	sdk::util::c_thread::Instance().append([]()
 	{
 		sdk::game::accconnector::c_login::Instance().work();
 	}, 15);
+	sdk::util::c_thread::Instance().append([]()
+	{
+		sdk::game::chr::c_char::Instance().update();
+	}, 15);
+
 	sdk::util::ui_worker();
 }
 

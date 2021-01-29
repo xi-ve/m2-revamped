@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <unordered_map>
+#include <map>
 #include <thread>
 #include <map>
 #include <functional>
@@ -22,6 +23,7 @@
 #include <regex>
 #include <sstream>
 #include <d3d9.h>
+#include <math.h>
 //libs
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "d3d9.lib")
@@ -37,6 +39,7 @@
 //cheat core
 #include <util/xor.h>
 #include <singleton.h>
+#include <util/maths.h>
 #include <crc32/crc32.h>
 #include <util/crc32.h>
 #include <util/log.h>
@@ -47,6 +50,7 @@
 #include <game/offsets.h>
 #include <game/functions.h>
 #include <game/utils.h>
+#include <game/char/utils.h>
 #include <util/rtti.h>
 #include <util/fn_discover.h>
 #include <util/address_gathering.h>

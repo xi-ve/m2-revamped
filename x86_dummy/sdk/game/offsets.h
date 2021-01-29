@@ -12,9 +12,17 @@ namespace sdk
 		{
 			extern uint32_t		off_CAccountConnector;
 			extern uint32_t		off_CPythonNetworkStream;
+			extern uint32_t		off_CPythonCharacterManager;
 		}
 		namespace actor_offsets
 		{
+			extern uint32_t		off_FAINT;
+			extern uint32_t		off_SLEEP;
+			extern uint32_t		off_RESIST;
+			extern uint32_t		off_STUN;
+			extern uint32_t		off_DEAD;
+			extern uint32_t		off_WALKING;
+			extern uint32_t		off_GRAPHIC_THING;
 
 		}
 		namespace connection_offsets
