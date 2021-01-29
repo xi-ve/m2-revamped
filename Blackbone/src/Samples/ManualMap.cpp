@@ -8,11 +8,25 @@ using namespace std::chrono;
 
 std::set<std::wstring> nativeMods, modList;
 DWORD lastpid;
+
+std::vector<DWORD> getpids() {
+    std::vector<DWORD> pids;
+    std::vector<std::string> Names = { "Olympia2.exe" };
+    for (auto a : Names) {
+        std::vector<DWORD> buf = Process::EnumByName(std::wstring(a.begin(),a.end()));
+        for (auto i : buf) {
+            pids.push_back(i);
+        }
+    }
+
+    return pids;
+}
+
 void MapCmdFromMem()
 {
-    auto pids = Process::EnumByName(L"Olympia2.exe");
+    std::vector<DWORD> pids = getpids();
 
-    while (!pids.size()) { pids = Process::EnumByName(L"Olympia2.exe"); }
+    while (!pids.size()) { pids = getpids(); }
     if (pids.front() == lastpid) return;
     lastpid = pids.front();
 
