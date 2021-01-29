@@ -226,7 +226,9 @@ void main::c_ui::work()
 
 						if (net_phase)
 						{
+							auto self_ptr = sdk::game::chr::c_char::Instance().get_main_actor();
 							nk_layout_row_dynamic(ctx, 26, 1);
+							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("self    ptr  : %04x"), self_ptr), NK_TEXT_LEFT);
 							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network ptr  : %04x"), network_base), NK_TEXT_LEFT);
 							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("network phase: %s"), net_phase), NK_TEXT_LEFT);
 							nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("username     : %s"), cur_username), NK_TEXT_LEFT);

@@ -24,6 +24,8 @@ namespace sdk
 				void							update();
 				std::list<uint32_t*>			get_dead();
 				std::map<uint32_t, uint32_t*>	get_alive();
+			public:
+				uint32_t						get_main_actor();
 			};
 		}
 	}

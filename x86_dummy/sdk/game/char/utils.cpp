@@ -25,3 +25,10 @@ std::map<uint32_t, uint32_t*> sdk::game::chr::c_char::get_alive()
 {
 	return this->alive_actors;
 }
+
+uint32_t sdk::game::chr::c_char::get_main_actor()
+{
+	auto player_base = sdk::game::c_utils::Instance().baseclass_python_player() + 4;
+	if (!player_base || player_base == 4) return 0;
+	return (uint32_t)(*(int(__thiscall**)(int))(*(DWORD*)player_base + sdk::game::actor_offsets::off_VTABLE_GET_MAIN))(player_base);
+}

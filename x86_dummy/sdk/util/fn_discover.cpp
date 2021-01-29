@@ -163,6 +163,12 @@ uint32_t sdk::util::c_fn_discover::get_fn(const char* fn_str_ref)
 	sdk::util::c_log::Instance().duo(XorStr("[ failed to find reference for %s ]\n"), fn_str_ref);
 	return 0;
 }
+sdk::util::t_addrs sdk::util::c_fn_discover::get_adr_str(const char* fn_name, int max_strings)
+{
+	auto l = sdk::util::t_addrs();
+	for (auto a : this->fns) if (a.strings.size() == max_strings) for (auto b : a.strings) if (strstr(b.c_str(), fn_name)) l.push_back(a.address);
+	return l;
+}
 
 uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp)
 {

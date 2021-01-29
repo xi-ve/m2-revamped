@@ -10,6 +10,8 @@ namespace sdk
 		public:
 			uint32_t	baseclass_networking();
 			uint32_t	baseclass_account_connector();
+			uint32_t	baseclass_character_manager();
+			uint32_t	baseclass_python_player();
 		};
 	}
 }
