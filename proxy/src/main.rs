@@ -23,7 +23,7 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
     while let Ok((inbound, _)) = listener.accept().await {
         let ip_addr = inbound.peer_addr().unwrap().ip().to_string();
         let buf = ips.read().await;
-        let mut ip_find = stream::iter(buf.iter()).filter_map(|x| {
+        let ip_find = stream::iter(buf.iter()).filter_map(|x| {
             let ip_addr = &ip_addr;
             async move {
                 if x.read().await.ip_addr == ip_addr.to_string() {
@@ -48,7 +48,7 @@ fn remove_whitespace(s: &mut String) {
     s.retain(|c| !c.is_whitespace());
 }
 
-async fn process(mut ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
+async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
     let mut reader = BufReader::new(inbound);
     let mut line = String::new();
     reader.read_line(&mut line).await.unwrap();
