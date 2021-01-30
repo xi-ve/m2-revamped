@@ -1,7 +1,7 @@
 use tokio::io;
 use tokio::net::{TcpListener, TcpStream};
-use tokio_stream::StreamExt;
 
+use futures::stream::{self, StreamExt};
 use futures::FutureExt;
 use std::error::Error;
 use std::sync::Arc;
@@ -23,8 +23,17 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
     while let Ok((inbound, _)) = listener.accept().await {
         let ip_addr = inbound.peer_addr().unwrap().ip().to_string();
         let buf = ips.read().await;
-        let mut ip_find = tokio_stream::iter(buf.iter())
-            .filter(|x| futures::executor::block_on(async { x.read().await.ip_addr == ip_addr }));
+        let ip_find = stream::iter(buf.iter()).filter_map(|x| {
+            let ip_addr = &ip_addr;
+            async move {
+                if x.read().await.ip_addr == ip_addr.to_string() {
+                    Some(x)
+                } else {
+                    None
+                }
+            }
+        });
+        tokio::pin!(ip_find);
         if let Some(ip) = ip_find.next().await {
             let transfer = transfer(Arc::clone(ip), inbound, server_addr.clone()).map(|r| {
                 if let Err(e) = r {
@@ -38,22 +47,39 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
 fn remove_whitespace(s: &mut String) {
     s.retain(|c| !c.is_whitespace());
 }
-async fn process(mut ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>,inbound: TcpStream){
+
+async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
     let mut reader = BufReader::new(inbound);
-            let mut line = String::new();
-            reader.read_line(&mut line).await.unwrap();
-            remove_whitespace(&mut line);
-            println!("adding {}", line);
-            ips.write().await.push(Arc::new(RwLock::new(Ip {
-                ip_addr: line,
-                expire: SystemTime::now() + Duration::from_secs(30),
-            })));
+    let mut line = String::new();
+    reader.read_line(&mut line).await.unwrap();
+    remove_whitespace(&mut line);
+    println!("adding {}", line);
+    let ip_cop: String = line.clone();
+    let mut found: bool = false;
+    let mut index: usize = 0;
+    let ip_addr = &line;
+
+    for n in 0..ips.read().await.len(){
+        if ips.read().await[n].read().await.ip_addr == ip_addr.to_string(){
+            index = n;
+            found = true;
+            break;
+        }
+    }
+    if found {
+        ips.write().await[index].write().await.expire = SystemTime::now() + Duration::from_secs(30);
+        return;
+    }
+    ips.write().await.push(Arc::new(RwLock::new(Ip {
+        ip_addr: ip_cop,
+        expire: SystemTime::now() + Duration::from_secs(30),
+    })));
+    println!("not reached");
 }
 async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
     let listener = TcpListener::bind("0.0.0.0:1337").await.unwrap();
     while let Ok((inbound, _)) = listener.accept().await {
         tokio::spawn(process(ips.clone(), inbound));
-        
     }
 }
 
