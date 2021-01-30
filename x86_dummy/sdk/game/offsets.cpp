@@ -26,3 +26,6 @@ uint32_t sdk::game::actor_offsets::off_GRAPHIC_THING = 0x0;
 uint32_t sdk::game::actor_offsets::off_ACTOR_TYPE = 0x0;
 uint32_t sdk::game::actor_offsets::off_COMBO_INDEX = 0x0;
 uint32_t sdk::game::actor_offsets::off_VTABLE_GET_MAIN = 0x0;
+uint32_t sdk::game::actor_offsets::off_VIRTUAL_ID = 0x0;
+uint32_t sdk::game::actor_offsets::off_SHOULD_SKIP_COLLISION = 0x0;
+uint32_t sdk::game::actor_offsets::off_NAME = 0x0;

@@ -209,10 +209,6 @@ void sdk::game::accconnector::c_login::work()
 
 			this->last_phase = cur_phase;
 
-			//MH_DisableHook((void*)sdk::game::func::c_funcs::Instance().o_SendSelectCharacter);
-			//MH_RemoveHook((void*)sdk::game::func::c_funcs::Instance().o_SendSelectCharacter);
-			//this->enabled_hook = false;
-			
 			*(uint8_t*)(py_net + sdk::game::connection_offsets::off_SELECT_CHAR_IDX) = std::stoi(this->account_selected.slot.c_str());
 		}
 	}

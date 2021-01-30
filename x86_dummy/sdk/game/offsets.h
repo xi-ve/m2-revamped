@@ -27,6 +27,9 @@ namespace sdk
 			extern uint32_t		off_ACTOR_TYPE;
 			extern uint32_t		off_COMBO_INDEX;
 			extern uint32_t		off_VTABLE_GET_MAIN;
+			extern uint32_t		off_VIRTUAL_ID;
+			extern uint32_t		off_SHOULD_SKIP_COLLISION;
+			extern uint32_t		off_NAME;
 		}
 		namespace connection_offsets
 		{

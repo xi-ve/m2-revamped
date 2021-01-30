@@ -10,24 +10,25 @@
  *
  * ===============================================================
  */
-#ifndef NK_D3D9_H_
-#define NK_D3D9_H_
+#ifndef NK_GDI_H_
+#define NK_GDI_H_
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-typedef struct IDirect3DDevice9 IDirect3DDevice9;
+typedef struct GdiFont GdiFont;
+NK_API struct nk_context* nk_gdi_init(GdiFont* font, HDC window_dc, unsigned int width, unsigned int height);
+NK_API int nk_gdi_handle_event(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+NK_API void nk_gdi_render(struct nk_color clear);
+NK_API void nk_gdi_shutdown(void);
 
-NK_API struct nk_context *nk_d3d9_init(IDirect3DDevice9 *device, int width, int height);
-NK_API void nk_d3d9_font_stash_begin(struct nk_font_atlas **atlas);
-NK_API void nk_d3d9_font_stash_end(void);
-NK_API int nk_d3d9_handle_event(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
-NK_API void nk_d3d9_render(enum nk_anti_aliasing);
-NK_API void nk_d3d9_release(void);
-NK_API void nk_d3d9_resize(int width, int height);
-NK_API void nk_d3d9_shutdown(void);
+/* font */
+NK_API GdiFont* nk_gdifont_create(const char* name, int size);
+NK_API void nk_gdifont_del(GdiFont* font);
+NK_API void nk_gdi_set_font(GdiFont* font);
 
 #endif
+
 /*
  * ==============================================================
  *
@@ -35,510 +36,871 @@ NK_API void nk_d3d9_shutdown(void);
  *
  * ===============================================================
  */
-#ifdef NK_D3D9_IMPLEMENTATION
+#ifdef NK_GDI_IMPLEMENTATION
 
-#define WIN32_LEAN_AND_MEAN
-#define COBJMACROS
-#include <d3d9.h>
+#include <stdlib.h>
+#include <malloc.h>
 
-#include <stddef.h>
-#include <string.h>
-
-struct nk_d3d9_vertex {
-    /* D3d9 FFP requires three coordinate position, but nuklear writes only 2 elements
-       projection matrix doesn't use z coordinate => so it can be any value.
-       Member order here is important! Do not rearrange them! */
-    float position[3];
-    nk_uchar col[4];
-    float uv[2];
+struct GdiFont {
+    struct nk_user_font nk;
+    int height;
+    HFONT handle;
+    HDC dc;
 };
 
 static struct {
+    HBITMAP bitmap;
+    HDC window_dc;
+    HDC memory_dc;
+    unsigned int width;
+    unsigned int height;
     struct nk_context ctx;
-    struct nk_font_atlas atlas;
-    struct nk_buffer cmds;
+} gdi;
 
-    struct nk_draw_null_texture null;
-
-    D3DVIEWPORT9 viewport;
-    D3DMATRIX projection;
-    IDirect3DDevice9 *device;
-    IDirect3DTexture9 *texture;
-    IDirect3DStateBlock9 *state;
-} d3d9;
-
-NK_API void
-nk_d3d9_create_state()
+static void
+nk_create_image(struct nk_image* image, const char* frame_buffer, const int width, const int height)
 {
-    HRESULT hr;
-
-    hr = IDirect3DDevice9_BeginStateBlock(d3d9.device);
-    NK_ASSERT(SUCCEEDED(hr));
-
-    /* vertex format */
-    IDirect3DDevice9_SetFVF(d3d9.device, D3DFVF_XYZ + D3DFVF_DIFFUSE + D3DFVF_TEX1);
-
-    /* blend state */
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_ALPHABLENDENABLE, TRUE);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_BLENDOP, D3DBLENDOP_ADD);
-
-    /* render state */
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_LIGHTING, FALSE);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_ZENABLE, FALSE);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_ZWRITEENABLE, FALSE);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_CULLMODE, D3DCULL_NONE);
-    IDirect3DDevice9_SetRenderState(d3d9.device, D3DRS_SCISSORTESTENABLE, TRUE);
-
-    /* sampler state */
-    IDirect3DDevice9_SetSamplerState(d3d9.device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-    IDirect3DDevice9_SetSamplerState(d3d9.device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-    IDirect3DDevice9_SetSamplerState(d3d9.device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-    IDirect3DDevice9_SetSamplerState(d3d9.device, 0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-
-    /* texture stage state */
-    IDirect3DDevice9_SetTextureStageState(d3d9.device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    IDirect3DDevice9_SetTextureStageState(d3d9.device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-    IDirect3DDevice9_SetTextureStageState(d3d9.device, 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-    IDirect3DDevice9_SetTextureStageState(d3d9.device, 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-    IDirect3DDevice9_SetTextureStageState(d3d9.device, 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-    IDirect3DDevice9_SetTextureStageState(d3d9.device, 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-
-    hr = IDirect3DDevice9_EndStateBlock(d3d9.device, &d3d9.state);
-    NK_ASSERT(SUCCEEDED(hr));
-}
-
-NK_API void
-nk_d3d9_render(enum nk_anti_aliasing AA)
-{
-    HRESULT hr;
-
-    nk_d3d9_create_state();
-
-    hr = IDirect3DStateBlock9_Apply(d3d9.state);
-    NK_ASSERT(SUCCEEDED(hr));
-
-    /* projection matrix */
-    IDirect3DDevice9_SetTransform(d3d9.device, D3DTS_PROJECTION, &d3d9.projection);
-
-    /* viewport */
-    IDirect3DDevice9_SetViewport(d3d9.device, &d3d9.viewport);
-
-    /* convert from command queue into draw list and draw to screen */
+    if (image && frame_buffer && (width > 0) && (height > 0))
     {
-        struct nk_buffer vbuf, ebuf;
-        const struct nk_draw_command *cmd;
-        const nk_draw_index *offset = NULL;
-        UINT vertex_count;
+        image->w = width;
+        image->h = height;
+        image->region[0] = 0;
+        image->region[1] = 0;
+        image->region[2] = width;
+        image->region[3] = height;
 
-        /* fill converting configuration */
-        struct nk_convert_config config;
-        NK_STORAGE const struct nk_draw_vertex_layout_element vertex_layout[] = {
-            {NK_VERTEX_POSITION, NK_FORMAT_FLOAT,    NK_OFFSETOF(struct nk_d3d9_vertex, position)},
-            {NK_VERTEX_COLOR,    NK_FORMAT_B8G8R8A8, NK_OFFSETOF(struct nk_d3d9_vertex, col)},
-            {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT,    NK_OFFSETOF(struct nk_d3d9_vertex, uv)},
-            {NK_VERTEX_LAYOUT_END}
-        };
-        memset(&config, 0, sizeof(config));
-        config.vertex_layout = vertex_layout;
-        config.vertex_size = sizeof(struct nk_d3d9_vertex);
-        config.vertex_alignment = NK_ALIGNOF(struct nk_d3d9_vertex);
-        config.global_alpha = 1.0f;
-        config.shape_AA = AA;
-        config.line_AA = AA;
-        config.circle_segment_count = 22;
-        config.curve_segment_count = 22;
-        config.arc_segment_count = 22;
-        config.null = d3d9.null;
+        INT row = ((width * 3 + 3) & ~3);
+        BITMAPINFO bi = { 0 };
+        bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bi.bmiHeader.biWidth = width;
+        bi.bmiHeader.biHeight = height;
+        bi.bmiHeader.biPlanes = 1;
+        bi.bmiHeader.biBitCount = 24;
+        bi.bmiHeader.biCompression = BI_RGB;
+        bi.bmiHeader.biSizeImage = row * height;
 
-        /* convert shapes into vertexes */
-        nk_buffer_init_default(&vbuf);
-        nk_buffer_init_default(&ebuf);
-        nk_convert(&d3d9.ctx, &d3d9.cmds, &vbuf, &ebuf, &config);
+        LPBYTE lpBuf, pb = NULL;
+        HBITMAP hbm = CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, (void**)&lpBuf, NULL, 0);
 
-        /* iterate over and execute each draw command */
-        offset = (const nk_draw_index *)nk_buffer_memory_const(&ebuf);
-        vertex_count = (UINT)vbuf.needed / sizeof(struct nk_d3d9_vertex);
-
-        nk_draw_foreach(cmd, &d3d9.ctx, &d3d9.cmds)
+        pb = lpBuf + row * height;
+        unsigned char* src = (unsigned char*)frame_buffer;
+        for (int v = 0; v < height; v++)
         {
-            RECT scissor;
-            if (!cmd->elem_count) continue;
-
-            hr = IDirect3DDevice9_SetTexture(d3d9.device, 0, (IDirect3DBaseTexture9 *)cmd->texture.ptr);
-            NK_ASSERT(SUCCEEDED(hr));
-
-            scissor.left = (LONG)cmd->clip_rect.x;
-            scissor.right = (LONG)(cmd->clip_rect.x + cmd->clip_rect.w);
-            scissor.top = (LONG)cmd->clip_rect.y;
-            scissor.bottom = (LONG)(cmd->clip_rect.y + cmd->clip_rect.h);
-
-            hr = IDirect3DDevice9_SetScissorRect(d3d9.device, &scissor);
-            NK_ASSERT(SUCCEEDED(hr));
-
-            NK_ASSERT(sizeof(nk_draw_index) == sizeof(NK_UINT16));
-            hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(d3d9.device, D3DPT_TRIANGLELIST,
-                0, vertex_count, cmd->elem_count/3, offset, D3DFMT_INDEX16,
-                nk_buffer_memory_const(&vbuf), sizeof(struct nk_d3d9_vertex));
-            NK_ASSERT(SUCCEEDED(hr));
-            offset += cmd->elem_count;
+            pb -= row;
+            for (int i = 0; i < row; i += 3)
+            {
+                pb[i + 0] = src[0];
+                pb[i + 1] = src[1];
+                pb[i + 2] = src[2];
+                src += 3;
+            }
         }
-
-        nk_buffer_free(&vbuf);
-        nk_buffer_free(&ebuf);
+        SetDIBits(NULL, hbm, 0, height, lpBuf, &bi, DIB_RGB_COLORS);
+        image->handle.ptr = hbm;
     }
-
-    nk_clear(&d3d9.ctx);
-    nk_buffer_clear(&d3d9.cmds);
-
-    IDirect3DStateBlock9_Apply(d3d9.state);
-    IDirect3DStateBlock9_Release(d3d9.state);
 }
 
 static void
-nk_d3d9_get_projection_matrix(int width, int height, float *result)
+nk_delete_image(struct nk_image* image)
 {
-    const float L = 0.5f;
-    const float R = (float)width + 0.5f;
-    const float T = 0.5f;
-    const float B = (float)height + 0.5f;
-    float matrix[4][4] = {
-        {    2.0f / (R - L),              0.0f, 0.0f, 0.0f },
-        {              0.0f,    2.0f / (T - B), 0.0f, 0.0f },
-        {              0.0f,              0.0f, 0.0f, 0.0f },
-        { (R + L) / (L - R), (T + B) / (B - T), 0.0f, 1.0f },
+    if (image && image->handle.id != 0)
+    {
+        HBITMAP hbm = (HBITMAP)image->handle.ptr;
+        DeleteObject(hbm);
+        memset(image, 0, sizeof(struct nk_image));
+    }
+}
+
+static void
+nk_gdi_draw_image(short x, short y, unsigned short w, unsigned short h,
+                  struct nk_image img, struct nk_color col)
+{
+    HBITMAP hbm = (HBITMAP)img.handle.ptr;
+    HDC     hDCBits;
+    BITMAP  bitmap;
+
+    if (!gdi.memory_dc || !hbm)
+        return;
+
+    hDCBits = CreateCompatibleDC(gdi.memory_dc);
+    GetObject(hbm, sizeof(BITMAP), (LPSTR)&bitmap);
+    SelectObject(hDCBits, hbm);
+    StretchBlt(gdi.memory_dc, x, y, w, h, hDCBits, 0, 0, bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
+    DeleteDC(hDCBits);
+}
+
+static COLORREF
+convert_color(struct nk_color c)
+{
+    return c.r | (c.g << 8) | (c.b << 16);
+}
+
+static void
+nk_gdi_scissor(HDC dc, float x, float y, float w, float h)
+{
+    SelectClipRgn(dc, NULL);
+    IntersectClipRect(dc, (int)x, (int)y, (int)(x + w + 1), (int)(y + h + 1));
+}
+
+static void
+nk_gdi_stroke_line(HDC dc, short x0, short y0, short x1,
+                   short y1, unsigned int line_thickness, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
+    }
+
+    MoveToEx(dc, x0, y0, NULL);
+    LineTo(dc, x1, y1);
+
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_stroke_rect(HDC dc, short x, short y, unsigned short w,
+                   unsigned short h, unsigned short r, unsigned short line_thickness, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
+    }
+
+    HGDIOBJ br = SelectObject(dc, GetStockObject(NULL_BRUSH));
+    if (r == 0) {
+        Rectangle(dc, x, y, x + w, y + h);
+    }
+    else {
+        RoundRect(dc, x, y, x + w, y + h, r, r);
+    }
+    SelectObject(dc, br);
+
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_fill_rect(HDC dc, short x, short y, unsigned short w,
+                 unsigned short h, unsigned short r, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+
+    if (r == 0) {
+        RECT rect = { x, y, x + w, y + h };
+        SetBkColor(dc, color);
+        ExtTextOutW(dc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+    }
+    else {
+        SetDCPenColor(dc, color);
+        SetDCBrushColor(dc, color);
+        RoundRect(dc, x, y, x + w, y + h, r, r);
+    }
+}
+static void
+nk_gdi_set_vertexColor(PTRIVERTEX tri, struct nk_color col)
+{
+    tri->Red = col.r << 8;
+    tri->Green = col.g << 8;
+    tri->Blue = col.b << 8;
+    tri->Alpha = 0xff << 8;
+}
+
+static void
+nk_gdi_rect_multi_color(HDC dc, short x, short y, unsigned short w,
+                        unsigned short h, struct nk_color left, struct nk_color top,
+                        struct nk_color right, struct nk_color bottom)
+{
+    BLENDFUNCTION alphaFunction;
+    GRADIENT_TRIANGLE gTri[2];
+    TRIVERTEX vt[4];
+    alphaFunction.BlendOp = AC_SRC_OVER;
+    alphaFunction.BlendFlags = 0;
+    alphaFunction.SourceConstantAlpha = 0;
+    alphaFunction.AlphaFormat = AC_SRC_ALPHA;
+
+    /* TODO: This Case Needs Repair.*/
+    /* Top Left Corner */
+    vt[0].x = x;
+    vt[0].y = y;
+    nk_gdi_set_vertexColor(&vt[0], left);
+    /* Top Right Corner */
+    vt[1].x = x + w;
+    vt[1].y = y;
+    nk_gdi_set_vertexColor(&vt[1], top);
+    /* Bottom Left Corner */
+    vt[2].x = x;
+    vt[2].y = y + h;
+    nk_gdi_set_vertexColor(&vt[2], right);
+
+    /* Bottom Right Corner */
+    vt[3].x = x + w;
+    vt[3].y = y + h;
+    nk_gdi_set_vertexColor(&vt[3], bottom);
+
+    gTri[0].Vertex1 = 0;
+    gTri[0].Vertex2 = 1;
+    gTri[0].Vertex3 = 2;
+    gTri[1].Vertex1 = 2;
+    gTri[1].Vertex2 = 1;
+    gTri[1].Vertex3 = 3;
+    GdiGradientFill(dc, vt, 4, gTri, 2, GRADIENT_FILL_TRIANGLE);
+    AlphaBlend(gdi.window_dc, x, y, x + w, y + h, gdi.memory_dc, x, y, x + w, y + h, alphaFunction);
+
+}
+
+static void
+nk_gdi_fill_triangle(HDC dc, short x0, short y0, short x1,
+                     short y1, short x2, short y2, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    POINT points[] = {
+        { x0, y0 },
+        { x1, y1 },
+        { x2, y2 },
     };
-    memcpy(result, matrix, sizeof(matrix));
-}
 
-NK_API void
-nk_d3d9_release(void)
-{
-    IDirect3DTexture9_Release(d3d9.texture);
+    SetDCPenColor(dc, color);
+    SetDCBrushColor(dc, color);
+    Polygon(dc, points, 3);
 }
 
 static void
-nk_d3d9_create_font_texture()
+nk_gdi_stroke_triangle(HDC dc, short x0, short y0, short x1,
+                       short y1, short x2, short y2, unsigned short line_thickness, struct nk_color col)
 {
-    int w, h, y;
-    const void *image;
+    COLORREF color = convert_color(col);
+    POINT points[] = {
+        { x0, y0 },
+        { x1, y1 },
+        { x2, y2 },
+        { x0, y0 },
+    };
 
-    HRESULT hr;
-    D3DLOCKED_RECT locked;
-
-    image = nk_font_atlas_bake(&d3d9.atlas, &w, &h, NK_FONT_ATLAS_RGBA32);
-
-    hr = IDirect3DDevice9_CreateTexture(d3d9.device, w, h, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &d3d9.texture, NULL);
-    NK_ASSERT(SUCCEEDED(hr));
-
-    hr = IDirect3DTexture9_LockRect(d3d9.texture, 0, &locked, NULL, 0);
-    NK_ASSERT(SUCCEEDED(hr));
-
-    for (y = 0; y < h; y++) {
-        void *src = (char *)image + y * w * 4;
-        void *dst = (char *)locked.pBits + y * locked.Pitch;
-        memcpy(dst, src, w * 4);
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
     }
 
-    hr = IDirect3DTexture9_UnlockRect(d3d9.texture, 0);
-    NK_ASSERT(SUCCEEDED(hr));
+    Polyline(dc, points, 4);
 
-    nk_font_atlas_end(&d3d9.atlas, nk_handle_ptr(d3d9.texture), &d3d9.null);
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_fill_polygon(HDC dc, const struct nk_vec2i* pnts, int count, struct nk_color col)
+{
+    int i = 0;
+#define MAX_POINTS 64
+    POINT points[MAX_POINTS];
+    COLORREF color = convert_color(col);
+    SetDCBrushColor(dc, color);
+    SetDCPenColor(dc, color);
+    for (i = 0; i < count && i < MAX_POINTS; ++i) {
+        points[i].x = pnts[i].x;
+        points[i].y = pnts[i].y;
+    }
+    Polygon(dc, points, i);
+#undef MAX_POINTS
+}
+
+static void
+nk_gdi_stroke_polygon(HDC dc, const struct nk_vec2i* pnts, int count,
+                      unsigned short line_thickness, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
+    }
+
+    if (count > 0) {
+        int i;
+        MoveToEx(dc, pnts[0].x, pnts[0].y, NULL);
+        for (i = 1; i < count; ++i)
+            LineTo(dc, pnts[i].x, pnts[i].y);
+        LineTo(dc, pnts[0].x, pnts[0].y);
+    }
+
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_stroke_polyline(HDC dc, const struct nk_vec2i* pnts,
+                       int count, unsigned short line_thickness, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
+    }
+
+    if (count > 0) {
+        int i;
+        MoveToEx(dc, pnts[0].x, pnts[0].y, NULL);
+        for (i = 1; i < count; ++i)
+            LineTo(dc, pnts[i].x, pnts[i].y);
+    }
+
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_fill_circle(HDC dc, short x, short y, unsigned short w,
+                   unsigned short h, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    SetDCBrushColor(dc, color);
+    SetDCPenColor(dc, color);
+    Ellipse(dc, x, y, x + w, y + h);
+}
+
+static void
+nk_gdi_stroke_circle(HDC dc, short x, short y, unsigned short w,
+                     unsigned short h, unsigned short line_thickness, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
+    }
+
+    SetDCBrushColor(dc, OPAQUE);
+    Ellipse(dc, x, y, x + w, y + h);
+
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_stroke_curve(HDC dc, struct nk_vec2i p1,
+                    struct nk_vec2i p2, struct nk_vec2i p3, struct nk_vec2i p4,
+                    unsigned short line_thickness, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    POINT p[] = {
+        { p1.x, p1.y },
+        { p2.x, p2.y },
+        { p3.x, p3.y },
+        { p4.x, p4.y },
+    };
+
+    HPEN pen = NULL;
+    if (line_thickness == 1) {
+        SetDCPenColor(dc, color);
+    }
+    else {
+        pen = CreatePen(PS_SOLID, line_thickness, color);
+        SelectObject(dc, pen);
+    }
+
+    SetDCBrushColor(dc, OPAQUE);
+    PolyBezier(dc, p, 4);
+
+    if (pen) {
+        SelectObject(dc, GetStockObject(DC_PEN));
+        DeleteObject(pen);
+    }
+}
+
+static void
+nk_gdi_draw_text(HDC dc, short x, short y, unsigned short w, unsigned short h,
+                 const char* text, int len, GdiFont* font, struct nk_color cbg, struct nk_color cfg)
+{
+    int wsize;
+    WCHAR* wstr;
+
+    if (!text || !font || !len) return;
+
+    wsize = MultiByteToWideChar(CP_UTF8, 0, text, len, NULL, 0);
+    wstr = (WCHAR*)_alloca(wsize * sizeof(wchar_t));
+    MultiByteToWideChar(CP_UTF8, 0, text, len, wstr, wsize);
+
+    SetBkColor(dc, convert_color(cbg));
+    SetTextColor(dc, convert_color(cfg));
+
+    SelectObject(dc, font->handle);
+    ExtTextOutW(dc, x, y, ETO_OPAQUE, NULL, wstr, wsize, NULL);
+}
+
+static void
+nk_gdi_clear(HDC dc, struct nk_color col)
+{
+    COLORREF color = convert_color(col);
+    RECT rect = { 0, 0, (LONG)gdi.width, (LONG)gdi.height };
+    SetBkColor(dc, color);
+
+    ExtTextOutW(dc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+}
+
+static void
+nk_gdi_blit(HDC dc)
+{
+    BitBlt(dc, 0, 0, gdi.width, gdi.height, gdi.memory_dc, 0, 0, SRCCOPY);
+
+}
+
+GdiFont*
+nk_gdifont_create(const char* name, int size)
+{
+    TEXTMETRICW metric;
+    GdiFont* font = (GdiFont*)calloc(1, sizeof(GdiFont));
+    if (!font)
+        return NULL;
+    font->dc = CreateCompatibleDC(0);
+    font->handle = CreateFontA(size, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, name);
+    SelectObject(font->dc, font->handle);
+    GetTextMetricsW(font->dc, &metric);
+    font->height = metric.tmHeight;
+    return font;
+}
+
+static float
+nk_gdifont_get_text_width(nk_handle handle, float height, const char* text, int len)
+{
+    GdiFont* font = (GdiFont*)handle.ptr;
+    SIZE size;
+    int wsize;
+    WCHAR* wstr;
+    if (!font || !text)
+        return 0;
+
+    wsize = MultiByteToWideChar(CP_UTF8, 0, text, len, NULL, 0);
+    wstr = (WCHAR*)_alloca(wsize * sizeof(wchar_t));
+    MultiByteToWideChar(CP_UTF8, 0, text, len, wstr, wsize);
+    if (GetTextExtentPoint32W(font->dc, wstr, wsize, &size))
+        return (float)size.cx;
+    return -1.0f;
+}
+
+void
+nk_gdifont_del(GdiFont* font)
+{
+    if (!font) return;
+    DeleteObject(font->handle);
+    DeleteDC(font->dc);
+    free(font);
+}
+
+static void
+nk_gdi_clipboard_paste(nk_handle usr, struct nk_text_edit* edit)
+{
+    (void)usr;
+    if (IsClipboardFormatAvailable(CF_UNICODETEXT) && OpenClipboard(NULL))
+    {
+        HGLOBAL mem = GetClipboardData(CF_UNICODETEXT);
+        if (mem)
+        {
+            SIZE_T size = GlobalSize(mem) - 1;
+            if (size)
+            {
+                LPCWSTR wstr = (LPCWSTR)GlobalLock(mem);
+                if (wstr)
+                {
+                    int utf8size = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)(size / sizeof(wchar_t)), NULL, 0, NULL, NULL);
+                    if (utf8size)
+                    {
+                        char* utf8 = (char*)malloc(utf8size);
+                        if (utf8)
+                        {
+                            WideCharToMultiByte(CP_UTF8, 0, wstr, (int)(size / sizeof(wchar_t)), utf8, utf8size, NULL, NULL);
+                            nk_textedit_paste(edit, utf8, utf8size);
+                            free(utf8);
+                        }
+                    }
+                    GlobalUnlock(mem);
+                }
+            }
+        }
+        CloseClipboard();
+    }
+}
+
+static void
+nk_gdi_clipboard_copy(nk_handle usr, const char* text, int len)
+{
+    if (OpenClipboard(NULL))
+    {
+        int wsize = MultiByteToWideChar(CP_UTF8, 0, text, len, NULL, 0);
+        if (wsize)
+        {
+            HGLOBAL mem = (HGLOBAL)GlobalAlloc(GMEM_MOVEABLE, (wsize + 1) * sizeof(wchar_t));
+            if (mem)
+            {
+                wchar_t* wstr = (wchar_t*)GlobalLock(mem);
+                if (wstr)
+                {
+                    MultiByteToWideChar(CP_UTF8, 0, text, len, wstr, wsize);
+                    wstr[wsize] = 0;
+                    GlobalUnlock(mem);
+
+                    SetClipboardData(CF_UNICODETEXT, mem);
+                }
+            }
+        }
+        CloseClipboard();
+    }
+}
+
+NK_API struct nk_context*
+nk_gdi_init(GdiFont* gdifont, HDC window_dc, unsigned int width, unsigned int height)
+{
+    struct nk_user_font* font = &gdifont->nk;
+    font->userdata = nk_handle_ptr(gdifont);
+    font->height = (float)gdifont->height;
+    font->width = nk_gdifont_get_text_width;
+
+    gdi.bitmap = CreateCompatibleBitmap(window_dc, width, height);
+    gdi.window_dc = window_dc;
+    gdi.memory_dc = CreateCompatibleDC(window_dc);
+    gdi.width = width;
+    gdi.height = height;
+    SelectObject(gdi.memory_dc, gdi.bitmap);
+
+    nk_init_default(&gdi.ctx, font);
+    gdi.ctx.clip.copy = nk_gdi_clipboard_copy;
+    gdi.ctx.clip.paste = nk_gdi_clipboard_paste;
+    return &gdi.ctx;
 }
 
 NK_API void
-nk_d3d9_resize(int width, int height)
+nk_gdi_set_font(GdiFont* gdifont)
 {
-    if (d3d9.texture) {
-        nk_d3d9_create_font_texture();
-    }
-
-    nk_d3d9_create_state();
-
-    nk_d3d9_get_projection_matrix(width, height, &d3d9.projection.m[0][0]);
-    d3d9.viewport.Width = width;
-    d3d9.viewport.Height = height;
+    struct nk_user_font* font = &gdifont->nk;
+    font->userdata = nk_handle_ptr(gdifont);
+    font->height = (float)gdifont->height;
+    font->width = nk_gdifont_get_text_width;
+    nk_style_set_font(&gdi.ctx, font);
 }
 
 NK_API int
-nk_d3d9_handle_event(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+nk_gdi_handle_event(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
-    case WM_KEYDOWN:
-    case WM_KEYUP:
-    case WM_SYSKEYDOWN:
-    case WM_SYSKEYUP:
-    {
-        int down = !((lparam >> 31) & 1);
-        int ctrl = GetKeyState(VK_CONTROL) & (1 << 15);
-
-        switch (wparam)
+        case WM_SIZE:
         {
-        case VK_SHIFT:
-        case VK_LSHIFT:
-        case VK_RSHIFT:
-            nk_input_key(&d3d9.ctx, NK_KEY_SHIFT, down);
-            return 1;
-
-        case VK_DELETE:
-            nk_input_key(&d3d9.ctx, NK_KEY_DEL, down);
-            return 1;
-
-        case VK_RETURN:
-            nk_input_key(&d3d9.ctx, NK_KEY_ENTER, down);
-            return 1;
-
-        case VK_TAB:
-            nk_input_key(&d3d9.ctx, NK_KEY_TAB, down);
-            return 1;
-
-        case VK_LEFT:
-            if (ctrl)
-                nk_input_key(&d3d9.ctx, NK_KEY_TEXT_WORD_LEFT, down);
-            else
-                nk_input_key(&d3d9.ctx, NK_KEY_LEFT, down);
-            return 1;
-
-        case VK_RIGHT:
-            if (ctrl)
-                nk_input_key(&d3d9.ctx, NK_KEY_TEXT_WORD_RIGHT, down);
-            else
-                nk_input_key(&d3d9.ctx, NK_KEY_RIGHT, down);
-            return 1;
-
-        case VK_BACK:
-            nk_input_key(&d3d9.ctx, NK_KEY_BACKSPACE, down);
-            return 1;
-
-        case VK_HOME:
-            nk_input_key(&d3d9.ctx, NK_KEY_TEXT_START, down);
-            nk_input_key(&d3d9.ctx, NK_KEY_SCROLL_START, down);
-            return 1;
-
-        case VK_END:
-            nk_input_key(&d3d9.ctx, NK_KEY_TEXT_END, down);
-            nk_input_key(&d3d9.ctx, NK_KEY_SCROLL_END, down);
-            return 1;
-
-        case VK_NEXT:
-            nk_input_key(&d3d9.ctx, NK_KEY_SCROLL_DOWN, down);
-            return 1;
-
-        case VK_PRIOR:
-            nk_input_key(&d3d9.ctx, NK_KEY_SCROLL_UP, down);
-            return 1;
-
-        case 'C':
-            if (ctrl) {
-                nk_input_key(&d3d9.ctx, NK_KEY_COPY, down);
-                return 1;
-            }
-            break;
-
-        case 'V':
-            if (ctrl) {
-                nk_input_key(&d3d9.ctx, NK_KEY_PASTE, down);
-                return 1;
-            }
-            break;
-
-        case 'X':
-            if (ctrl) {
-                nk_input_key(&d3d9.ctx, NK_KEY_CUT, down);
-                return 1;
-            }
-            break;
-
-        case 'Z':
-            if (ctrl) {
-                nk_input_key(&d3d9.ctx, NK_KEY_TEXT_UNDO, down);
-                return 1;
-            }
-            break;
-
-        case 'R':
-            if (ctrl) {
-                nk_input_key(&d3d9.ctx, NK_KEY_TEXT_REDO, down);
-                return 1;
+            unsigned width = LOWORD(lparam);
+            unsigned height = HIWORD(lparam);
+            if (width != gdi.width || height != gdi.height)
+            {
+                DeleteObject(gdi.bitmap);
+                gdi.bitmap = CreateCompatibleBitmap(gdi.window_dc, width, height);
+                gdi.width = width;
+                gdi.height = height;
+                SelectObject(gdi.memory_dc, gdi.bitmap);
             }
             break;
         }
-        return 0;
-    }
 
-    case WM_CHAR:
-        if (wparam >= 32)
+        case WM_PAINT:
         {
-            nk_input_unicode(&d3d9.ctx, (nk_rune)wparam);
+            PAINTSTRUCT paint;
+            HDC dc = BeginPaint(wnd, &paint);
+            nk_gdi_blit(dc);
+            EndPaint(wnd, &paint);
             return 1;
         }
-        break;
 
-    case WM_LBUTTONDOWN:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_LEFT, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-        SetCapture(wnd);
-        return 1;
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        {
+            int down = !((lparam >> 31) & 1);
+            int ctrl = GetKeyState(VK_CONTROL) & (1 << 15);
 
-    case WM_LBUTTONUP:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_DOUBLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
-        nk_input_button(&d3d9.ctx, NK_BUTTON_LEFT, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
-        ReleaseCapture();
-        return 1;
+            switch (wparam)
+            {
+                case VK_SHIFT:
+                case VK_LSHIFT:
+                case VK_RSHIFT:
+                    nk_input_key(&gdi.ctx, NK_KEY_SHIFT, down);
+                    return 1;
 
-    case WM_RBUTTONDOWN:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_RIGHT, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-        SetCapture(wnd);
-        return 1;
+                case VK_DELETE:
+                    nk_input_key(&gdi.ctx, NK_KEY_DEL, down);
+                    return 1;
 
-    case WM_RBUTTONUP:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_RIGHT, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
-        ReleaseCapture();
-        return 1;
+                case VK_RETURN:
+                    nk_input_key(&gdi.ctx, NK_KEY_ENTER, down);
+                    return 1;
 
-    case WM_MBUTTONDOWN:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_MIDDLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-        SetCapture(wnd);
-        return 1;
+                case VK_TAB:
+                    nk_input_key(&gdi.ctx, NK_KEY_TAB, down);
+                    return 1;
 
-    case WM_MBUTTONUP:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_MIDDLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
-        ReleaseCapture();
-        return 1;
+                case VK_LEFT:
+                    if (ctrl)
+                        nk_input_key(&gdi.ctx, NK_KEY_TEXT_WORD_LEFT, down);
+                    else
+                        nk_input_key(&gdi.ctx, NK_KEY_LEFT, down);
+                    return 1;
 
-    case WM_MOUSEWHEEL:
-        nk_input_scroll(&d3d9.ctx, nk_vec2(0,(float)(short)HIWORD(wparam) / WHEEL_DELTA));
-        return 1;
+                case VK_RIGHT:
+                    if (ctrl)
+                        nk_input_key(&gdi.ctx, NK_KEY_TEXT_WORD_RIGHT, down);
+                    else
+                        nk_input_key(&gdi.ctx, NK_KEY_RIGHT, down);
+                    return 1;
 
-    case WM_MOUSEMOVE:
-        nk_input_motion(&d3d9.ctx, (short)LOWORD(lparam), (short)HIWORD(lparam));
-        return 1;
+                case VK_BACK:
+                    nk_input_key(&gdi.ctx, NK_KEY_BACKSPACE, down);
+                    return 1;
 
-    case WM_LBUTTONDBLCLK:
-        nk_input_button(&d3d9.ctx, NK_BUTTON_DOUBLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-        return 1;
+                case VK_HOME:
+                    nk_input_key(&gdi.ctx, NK_KEY_TEXT_START, down);
+                    nk_input_key(&gdi.ctx, NK_KEY_SCROLL_START, down);
+                    return 1;
+
+                case VK_END:
+                    nk_input_key(&gdi.ctx, NK_KEY_TEXT_END, down);
+                    nk_input_key(&gdi.ctx, NK_KEY_SCROLL_END, down);
+                    return 1;
+
+                case VK_NEXT:
+                    nk_input_key(&gdi.ctx, NK_KEY_SCROLL_DOWN, down);
+                    return 1;
+
+                case VK_PRIOR:
+                    nk_input_key(&gdi.ctx, NK_KEY_SCROLL_UP, down);
+                    return 1;
+
+                case 'C':
+                    if (ctrl) {
+                        nk_input_key(&gdi.ctx, NK_KEY_COPY, down);
+                        return 1;
+                    }
+                    break;
+
+                case 'V':
+                    if (ctrl) {
+                        nk_input_key(&gdi.ctx, NK_KEY_PASTE, down);
+                        return 1;
+                    }
+                    break;
+
+                case 'X':
+                    if (ctrl) {
+                        nk_input_key(&gdi.ctx, NK_KEY_CUT, down);
+                        return 1;
+                    }
+                    break;
+
+                case 'Z':
+                    if (ctrl) {
+                        nk_input_key(&gdi.ctx, NK_KEY_TEXT_UNDO, down);
+                        return 1;
+                    }
+                    break;
+
+                case 'R':
+                    if (ctrl) {
+                        nk_input_key(&gdi.ctx, NK_KEY_TEXT_REDO, down);
+                        return 1;
+                    }
+                    break;
+            }
+            return 0;
+        }
+
+        case WM_CHAR:
+            if (wparam >= 32)
+            {
+                nk_input_unicode(&gdi.ctx, (nk_rune)wparam);
+                return 1;
+            }
+            break;
+
+        case WM_LBUTTONDOWN:
+            nk_input_button(&gdi.ctx, NK_BUTTON_LEFT, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
+            SetCapture(wnd);
+            return 1;
+
+        case WM_LBUTTONUP:
+            nk_input_button(&gdi.ctx, NK_BUTTON_DOUBLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
+            nk_input_button(&gdi.ctx, NK_BUTTON_LEFT, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
+            ReleaseCapture();
+            return 1;
+
+        case WM_RBUTTONDOWN:
+            nk_input_button(&gdi.ctx, NK_BUTTON_RIGHT, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
+            SetCapture(wnd);
+            return 1;
+
+        case WM_RBUTTONUP:
+            nk_input_button(&gdi.ctx, NK_BUTTON_RIGHT, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
+            ReleaseCapture();
+            return 1;
+
+        case WM_MBUTTONDOWN:
+            nk_input_button(&gdi.ctx, NK_BUTTON_MIDDLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
+            SetCapture(wnd);
+            return 1;
+
+        case WM_MBUTTONUP:
+            nk_input_button(&gdi.ctx, NK_BUTTON_MIDDLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 0);
+            ReleaseCapture();
+            return 1;
+
+        case WM_MOUSEWHEEL:
+            nk_input_scroll(&gdi.ctx, nk_vec2(0, (float)(short)HIWORD(wparam) / WHEEL_DELTA));
+            return 1;
+
+        case WM_MOUSEMOVE:
+            nk_input_motion(&gdi.ctx, (short)LOWORD(lparam), (short)HIWORD(lparam));
+            return 1;
+
+        case WM_LBUTTONDBLCLK:
+            nk_input_button(&gdi.ctx, NK_BUTTON_DOUBLE, (short)LOWORD(lparam), (short)HIWORD(lparam), 1);
+            return 1;
     }
 
     return 0;
 }
 
-static void
-nk_d3d9_clipboard_paste(nk_handle usr, struct nk_text_edit *edit)
+NK_API void
+nk_gdi_shutdown(void)
 {
-    (void)usr;
-    if (!IsClipboardFormatAvailable(CF_UNICODETEXT) && OpenClipboard(NULL)) {
-        return;
-    }
-
-    HGLOBAL mem = GetClipboardData(CF_UNICODETEXT);
-    if (!mem) {
-        CloseClipboard();
-        return;
-    }
-
-    SIZE_T size = GlobalSize(mem) - 1;
-    if (!size) {
-        CloseClipboard();
-        return;
-    }
-
-    LPCWSTR wstr = (LPCWSTR)GlobalLock(mem);
-    if (!wstr) {
-        CloseClipboard();
-        return;
-    }
-
-    int utf8size = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)size / sizeof(wchar_t), NULL, 0, NULL, NULL);
-    if (utf8size) {
-        char *utf8 = (char *)malloc(utf8size);
-        if (utf8) {
-            WideCharToMultiByte(CP_UTF8, 0, wstr, (int)size / sizeof(wchar_t), utf8, utf8size, NULL, NULL);
-            nk_textedit_paste(edit, utf8, utf8size);
-            free(utf8);
-        }
-    }
-
-    GlobalUnlock(mem); 
-    CloseClipboard();
-}
-
-static void
-nk_d3d9_clipboard_copy(nk_handle usr, const char *text, int len)
-{
-    (void)usr;
-    if (!OpenClipboard(NULL)) {
-        return;
-    }
-
-    int wsize = MultiByteToWideChar(CP_UTF8, 0, text, len, NULL, 0);
-    if (wsize) {
-        HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, (wsize + 1) * sizeof(wchar_t));
-        if (mem) {
-            wchar_t *wstr = (wchar_t*)GlobalLock(mem);
-            if (wstr) {
-                MultiByteToWideChar(CP_UTF8, 0, text, len, wstr, wsize);
-                wstr[wsize] = 0;
-                GlobalUnlock(mem);
-                SetClipboardData(CF_UNICODETEXT, mem); 
-            }
-        }
-    }
-
-    CloseClipboard();
-}
-
-NK_API struct nk_context*
-nk_d3d9_init(IDirect3DDevice9 *device, int width, int height)
-{
-    d3d9.device = device;
-    IDirect3DDevice9_AddRef(device);
-
-    nk_init_default(&d3d9.ctx, 0);
-    d3d9.state = NULL;
-    d3d9.texture = NULL;
-    d3d9.ctx.clip.copy = nk_d3d9_clipboard_copy;
-    d3d9.ctx.clip.paste = nk_d3d9_clipboard_paste;
-    d3d9.ctx.clip.userdata = nk_handle_ptr(0);
-
-    nk_buffer_init_default(&d3d9.cmds);
-
-    /* viewport */
-    d3d9.viewport.X = 0;
-    d3d9.viewport.Y = 0;
-    d3d9.viewport.MinZ = 0.0f;
-    d3d9.viewport.MaxZ = 1.0f;
-
-    nk_d3d9_resize(width, height);
-
-    return &d3d9.ctx;
+    DeleteObject(gdi.memory_dc);
+    DeleteObject(gdi.bitmap);
+    nk_free(&gdi.ctx);
 }
 
 NK_API void
-nk_d3d9_font_stash_begin(struct nk_font_atlas **atlas)
+nk_gdi_render(struct nk_color clear)
 {
-    nk_font_atlas_init_default(&d3d9.atlas);
-    nk_font_atlas_begin(&d3d9.atlas);
-    *atlas = &d3d9.atlas;
-}
+    const struct nk_command* cmd;
 
-NK_API void
-nk_d3d9_font_stash_end(void)
-{
-    nk_d3d9_create_font_texture();
+    HDC memory_dc = gdi.memory_dc;
+    SelectObject(memory_dc, GetStockObject(DC_PEN));
+    SelectObject(memory_dc, GetStockObject(DC_BRUSH));
+    nk_gdi_clear(memory_dc, clear);
 
-    if (d3d9.atlas.default_font)
-        nk_style_set_font(&d3d9.ctx, &d3d9.atlas.default_font->handle);
-}
-
-NK_API
-void nk_d3d9_shutdown(void)
-{
-    nk_d3d9_release();
-
-    nk_font_atlas_clear(&d3d9.atlas);
-    nk_buffer_free(&d3d9.cmds);
-    nk_free(&d3d9.ctx);
+    nk_foreach(cmd, &gdi.ctx)
+    {
+        switch (cmd->type) {
+            case NK_COMMAND_NOP: break;
+            case NK_COMMAND_SCISSOR: {
+                const struct nk_command_scissor* s = (const struct nk_command_scissor*)cmd;
+                nk_gdi_scissor(memory_dc, s->x, s->y, s->w, s->h);
+            } break;
+            case NK_COMMAND_LINE: {
+                const struct nk_command_line* l = (const struct nk_command_line*)cmd;
+                nk_gdi_stroke_line(memory_dc, l->begin.x, l->begin.y, l->end.x,
+                                   l->end.y, l->line_thickness, l->color);
+            } break;
+            case NK_COMMAND_RECT: {
+                const struct nk_command_rect* r = (const struct nk_command_rect*)cmd;
+                nk_gdi_stroke_rect(memory_dc, r->x, r->y, r->w, r->h,
+                                   (unsigned short)r->rounding, r->line_thickness, r->color);
+            } break;
+            case NK_COMMAND_RECT_FILLED: {
+                const struct nk_command_rect_filled* r = (const struct nk_command_rect_filled*)cmd;
+                nk_gdi_fill_rect(memory_dc, r->x, r->y, r->w, r->h,
+                                 (unsigned short)r->rounding, r->color);
+            } break;
+            case NK_COMMAND_CIRCLE: {
+                const struct nk_command_circle* c = (const struct nk_command_circle*)cmd;
+                nk_gdi_stroke_circle(memory_dc, c->x, c->y, c->w, c->h, c->line_thickness, c->color);
+            } break;
+            case NK_COMMAND_CIRCLE_FILLED: {
+                const struct nk_command_circle_filled* c = (const struct nk_command_circle_filled*)cmd;
+                nk_gdi_fill_circle(memory_dc, c->x, c->y, c->w, c->h, c->color);
+            } break;
+            case NK_COMMAND_TRIANGLE: {
+                const struct nk_command_triangle* t = (const struct nk_command_triangle*)cmd;
+                nk_gdi_stroke_triangle(memory_dc, t->a.x, t->a.y, t->b.x, t->b.y,
+                                       t->c.x, t->c.y, t->line_thickness, t->color);
+            } break;
+            case NK_COMMAND_TRIANGLE_FILLED: {
+                const struct nk_command_triangle_filled* t = (const struct nk_command_triangle_filled*)cmd;
+                nk_gdi_fill_triangle(memory_dc, t->a.x, t->a.y, t->b.x, t->b.y,
+                                     t->c.x, t->c.y, t->color);
+            } break;
+            case NK_COMMAND_POLYGON: {
+                const struct nk_command_polygon* p = (const struct nk_command_polygon*)cmd;
+                nk_gdi_stroke_polygon(memory_dc, p->points, p->point_count, p->line_thickness, p->color);
+            } break;
+            case NK_COMMAND_POLYGON_FILLED: {
+                const struct nk_command_polygon_filled* p = (const struct nk_command_polygon_filled*)cmd;
+                nk_gdi_fill_polygon(memory_dc, p->points, p->point_count, p->color);
+            } break;
+            case NK_COMMAND_POLYLINE: {
+                const struct nk_command_polyline* p = (const struct nk_command_polyline*)cmd;
+                nk_gdi_stroke_polyline(memory_dc, p->points, p->point_count, p->line_thickness, p->color);
+            } break;
+            case NK_COMMAND_TEXT: {
+                const struct nk_command_text* t = (const struct nk_command_text*)cmd;
+                nk_gdi_draw_text(memory_dc, t->x, t->y, t->w, t->h,
+                                 (const char*)t->string, t->length,
+                                 (GdiFont*)t->font->userdata.ptr,
+                                 t->background, t->foreground);
+            } break;
+            case NK_COMMAND_CURVE: {
+                const struct nk_command_curve* q = (const struct nk_command_curve*)cmd;
+                nk_gdi_stroke_curve(memory_dc, q->begin, q->ctrl[0], q->ctrl[1],
+                                    q->end, q->line_thickness, q->color);
+            } break;
+            case NK_COMMAND_RECT_MULTI_COLOR: {
+                const struct nk_command_rect_multi_color* r = (const struct nk_command_rect_multi_color*)cmd;
+                nk_gdi_rect_multi_color(memory_dc, r->x, r->y, r->w, r->h, r->left, r->top, r->right, r->bottom);
+            } break;
+            case NK_COMMAND_IMAGE: {
+                const struct nk_command_image* i = (const struct nk_command_image*)cmd;
+                nk_gdi_draw_image(i->x, i->y, i->w, i->h, i->img, i->col);
+            } break;
+            case NK_COMMAND_ARC:
+            case NK_COMMAND_ARC_FILLED:
+            default: break;
+        }
+    }
+    nk_gdi_blit(gdi.window_dc);
+    nk_clear(&gdi.ctx);
 }
 
 #endif
+

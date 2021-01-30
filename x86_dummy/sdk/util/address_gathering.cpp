@@ -87,7 +87,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	sdk::game::connection_offsets::off_SELECT_CHAR_IDX = ConnectToGameServer_off.front();
 	sdk::game::func::c_funcs::Instance().f_ConnectToGameServer = decltype(sdk::game::func::c_funcs::Instance().f_ConnectToGameServer)(dodirectenter_fn);
 
-	sdk::util::c_log::Instance().duo(XorStr("[ dodirectenter fn: %04x ]\n"), dodirectenter_fn);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_directenter fn: %04x ]\n"), dodirectenter_fn);
 	sdk::util::c_log::Instance().duo(XorStr("[ off_SELECT_CHAR_IDX fn: %04x ]\n"), sdk::game::connection_offsets::off_SELECT_CHAR_IDX);
 
 	//
@@ -95,7 +95,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	auto CAccountConnector_SetLoginInfo = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetLoginInfo"));
 	if (!CAccountConnector_SetLoginInfo) return this->error_out(__LINE__);
 
-	sdk::util::c_log::Instance().duo(XorStr("[ SetLoginInfo: %04x ]\n"), CAccountConnector_SetLoginInfo);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SetLoginInfo: %04x ]\n"), CAccountConnector_SetLoginInfo);
 
 	auto CAccountConnector_Set = sdk::util::c_disassembler::Instance().get_calls(CAccountConnector_SetLoginInfo, 0, 0);
 	if (!CAccountConnector_Set.size()) return this->error_out(__LINE__);
@@ -162,7 +162,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 		auto SetOfflinePhase_py_calls = sdk::util::c_disassembler::Instance().get_calls(SetOfflinePhase_py, 0xB, 0, 0);
 		if (SetOfflinePhase_py_calls.empty()) return this->error_out(__LINE__);
 
-		for (auto b : SetOfflinePhase_py_calls) sdk::util::c_log::Instance().duo("[ %04x ]\n", b);
+		for (auto b : SetOfflinePhase_py_calls) sdk::util::c_log::Instance().duo(XorStr("[ %04x ]\n"), b);
 
 		if (SetOfflinePhase_py_calls.size() > 1) CPythonNetworkStream_SetOffLinePhase = SetOfflinePhase_py_calls[SetOfflinePhase_py_calls.size()-2];
 		else CPythonNetworkStream_SetOffLinePhase = SetOfflinePhase_py_calls.front();
@@ -174,7 +174,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	sdk::game::connection_offsets::off_NETWORKING_PHASE = CPythonNetworkStream_SetOffLinePhase_off.front();
 	sdk::util::c_log::Instance().duo(XorStr("[ off_NETWORKING_PHASE: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase_off.front());
-	sdk::util::c_log::Instance().duo(XorStr("[ CPythonNetworkStream_SetOffLinePhase: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonNetworkStream_SetOffLinePhase: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase);
 
 	//
 
@@ -198,7 +198,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	sdk::game::func::c_funcs::Instance().f_SendSelectCharacter = decltype(sdk::game::func::c_funcs::Instance().f_SendSelectCharacter)(CPythonNetworkStream_SendSelectCharacterPacket);
 	sdk::game::func::c_funcs::Instance().o_SendSelectCharacter = CPythonNetworkStream_SendSelectCharacterPacket;
 	
-	sdk::util::c_log::Instance().duo(XorStr("[ CPythonNetworkStream_SendSelectCharacterPacket: %04x ]\n"), CPythonNetworkStream_SendSelectCharacterPacket);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SendSelectCharacter: %04x ]\n"), CPythonNetworkStream_SendSelectCharacterPacket);
 
 	//
 
@@ -226,7 +226,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 bool sdk::util::c_address_gathering::gather_actor_related()
 {
-	auto CPythonCharacterManager_FaintTest = sdk::util::c_fn_discover::Instance().get_fn_py("FaintTest");
+	auto CPythonCharacterManager_FaintTest = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("FaintTest"));
 	if (!CPythonCharacterManager_FaintTest) this->error_out(__LINE__);
 
 	auto CPythonCharacterManager_instance = this->find_singleton_or_instance(CPythonCharacterManager_FaintTest);
@@ -244,15 +244,15 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	sdk::game::actor_offsets::off_DEAD = IsFaint_off.front() + 0xC;
 	sdk::game::pointer_offsets::off_CPythonCharacterManager = CPythonCharacterManager_instance;
 
-	sdk::util::c_log::Instance().duo("[ off_CPythonCharacterManager: %04x ]\n", CPythonCharacterManager_instance);
-	sdk::util::c_log::Instance().duo("[ off_FAINT: %04x ]\n", IsFaint_off.front());
-	sdk::util::c_log::Instance().duo("[ off_SLEEP: %04x ]\n", IsFaint_off.front() - 0x4);
-	sdk::util::c_log::Instance().duo("[ off_STUN : %04x ]\n", IsFaint_off.front() + 0x8);
-	sdk::util::c_log::Instance().duo("[ off_DEAD : %04x ]\n", IsFaint_off.front() + 0xC);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonCharacterManager: %04x ]\n"), CPythonCharacterManager_instance);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_FAINT: %04x ]\n"), IsFaint_off.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SLEEP: %04x ]\n"), IsFaint_off.front() - 0x4);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_STUN : %04x ]\n"), IsFaint_off.front() + 0x8);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_DEAD : %04x ]\n"), IsFaint_off.front() + 0xC);
 
 	//
 
-	auto GetInstanceType_fn = sdk::util::c_fn_discover::Instance().get_fn_py("GetInstanceType");
+	auto GetInstanceType_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("GetInstanceType"));
 	if (!GetInstanceType_fn) return this->error_out(__LINE__);
 
 	auto GetInstanceType_calls = sdk::util::c_disassembler::Instance().get_calls(GetInstanceType_fn, 0, 0, 0);
@@ -274,16 +274,16 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	sdk::game::actor_offsets::off_GRAPHIC_THING = CPythonCharacterManager_GetInstancePtr_off.front();
 	sdk::game::actor_offsets::off_ACTOR_TYPE = CInstanceBase_GetInstanceType_off.front();
 	sdk::game::actor_offsets::off_COMBO_INDEX = CInstanceBase_GetInstanceType_off.front() - 0x4;
-	sdk::util::c_log::Instance().duo("[ off_GRAPHIC_THING : %04x ]\n", CPythonCharacterManager_GetInstancePtr_off.front());
-	sdk::util::c_log::Instance().duo("[ off_ACTOR_TYPE    : %04x ]\n", CInstanceBase_GetInstanceType_off.front());
-	sdk::util::c_log::Instance().duo("[ off_COMBO_INDEX    : %04x ]\n", CInstanceBase_GetInstanceType_off.front() - 0x4);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_GRAPHIC_THING : %04x ]\n"), CPythonCharacterManager_GetInstancePtr_off.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ off_ACTOR_TYPE    : %04x ]\n"), CInstanceBase_GetInstanceType_off.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ off_COMBO_INDEX    : %04x ]\n"), CInstanceBase_GetInstanceType_off.front() - 0x4);
 	   
 	//
 
-	auto CPythonPlayer_OpenCharacterMenu = sdk::util::c_fn_discover::Instance().get_fn_py("OpenCharacterMenu");
+	auto CPythonPlayer_OpenCharacterMenu = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("OpenCharacterMenu"));
 	if (!CPythonPlayer_OpenCharacterMenu) return this->error_out(__LINE__);
 
-	auto possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str("SetPCTargetBoard", 2);
+	auto possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SetPCTargetBoard"), 2);
 
 	auto CPythonPlayer_NEW_GetMainActorPtr_off = sdk::util::c_disassembler::Instance().get_custom(possible_NEW_GetMainActorPtr.front(), 0, 0x20, 0x100, { "call", "mov" });
 	if (CPythonPlayer_NEW_GetMainActorPtr_off.empty()) return this->error_out(__LINE__);
@@ -294,8 +294,45 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 	sdk::game::pointer_offsets::off_CPythonPlayer = CPythonPlayer_instance;
 	sdk::game::actor_offsets::off_VTABLE_GET_MAIN = CPythonPlayer_NEW_GetMainActorPtr_off.front();
-	sdk::util::c_log::Instance().duo("[ off_VTABLE_GET_MAIN    : %04x ]\n", CPythonPlayer_NEW_GetMainActorPtr_off.front());
-	sdk::util::c_log::Instance().duo("[ off_CPythonPlayer      : %04x ]\n", CPythonPlayer_instance);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_VTABLE_GET_MAIN    : %04x ]\n"), CPythonPlayer_NEW_GetMainActorPtr_off.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonPlayer      : %04x ]\n"), CPythonPlayer_instance);
+
+	//
+
+	auto SetVirtualID_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetVirtualID"));
+	if (!SetVirtualID_fn) return this->error_out(__LINE__);
+
+	auto SetVirtualID_calls = sdk::util::c_disassembler::Instance().get_calls(SetVirtualID_fn, 0, 0, 1);
+	if (SetVirtualID_calls.empty()) return this->error_out(__LINE__);
+
+	auto CInstanceBase_SetVirtualID = sdk::util::c_disassembler::Instance().get_calls(SetVirtualID_calls[SetVirtualID_calls.size() - 2], 0, 0, 1);
+	if (CInstanceBase_SetVirtualID.empty())
+	{
+		CInstanceBase_SetVirtualID = sdk::util::c_disassembler::Instance().get_jumps(SetVirtualID_calls[SetVirtualID_calls.size() - 2], 0, 0);
+		if (CInstanceBase_SetVirtualID.empty()) return this->error_out(__LINE__);
+	}
+
+	auto SetVirtualID_offs = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_SetVirtualID.front(), 0, 0x200, 0x2000, { "mov", "push" });
+	if (SetVirtualID_offs.empty()) return this->error_out(__LINE__);
+
+	sdk::game::actor_offsets::off_VIRTUAL_ID = SetVirtualID_offs.front();
+	sdk::game::actor_offsets::off_SHOULD_SKIP_COLLISION = SetVirtualID_offs.front() + 0x8;
+	sdk::util::c_log::Instance().duo(XorStr("[ off_VIRTUAL_ID: %04x ]\n"), SetVirtualID_offs.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SHOULD_SKIP_COLLISION: %04x ]\n"), SetVirtualID_offs.front() + 0x8);
+
+	//
+
+	auto SetNameString_fn = sdk::util::c_fn_discover::Instance().get_fn_py("SetNameString");
+	if (!SetNameString_fn) return this->error_out(__LINE__);
+
+	auto SetNameString_calls = sdk::util::c_disassembler::Instance().get_calls(SetNameString_fn, 0, 0, 1);
+	if (SetNameString_calls.empty()) return this->error_out(__LINE__);
+
+	auto CInstanceBase_SetNameString = sdk::util::c_disassembler::Instance().get_custom(SetNameString_calls[SetNameString_calls.size() - 2], 0, 0x8, 0x30, { "add", "lea" });
+	if (CInstanceBase_SetNameString.empty()) return this->error_out(__LINE__);
+
+	sdk::game::actor_offsets::off_NAME = CInstanceBase_SetNameString.front();
+	sdk::util::c_log::Instance().duo(XorStr("[ off_NAME: %04x ]\n"), CInstanceBase_SetNameString.front());
 
 	return 1;
 }
