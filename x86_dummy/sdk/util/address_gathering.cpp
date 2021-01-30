@@ -261,8 +261,41 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	auto CPythonCharacterManager_GetInstancePtr_off = sdk::util::c_disassembler::Instance().get_custom(GetInstanceType_calls.back(), 0, 0x100, 0x2000, { "mov", "add", "push", "lea" });
 	if (CPythonCharacterManager_GetInstancePtr_off.empty()) return this->error_out(__LINE__);
 
+	auto CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_calls(GetInstanceType_calls.back(), 0, 0, 0);
+	if (CInstanceBase_GetInstanceType_fn.empty())
+	{
+		CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_jumps(GetInstanceType_calls.back(), 0, 0);
+		if (CInstanceBase_GetInstanceType_fn.empty()) return this->error_out(__LINE__);
+	}
+
+	auto CInstanceBase_GetInstanceType_off = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_GetInstanceType_fn.back(), 0, 0x100, 0x2000, { "mov", "add", "push", "lea" });
+	if (CInstanceBase_GetInstanceType_off.empty()) return this->error_out(__LINE__);
+
 	sdk::game::actor_offsets::off_GRAPHIC_THING = CPythonCharacterManager_GetInstancePtr_off.front();
+	sdk::game::actor_offsets::off_ACTOR_TYPE = CInstanceBase_GetInstanceType_off.front();
+	sdk::game::actor_offsets::off_COMBO_INDEX = CInstanceBase_GetInstanceType_off.front() - 0x4;
 	sdk::util::c_log::Instance().duo("[ off_GRAPHIC_THING : %04x ]\n", CPythonCharacterManager_GetInstancePtr_off.front());
+	sdk::util::c_log::Instance().duo("[ off_ACTOR_TYPE    : %04x ]\n", CInstanceBase_GetInstanceType_off.front());
+	sdk::util::c_log::Instance().duo("[ off_COMBO_INDEX    : %04x ]\n", CInstanceBase_GetInstanceType_off.front() - 0x4);
+	   
+	//
+
+	auto CPythonPlayer_OpenCharacterMenu = sdk::util::c_fn_discover::Instance().get_fn_py("OpenCharacterMenu");
+	if (!CPythonPlayer_OpenCharacterMenu) return this->error_out(__LINE__);
+
+	auto possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str("SetPCTargetBoard", 2);
+
+	auto CPythonPlayer_NEW_GetMainActorPtr_off = sdk::util::c_disassembler::Instance().get_custom(possible_NEW_GetMainActorPtr.front(), 0, 0x20, 0x100, { "call", "mov" });
+	if (CPythonPlayer_NEW_GetMainActorPtr_off.empty()) return this->error_out(__LINE__);
+
+	auto CPythonPlayer_instance = this->find_singleton_or_instance(possible_NEW_GetMainActorPtr.front());
+	if (!CPythonPlayer_instance) return this->error_out(__LINE__);
+
+
+	sdk::game::pointer_offsets::off_CPythonPlayer = CPythonPlayer_instance;
+	sdk::game::actor_offsets::off_VTABLE_GET_MAIN = CPythonPlayer_NEW_GetMainActorPtr_off.front();
+	sdk::util::c_log::Instance().duo("[ off_VTABLE_GET_MAIN    : %04x ]\n", CPythonPlayer_NEW_GetMainActorPtr_off.front());
+	sdk::util::c_log::Instance().duo("[ off_CPythonPlayer      : %04x ]\n", CPythonPlayer_instance);
 
 	return 1;
 }

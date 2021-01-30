@@ -14,7 +14,7 @@ namespace sdk
 			void		setup();
 			t_asm_res	get_pushes(uint32_t address, size_t size = 0, size_t min = 0xFFF);
 			t_asm_res	get_addrs(uint32_t address, size_t size = 0, size_t min = 0xFFF);
-			t_asm_res	get_calls(uint32_t address, size_t size = 0, size_t min = 0xFFF, BOOL inc_jumps = false);
+			t_asm_res	get_calls(uint32_t address, size_t size = 0, size_t min = 0xFFF, BOOL skip_py_exports = false);
 			t_asm_res	get_jumps(uint32_t address, size_t size = 0, size_t min = 0xFFF);
 			t_asm_res	get_offsets(uint32_t address, size_t size = 0, size_t min = 0x10, size_t max = 0xFFFF);
 			t_asm_res	get_custom(uint32_t address, size_t size = 0, size_t min = 0x10, size_t max = 0xFFFF, std::vector<std::string> opcodes = {"push", "lea"});

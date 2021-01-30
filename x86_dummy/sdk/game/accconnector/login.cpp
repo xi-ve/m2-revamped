@@ -223,10 +223,6 @@ void sdk::game::accconnector::c_login::setup()
 	this->load_accs();
 
 	if (sdk::game::connection_offsets::off_PASSCODE) this->acccon_passcode = true;
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2"))
-	{
-
-	}
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Kevra"))
 	{
 		this->acccon_passcode = true;
