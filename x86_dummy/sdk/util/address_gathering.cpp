@@ -232,8 +232,14 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	auto CPythonCharacterManager_instance = this->find_singleton_or_instance(CPythonCharacterManager_FaintTest);
 	if (!CPythonCharacterManager_instance) this->error_out(__LINE__);
 
-	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0xC, 0xE, 0, 0, false, false);;
-	if (!IsFaint_fn) this->error_out(__LINE__);
+	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0xC, 0xE, 0, 0, true, true);
+	if (!IsFaint_fn)
+	{
+		auto IsFaint_calls = sdk::util::c_disassembler::Instance().get_calls(CPythonCharacterManager_FaintTest, 0, 0, 1);
+		if (IsFaint_calls.empty()) return this->error_out(__LINE__);
+		IsFaint_fn = IsFaint_calls[IsFaint_calls.size() - 2];
+		if (!IsFaint_fn) this->error_out(__LINE__);
+	}
 
 	auto IsFaint_off = sdk::util::c_disassembler::Instance().get_custom(IsFaint_fn, 0, 0x300, 0x2000, { "mov", "lea", "push" });
 	if (IsFaint_off.empty()) return this->error_out(__LINE__);
@@ -333,6 +339,63 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 	sdk::game::actor_offsets::off_NAME = CInstanceBase_SetNameString.front();
 	sdk::util::c_log::Instance().duo(XorStr("[ off_NAME: %04x ]\n"), CInstanceBase_SetNameString.front());
+
+	//
+
+	auto GetPixelPosition_fn = sdk::util::c_fn_discover::Instance().get_fn_py("GetPixelPosition");
+	if (!GetPixelPosition_fn) return this->error_out(__LINE__);
+
+	auto CInstanceBase_NEW_GetPixelPosition = sdk::util::c_fn_discover::Instance().discover_fn(GetPixelPosition_fn, 0x20, 0x40, 1);
+	if (!CInstanceBase_NEW_GetPixelPosition) return this->error_out(__LINE__);
+
+	auto CInstanceBase_NEW_GetPixelPosition_calls = sdk::util::c_disassembler::Instance().get_calls(CInstanceBase_NEW_GetPixelPosition, 0, 0, 1);
+	if (CInstanceBase_NEW_GetPixelPosition_calls.empty())
+	{
+		CInstanceBase_NEW_GetPixelPosition_calls = sdk::util::c_disassembler::Instance().get_jumps(CInstanceBase_NEW_GetPixelPosition, 0, 0);
+		if (CInstanceBase_NEW_GetPixelPosition_calls.empty()) return this->error_out(__LINE__);
+	}
+
+	auto CInstanceBase_NEW_GetPixelPosition_off = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_NEW_GetPixelPosition_calls.front(), 0, 0x200, 0x3000, { "mov" });
+	if (CInstanceBase_NEW_GetPixelPosition_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::actor_offsets::off_POSITION = CInstanceBase_NEW_GetPixelPosition_off.front();
+	sdk::util::c_log::Instance().duo(XorStr("[ off_POSITION: %04x ]\n"), CInstanceBase_NEW_GetPixelPosition_off.front());
+
+	//
+
+	auto CPythonNetworkStream_SendCharacterStatePacket = sdk::util::c_fn_discover::Instance().get_fn("SendCharacterStatePacket(dwCmdTime=%u");
+	if (!CPythonNetworkStream_SendCharacterStatePacket)
+	{
+		auto CPyhtonNetworkStream_SendAttack = sdk::util::c_fn_discover::Instance().get_fn("Send Battle Attack Packet Error");
+		if (!CPyhtonNetworkStream_SendAttack) return this->error_out(__LINE__);
+
+		sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket = CPythonNetworkStream_SendCharacterStatePacket;
+		sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket = decltype(sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket)(CPyhtonNetworkStream_SendAttack + sdk::util::c_mem::Instance().find_size(CPyhtonNetworkStream_SendAttack) + 0x10);
+		CPythonNetworkStream_SendCharacterStatePacket = CPyhtonNetworkStream_SendAttack + sdk::util::c_mem::Instance().find_size(CPyhtonNetworkStream_SendAttack) + 0x10;
+	}
+	else
+	{
+		sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket = decltype(sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket)(CPythonNetworkStream_SendCharacterStatePacket);
+		sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket = CPythonNetworkStream_SendCharacterStatePacket;
+	}
+
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SendCharacterStatePacket: %04x ]\n"), CPythonNetworkStream_SendCharacterStatePacket);
+
+	//
+
+	auto CPyhtonNetworkStream_SendAttack = sdk::util::c_fn_discover::Instance().get_fn("Send Battle Attack Packet Error");
+	if (!CPyhtonNetworkStream_SendAttack)
+	{
+		//alt through ref
+		auto CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget = sdk::util::c_fn_discover::Instance().get_fn("Shoot : Hitting another target : %");
+		if (!CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget) return this->error_out(__LINE__);
+
+		CPyhtonNetworkStream_SendAttack = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget, 0x50, 0x80, 3, 0, 0, 1);
+		if (!CPyhtonNetworkStream_SendAttack) return this->error_out(__LINE__);
+	}
+
+	sdk::game::func::c_funcs::Instance().f_SendAttackPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendAttackPacket)(CPyhtonNetworkStream_SendAttack);
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SendAttackPacket: %04x ]\n"), CPyhtonNetworkStream_SendAttack);
 
 	return 1;
 }

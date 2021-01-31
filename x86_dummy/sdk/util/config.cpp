@@ -16,8 +16,17 @@ void sdk::util::c_config::add_variable(std::string h, std::string v, std::string
 void sdk::util::c_config::registrant()
 {
 	this->add_variable(XorStr("dynamics"), XorStr("last_file_crc"), "0", CONF_TYPE_STR);
+
 	this->add_variable(XorStr("login"), XorStr("enable"), "0", CONF_TYPE_INT);
 	this->add_variable(XorStr("login"), XorStr("last_character"), "0", CONF_TYPE_STR);
+
+	this->add_variable(XorStr("waithack"), XorStr("toggle"), "0", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("range"), "2000", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("targets"), "5", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("speed"), "1", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("anchor"), "1000", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("metins"), "1", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("mobs"), "1", CONF_TYPE_INT);
 }
 
 bool sdk::util::c_config::save()
@@ -35,7 +44,7 @@ bool sdk::util::c_config::save()
 		this->fstream << jobj << "\n";
 	}
 	this->fstream.close();
-	util::c_log::Instance().print(XorStr("[ saved config ]\n"));
+	//util::c_log::Instance().print(XorStr("[ saved config ]\n"));
 	return 1;
 }
 

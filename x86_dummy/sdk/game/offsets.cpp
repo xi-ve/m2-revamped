@@ -29,3 +29,4 @@ uint32_t sdk::game::actor_offsets::off_VTABLE_GET_MAIN = 0x0;
 uint32_t sdk::game::actor_offsets::off_VIRTUAL_ID = 0x0;
 uint32_t sdk::game::actor_offsets::off_SHOULD_SKIP_COLLISION = 0x0;
 uint32_t sdk::game::actor_offsets::off_NAME = 0x0;
+uint32_t sdk::game::actor_offsets::off_POSITION = 0x0;

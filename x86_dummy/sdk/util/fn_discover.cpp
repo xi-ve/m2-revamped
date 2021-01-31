@@ -22,7 +22,9 @@ void sdk::util::c_fn_discover::get_server()
 		"Celestial World 2.0",
 		"Arithra2",
 		"Kevra",
-		"Anoria2"
+		"Anoria2",
+		"SunshineMt2",
+		"Realm2"
 	};
 
 	auto cur_server = std::string("generic-server");
@@ -170,6 +172,13 @@ sdk::util::t_addrs sdk::util::c_fn_discover::get_adr_str(const char* fn_name, in
 	return l;
 }
 
+sdk::util::t_addrs sdk::util::c_fn_discover::get_adr_str(const char* ref)
+{
+	auto l = sdk::util::t_addrs();
+	for (auto a : this->fns) for (auto b : a.strings) if (strstr(b.c_str(), ref)) l.push_back(a.address);
+	return l;
+}
+
 uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp)
 {
 	auto origin_fn_size = sdk::util::c_mem::Instance().find_size(origin);
@@ -199,6 +208,12 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 			calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
 		}
 		sdk::util::c_log::Instance().duo(XorStr("[ scanning: %04x => %04x, size: %04x, calls: %i ]\n"), origin, a, inside_fn_size, calls_inside.size());
+		if (no_off_push_inside)
+		{
+			auto movs_in = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0x3000, 0xFFFFFFF, { "mov" });
+			sdk::util::c_log::Instance().duo(XorStr("[ movs scan: %04x => %04x, size: %04x, movs: %i ]\n"), origin, a, inside_fn_size, movs_in.size());
+			if (movs_in.size()) continue;
+		}
 		if (no_calls_inside) if (!calls_inside.empty()) continue;
 		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
 		if (approx_off_movs)

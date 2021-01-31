@@ -30,6 +30,7 @@ namespace sdk
 			extern uint32_t		off_VIRTUAL_ID;
 			extern uint32_t		off_SHOULD_SKIP_COLLISION;
 			extern uint32_t		off_NAME;
+			extern uint32_t		off_POSITION;
 		}
 		namespace connection_offsets
 		{

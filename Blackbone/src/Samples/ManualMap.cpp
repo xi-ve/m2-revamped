@@ -11,7 +11,7 @@ DWORD lastpid;
 
 std::vector<DWORD> getpids() {
     std::vector<DWORD> pids;
-    std::vector<std::string> Names = { "Olympia2.exe" };
+    std::vector<std::string> Names = { "Olympia2.exe", "metin2client.bin", "metin2client.exe", "Anoria2.exe", "Kevra.exe", "Arithra2-Client.exe", "Akeno2_new.exe", "SunshineMt2.exe" };
     for (auto a : Names) {
         std::vector<DWORD> buf = Process::EnumByName(std::wstring(a.begin(),a.end()));
         for (auto i : buf) {
@@ -35,9 +35,6 @@ void MapCmdFromMem()
 
     std::this_thread::sleep_for(250ms);
 
-    Process thisProc;
-    thisProc.Attach(pids.front());
-
     void* buf = nullptr;
     auto size = 0;
 
@@ -52,9 +49,10 @@ void MapCmdFromMem()
         CloseHandle( hFile );
     }
 
+	Process thisProc;
+	thisProc.Attach(pids.front());
 
-
-    auto image = thisProc.mmap().MapImage( size, buf, false, NoThreads | WipeHeader | CreateLdrRef );
+    auto image = thisProc.mmap().MapImage( size, buf, false, NoThreads | WipeHeader );
     if (!image)
     {
         std::wcout << L"Mapping failed with error 0x" << std::hex << image.status
@@ -62,6 +60,8 @@ void MapCmdFromMem()
     }
     else
         std::wcout << L"Successfully mapped, unmapping\n";
+
+    thisProc.Detach();
 
     VirtualFree( buf, 0, MEM_RELEASE );
 }

@@ -35,16 +35,17 @@
 //cheat predefs
 #include <win_strct.h>
 //cheat core
+#include <util/structs.h>
 #include <util/xor.h>
 #include <singleton.h>
 #include <util/maths.h>
 #include <crc32/crc32.h>
 #include <util/crc32.h>
 #include <util/log.h>
+#include <util/config.h>
 #include <util/mem.h>
 #include <util/disassembler.h>
 #include <util/threading.h>
-#include <util/config.h>
 #include <game/offsets.h>
 #include <game/functions.h>
 #include <game/utils.h>
@@ -54,5 +55,6 @@
 #include <util/address_gathering.h>
 #include <game/accconnector/login.h>
 #include <game/hardware_id.h>
+#include <game/char/waithack.h>
 #include <ui.h>
 #include <startup.h>

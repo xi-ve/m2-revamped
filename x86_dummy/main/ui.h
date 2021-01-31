@@ -7,6 +7,7 @@ namespace main
 	{
 	private:
 		bool		debug_serverdata = false;
+		bool		debug_actors = false;
 	private:		
 		WNDCLASSW wc;
 		RECT rect = { 0, 0, 350, 550 };
@@ -18,6 +19,7 @@ namespace main
 		void create_device(HWND wnd);
 	private:
 		void checkbox(std::string label, std::string varhead, std::string varbod, std::function<void()> fn = NULL);
+		void slider(std::string label, std::string varhead, std::string varbod, int min, int max, float steps = 0.1f);
 	public:
 		void setup();
 		void work();

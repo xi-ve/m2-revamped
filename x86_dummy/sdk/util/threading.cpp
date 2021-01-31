@@ -50,7 +50,7 @@ void __stdcall sdk::util::core_worker()
 {
 	while (1)
 	{
-		for (auto&& a : sdk::util::c_thread::Instance().get_items())
+		for (auto&& a : *sdk::util::c_thread::Instance().get_items())
 		{
 			if (a.last_execution > GetTickCount64()) continue;
 
@@ -70,10 +70,19 @@ void __stdcall sdk::util::ui_worker()
 
 void patch_cshield(std::string a, char* buf, size_t size, uint32_t offset)
 {
-	if (!(uintptr_t)GetModuleHandleA("CShield.dll")) return;
-	auto cs_checkheader = sdk::util::c_mem::Instance().find_pattern_directed((uintptr_t)GetModuleHandleA("CShield.dll"), a.c_str()) + offset;
+	if (!(uintptr_t)GetModuleHandleA(XorStr("CShield.dll"))) return;
+	auto cs_checkheader = sdk::util::c_mem::Instance().find_pattern_directed((uintptr_t)GetModuleHandleA(XorStr("CShield.dll")), a.c_str()) + offset;
 	if (!cs_checkheader || cs_checkheader == offset) return;
 	auto ret_wpm = WriteProcessMemory(GetCurrentProcess(), (void*)cs_checkheader, &buf, size, nullptr);
+}
+
+void empt_func()
+{
+
+}
+void __fastcall ac_shit(uint32_t self, int a2, int a3)
+{
+
 }
 
 void __stdcall sdk::util::init_worker()
@@ -85,14 +94,14 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_config::Instance().setup();
 	sdk::util::c_fn_discover::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Arithra2") || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2"))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")))
 	{
 		char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
-		patch_cshield("72 ? 8B 75 ? 83 C6 ?", patch2, sizeof(patch2), 0);
-		patch_cshield("75 ? 33 C0 EB ? 1B C0 83 C8 ? 85 C0 74 ? 8D 4D ? 8D 51 ? 90", patch2, sizeof(patch2), 0);
-		sdk::util::c_log::Instance().duo("[ CShield bonk executed ]\n");
+		patch_cshield(XorStr("72 ? 8B 75 ? 83 C6 ?"), patch2, sizeof(patch2), 0);
+		patch_cshield(XorStr("75 ? 33 C0 EB ? 1B C0 83 C8 ? 85 C0 74 ? 8D 4D ? 8D 51 ? 90"), patch2, sizeof(patch2), 0);
+		sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk executed ]\n"));
 	}
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Arithra2"))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")))
 	{
 		sdk::game::c_hwid::Instance().setup();
 	}
@@ -100,14 +109,68 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_address_gathering::Instance().setup();
 	sdk::game::accconnector::c_login::Instance().setup();
 	sdk::game::chr::c_char::Instance().setup();
+	sdk::game::c_waithack::Instance().setup();
+
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")))
+	{
+		//ajaja server shit
+		auto first_patch_start = sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x25;
+
+		auto fn_size = sdk::util::c_mem::Instance().find_size(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket);
+
+		DWORD old_prot = 0;
+		VirtualProtectEx(GetCurrentProcess(), (void*)sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket, fn_size, PAGE_EXECUTE_READWRITE, &old_prot);
+
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x13), 0xEB, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x13 + 1), 0x03, 1);
+
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x25), 0x75, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x25 + 1), 0x48, 1);
+
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x10B), 0xEB, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x10B + 1), 0x11, 1);
+
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x11E), 0xEB, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x11E + 1), 0x48, 1);
+
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A), 0xE9, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 1), 0x8E, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 2), 0x00, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 3), 0x00, 1);
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 4), 0x00, 1);
+
+		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x20D), 0x90, 0x11);
+
+		auto shit_funcs = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("Unknown file detected: "));
+		for (auto a : shit_funcs)
+		{
+			sdk::util::c_log::Instance().duo(XorStr("[ FILE-AC Realm2 %04x ]\n"), a);
+			void* aaa;
+			MH_CreateHook((void*)a, (void*)empt_func, (void**)&aaa);
+			MH_EnableHook((void*)a);
+		}
+
+		auto bs_ac_shit = sdk::util::c_mem::Instance().find_pattern((uint32_t)GetModuleHandleA(0), XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? A1 ? ? ? ? 33 C5 89 45 ? 50 8D 45 ? 64 A3 ? ? ? ? 89 4D ? 8D 45 ? 50 E8 ? ? ? ?"));
+		if (bs_ac_shit)
+		{
+			sdk::util::c_log::Instance().duo(XorStr("[ AC-CORE Realm2 %04x ]\n"), bs_ac_shit);
+			void* aaa;
+			MH_CreateHook((void*)bs_ac_shit, (void*)ac_shit, (void**)&aaa);
+			MH_EnableHook((void*)bs_ac_shit);
+		}
+
+		sdk::util::c_log::Instance().duo(XorStr("[ patched Realm2 protection ]\n"));
+	}
+
+	sdk::util::c_thread::Instance().append([]()
+	{
+		sdk::util::c_config::Instance().save();
+	}, 5000);
 
 	sdk::util::c_thread::Instance().append([]()
 	{
 		sdk::game::accconnector::c_login::Instance().work();
-	}, 15);
-	sdk::util::c_thread::Instance().append([]()
-	{
-		sdk::game::chr::c_char::Instance().update();
+		sdk::game::c_waithack::Instance().work();
 	}, 15);
 
 	main::c_ui::Instance().work();
@@ -125,7 +188,7 @@ bool sdk::util::c_thread::append(std::function<void()> lambda, uint32_t interval
 	return false;
 }
 
-sdk::util::t_queue sdk::util::c_thread::get_items()
+sdk::util::t_queue* sdk::util::c_thread::get_items()
 {
-	return this->workers;
+	return &this->workers;
 }

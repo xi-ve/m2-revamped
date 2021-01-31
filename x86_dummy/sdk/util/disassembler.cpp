@@ -4,6 +4,35 @@ void sdk::util::c_disassembler::setup()
 {
 }
 
+sdk::util::t_asm_res sdk::util::c_disassembler::get_movs(uint32_t address, size_t size /*= 0*/, size_t min /*= 0*/, size_t max /*= 0*/)
+{
+	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
+	auto raw_asm = this->get_asm(address, size);
+	if (!raw_asm.size()) return {};
+	auto base = GetModuleHandleA(0);
+	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
+	if (!min) min = (uint32_t)base + data1_sec.first;
+	auto ret = sdk::util::t_asm_res();
+	for (auto& a : raw_asm)
+	{
+		if (a.empty()) continue;
+		if (a.find(XorStr("mov")) != std::string::npos)
+		{
+			std::regex rex(XorStr("0[xX][0-9a-fA-F]+")); std::smatch match;
+			auto has = std::regex_search(a, match, rex);
+			if (!has) continue;
+			for (auto b : match)
+			{
+				auto hex = std::stoull(b, nullptr, 16);
+				if (hex > data1_max || hex < min) continue;
+				ret.push_back((uint32_t)hex);
+			}
+		}
+	}
+	return ret;
+}
+
 sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t size)
 {
 	auto ret = sdk::util::t_asm_raw();

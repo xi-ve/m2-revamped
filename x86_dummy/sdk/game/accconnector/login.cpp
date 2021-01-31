@@ -256,7 +256,12 @@ void sdk::game::accconnector::c_login::read_details()
 		if (!cur_username || cur_username[0] == 0 || !strlen(cur_username)) return;
 
 		char cur_password[32] = "\0";
-		memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
+		if (!strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "SunshineMt2")) memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
+		else
+		{
+			auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD);
+			strcpy(cur_password, r.c_str());
+		}
 
 		if (!cur_password || cur_password[0] == 0 || !strlen(cur_password)) return;
 

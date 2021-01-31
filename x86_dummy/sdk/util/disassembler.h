@@ -12,6 +12,7 @@ namespace sdk
 			t_asm_raw	get_asm(uint32_t address, size_t size);
 		public:
 			void		setup();
+			t_asm_res	get_movs(uint32_t address, size_t size = 0, size_t min = 0, size_t max = 0);
 			t_asm_res	get_pushes(uint32_t address, size_t size = 0, size_t min = 0xFFF);
 			t_asm_res	get_addrs(uint32_t address, size_t size = 0, size_t min = 0xFFF);
 			t_asm_res	get_calls(uint32_t address, size_t size = 0, size_t min = 0xFFF, BOOL skip_py_exports = false);

@@ -14,6 +14,7 @@ namespace sdk
 				uint32_t					adr = 0;
 				sdk::util::math::c_vector3	position;
 			};
+			typedef sdk::util::math::c_vector3 vec;
 			class c_char : public s<c_char>
 			{
 			private:
@@ -26,6 +27,15 @@ namespace sdk
 				std::map<uint32_t, uint32_t*>	get_alive();
 			public:
 				uint32_t						get_main_actor();
+				uint32_t						get_graphic_thing(uint32_t instance_base);
+				bool							is_dead_actor(uint32_t instance_base);
+				uint32_t						get_type(uint32_t instance_base);
+				vec								get_pos(uint32_t instance_base);
+				float							get_distance(vec from, vec to);
+				std::string						get_name(uint32_t instance_base);
+				bool							is_attackable(uint32_t instance_base);
+				uint32_t						get_vid(uint32_t instance_base);
+				uint32_t						get_instance(uint32_t vid);
 			};
 		}
 	}

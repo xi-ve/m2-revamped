@@ -39,7 +39,7 @@ namespace sdk
 			bool	spawn(LPTHREAD_START_ROUTINE fn, void* param = nullptr);
 			bool	append(std::function<void()> lambda, uint32_t interval);
 		public:
-			t_queue	get_items();
+			t_queue*	get_items();
 		};
 	}
 }
