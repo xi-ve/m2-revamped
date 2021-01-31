@@ -205,14 +205,18 @@ void main::c_ui::work()
 				this->checkbox(XorStr("waithack"), XorStr("waithack"), XorStr("toggle"));
 				this->checkbox(XorStr("metins"), XorStr("waithack"), XorStr("metins"));
 				this->checkbox(XorStr("mobs"), XorStr("waithack"), XorStr("mobs"));
-				this->slider(XorStr("range"), XorStr("waithack"), XorStr("range"), 300, 20000);
-				this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25);
-				this->slider(XorStr("speed"), XorStr("waithack"), XorStr("speed"), 1, 100);
-				this->slider(XorStr("anchor"), XorStr("waithack"), XorStr("anchor"), 1000, 6000);
+				this->checkbox(XorStr("on_attack"), XorStr("waithack"), XorStr("on_attack"));
+				this->slider(XorStr("range"), XorStr("waithack"), XorStr("range"), 300, 20000, 1.f);
+				this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25, 1.f);
+				this->slider(XorStr("speed"), XorStr("waithack"), XorStr("speed"), 1, 100, 1.f);
+				this->slider(XorStr("anchor"), XorStr("waithack"), XorStr("anchor"), 1000, 6000, 1.f);
+
+				auto main_act = sdk::game::chr::c_char::Instance().get_main_actor();
 
 				nk_layout_row_dynamic(ctx, 20, 2);
 				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("alive : %i"), sdk::game::chr::c_char::Instance().get_alive().size()), NK_TEXT_LEFT);
 				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("dead : %i"), sdk::game::chr::c_char::Instance().get_dead().size()), NK_TEXT_LEFT);
+				if (main_act) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("attacking : %i"), sdk::game::func::c_funcs::Instance().f_IsAttacking(main_act)), NK_TEXT_LEFT);
 
 				auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
 				auto account_connector_base = sdk::game::c_utils::Instance().baseclass_account_connector();

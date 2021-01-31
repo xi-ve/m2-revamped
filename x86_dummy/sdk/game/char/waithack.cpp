@@ -9,6 +9,7 @@ void sdk::game::c_waithack::setup()
 	this->metins = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("metins"));
 	this->anchor = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("anchor"));
 	this->mobs_ = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("mobs"));
+	this->on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("on_attack"));
 }
 
 int sdk::game::c_waithack::get_range()
@@ -53,11 +54,18 @@ int sdk::game::c_waithack::get_metins()
 	return std::stoi(r->container.c_str());
 }
 
+int sdk::game::c_waithack::get_on_attack()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->on_attack);
+	return std::stoi(r->container.c_str());
+}
+
 void sdk::game::c_waithack::work()
 {
 	if (!this->get_toggle()) return;
 	auto actor = sdk::game::chr::c_char::Instance().get_main_actor();
 	if (!actor) return;
+	if (this->get_on_attack() && !sdk::game::func::c_funcs::Instance().f_IsAttacking(actor)) return;
 	if (GetTickCount64() < this->attack_timeout) return;
 	this->attack_timeout = GetTickCount64() + (1500 / this->get_speed());
 	if (!this->populate()) return;

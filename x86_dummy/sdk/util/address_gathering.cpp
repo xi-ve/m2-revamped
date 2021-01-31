@@ -397,5 +397,24 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	sdk::game::func::c_funcs::Instance().f_SendAttackPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendAttackPacket)(CPyhtonNetworkStream_SendAttack);
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SendAttackPacket: %04x ]\n"), CPyhtonNetworkStream_SendAttack);
 
+	//
+
+	auto CPythonNetworkStream_SendItemUsePacket = sdk::util::c_fn_discover::Instance().get_fn("SendItemMovePacket Error");
+	if (!CPythonNetworkStream_SendItemUsePacket) return this->error_out(__LINE__);
+
+	auto CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x1A, 0x20, 2);
+	if (!CPythonNetworkStream_IsPlayerAttacking)
+	{
+		CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x3A, 0x3F, 2);
+		if (!CPythonNetworkStream_IsPlayerAttacking) return this->error_out(__LINE__);
+	}
+
+	auto CPythonNetworkStream_IsPlayerAttacking_calls = sdk::util::c_disassembler::Instance().get_calls(CPythonNetworkStream_IsPlayerAttacking, 0, 0, 1);
+	if (CPythonNetworkStream_IsPlayerAttacking_calls.empty()) return this->error_out(__LINE__);
+
+	sdk::game::func::c_funcs::Instance().f_IsAttacking = decltype(sdk::game::func::c_funcs::Instance().f_IsAttacking)(CPythonNetworkStream_IsPlayerAttacking_calls.back());
+	sdk::game::func::c_funcs::Instance().o_IsAttacking = CPythonNetworkStream_IsPlayerAttacking_calls.back();
+	sdk::util::c_log::Instance().duo(XorStr("[ f_IsAttacking: %04x ]\n"), CPythonNetworkStream_IsPlayerAttacking_calls.back());
+
 	return 1;
 }
