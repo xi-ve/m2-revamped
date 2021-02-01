@@ -28,6 +28,7 @@ void sdk::util::c_config::registrant()
 	this->add_variable(XorStr("waithack"), XorStr("metins"), "1", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("mobs"), "1", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("on_attack"), "1", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("bp_on_attack"), "1", CONF_TYPE_INT);
 }
 
 bool sdk::util::c_config::save()

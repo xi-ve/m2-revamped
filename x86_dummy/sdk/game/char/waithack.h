@@ -11,12 +11,17 @@ namespace sdk
 			std::vector<uint32_t>	mobs;
 		};
 
-		
+		namespace hooks
+		{
+			typedef bool(__fastcall* t_IsPlayerAttacking)(uint32_t);
+			extern t_IsPlayerAttacking o_IsPlayerAttacking;
+			extern bool __fastcall f_IsPlayerAttacking(uint32_t base);
+		}
 
 		class c_waithack : public s<c_waithack>
 		{
 		private:
-			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack;
+			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack;
 		private:
 			ULONGLONG						timeout = 0, attack_timeout = 0;
 		private:
@@ -34,6 +39,7 @@ namespace sdk
 			int								get_speed();
 			int								get_toggle();
 			int								get_anchor();
+			int								get_bp_on_attack();
 		private:
 			int								get_mobs();
 			int								get_metins();

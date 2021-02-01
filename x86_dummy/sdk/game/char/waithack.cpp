@@ -10,6 +10,10 @@ void sdk::game::c_waithack::setup()
 	this->anchor = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("anchor"));
 	this->mobs_ = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("mobs"));
 	this->on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("on_attack"));
+	this->bp_on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bp_on_attack"));
+
+	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking, (void*)sdk::game::hooks::f_IsPlayerAttacking, (void**)&sdk::game::hooks::o_IsPlayerAttacking);
+	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking);
 }
 
 int sdk::game::c_waithack::get_range()
@@ -57,6 +61,12 @@ int sdk::game::c_waithack::get_metins()
 int sdk::game::c_waithack::get_on_attack()
 {
 	auto r = (sdk::util::json_cfg::s_config_value*)(this->on_attack);
+	return std::stoi(r->container.c_str());
+}
+
+int sdk::game::c_waithack::get_bp_on_attack()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->bp_on_attack);
 	return std::stoi(r->container.c_str());
 }
 
@@ -165,6 +175,7 @@ bool sdk::game::c_waithack::populate()
 			auto dst_to_close_target = sdk::game::chr::c_char::Instance().get_distance(obj_pos, best_target_pos);
 			if (dst_to_close_target > this->get_anchor()) continue;
 			mob_group.mobs.push_back(obj.second);
+			if ((int)mob_group.mobs.size() >= this->get_targets()) break;
 			/*			mark actor as used up		 */	
 			obj.first = 0;
 		}
@@ -205,3 +216,9 @@ void sdk::game::c_waithack::selective_attack()
 	}
 }
 
+decltype(sdk::game::hooks::o_IsPlayerAttacking) sdk::game::hooks::o_IsPlayerAttacking = 0;
+bool __fastcall sdk::game::hooks::f_IsPlayerAttacking(uint32_t base)
+{
+	if (sdk::game::c_waithack::Instance().get_bp_on_attack()) return 1;
+	else return sdk::game::hooks::o_IsPlayerAttacking(base);
+}

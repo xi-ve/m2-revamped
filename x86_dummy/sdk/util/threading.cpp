@@ -162,6 +162,8 @@ void __stdcall sdk::util::init_worker()
 		sdk::util::c_log::Instance().duo(XorStr("[ patched Realm2 protection ]\n"));
 	}
 
+	std::this_thread::sleep_for(5s);
+
 	sdk::util::c_thread::Instance().append([]()
 	{
 		sdk::util::c_config::Instance().save();

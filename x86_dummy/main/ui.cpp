@@ -206,6 +206,7 @@ void main::c_ui::work()
 				this->checkbox(XorStr("metins"), XorStr("waithack"), XorStr("metins"));
 				this->checkbox(XorStr("mobs"), XorStr("waithack"), XorStr("mobs"));
 				this->checkbox(XorStr("on_attack"), XorStr("waithack"), XorStr("on_attack"));
+				this->checkbox(XorStr("bp_on_attack"), XorStr("waithack"), XorStr("bp_on_attack"));
 				this->slider(XorStr("range"), XorStr("waithack"), XorStr("range"), 300, 20000, 1.f);
 				this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25, 1.f);
 				this->slider(XorStr("speed"), XorStr("waithack"), XorStr("speed"), 1, 100, 1.f);
