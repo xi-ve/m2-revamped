@@ -22,6 +22,23 @@ std::vector<DWORD> getpids() {
     return pids;
 }
 
+
+LoadData dddddddddd(CallbackType type, void* /*context*/, Process& /*process*/, const ModuleData& modInfo)
+{
+	if (type == PreCallback)
+	{
+		if (nativeMods.count(modInfo.name))
+			return LoadData(MT_Native, Ldr_None);
+	}
+	else
+	{
+		if (modList.count(modInfo.name))
+			return LoadData(MT_Default, Ldr_ModList);
+	}
+
+	return LoadData(MT_Default, Ldr_None);
+};
+
 void MapCmdFromMem()
 {
     std::vector<DWORD> pids = getpids();
@@ -33,7 +50,12 @@ void MapCmdFromMem()
     lastpid = pids.front();
     printf("pid: %i\n",pids.front());
 
-    std::this_thread::sleep_for(250ms);
+	nativeMods.emplace(L"combase.dll");
+	nativeMods.emplace(L"user32.dll");
+
+	modList.emplace(L"windows.storage.dll");
+	modList.emplace(L"shell32.dll");
+	modList.emplace(L"shlwapi.dll");
 
     void* buf = nullptr;
     auto size = 0;
@@ -52,7 +74,8 @@ void MapCmdFromMem()
 	Process thisProc;
 	thisProc.Attach(pids.front());
 
-    auto image = thisProc.mmap().MapImage( size, buf, false, NoThreads | WipeHeader );
+    auto image = thisProc.mmap().MapImage( size, buf, false, NoThreads | ManualImports | WipeHeader | RebaseProcess);
+    thisProc.Detach();
     if (!image)
     {
         std::wcout << L"Mapping failed with error 0x" << std::hex << image.status
@@ -60,8 +83,6 @@ void MapCmdFromMem()
     }
     else
         std::wcout << L"Successfully mapped, unmapping\n";
-
-    thisProc.Detach();
 
     VirtualFree( buf, 0, MEM_RELEASE );
 }

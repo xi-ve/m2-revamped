@@ -93,6 +93,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_mem::Instance().setup();
 	sdk::util::c_config::Instance().setup();
 	sdk::util::c_fn_discover::Instance().setup();
+	sdk::util::c_address_gathering::Instance().setup();
 
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")))
 	{
@@ -106,7 +107,6 @@ void __stdcall sdk::util::init_worker()
 		sdk::game::c_hwid::Instance().setup();
 	}
 
-	sdk::util::c_address_gathering::Instance().setup();
 	sdk::game::accconnector::c_login::Instance().setup();
 	sdk::game::chr::c_char::Instance().setup();
 	sdk::game::c_waithack::Instance().setup();

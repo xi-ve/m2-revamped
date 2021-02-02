@@ -293,19 +293,18 @@ bool sdk::util::c_fn_discover::text_section()
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ new file detected, %04x to %04x ]\n[ running dynamics system, please wait ]\n"), std::stoul(conf_crc32->container), current_crc32);
 doit:
+		DeleteFileA(XorStr("M2++_PY_DYNAMICS.DB"));
 		auto base = GetModuleHandleA(0);
 		auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
 		auto rdata_section = sdk::util::c_mem::Instance().get_section(XorStr(".rdata"), base);
 		auto per_block_size = (text_section.first + text_section.second);
 		auto block_next = 0x1000;
 		std::vector<sdk::util::s_mem*> worker_data;
-		for (auto a = 0; a < 1; a++)
-		{
-			auto p = new sdk::util::s_mem(block_next, block_next + per_block_size);
-			worker_data.push_back(p);
-			sdk::util::c_thread::Instance().spawn((LPTHREAD_START_ROUTINE)sdk::util::worker_thread, p);
-			block_next += per_block_size;
-		}
+
+		auto p = new sdk::util::s_mem(block_next, block_next + per_block_size);
+		worker_data.push_back(p);
+		sdk::util::worker_thread(p);
+
 		while (1)
 		{
 			auto all_done = true;
