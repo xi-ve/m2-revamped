@@ -8,7 +8,7 @@ class OpCodes(IntEnum):
 sock = socket.socket()
 
 sock.connect(("127.0.0.1",1337))
-sock.send("{}\n".format(json.dumps({"op":OpCodes.Add_Ip})).encode('utf-8'))
+sock.send("{}\n".format(json.dumps({"op":OpCodes.Add_Ip,"ip":"192.168.178.131"})).encode('utf-8'))
 CHUNK_SIZE = 16  # you can set it larger or smaller
 buffer = bytearray()
 while True:

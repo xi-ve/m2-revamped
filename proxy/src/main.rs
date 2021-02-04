@@ -47,44 +47,39 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
 }
 
 async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
-    println!("{}","test");
+    println!("{}", "test");
     let (mut rd, mut wr) = io::split(inbound);
     let mut reader = BufReader::new(rd);
     let mut line = String::new();
-    println!("{}","test");
+    println!("{}", "test");
     reader.read_line(&mut line).await.unwrap();
     //remove_whitespace(&mut line);
-    println!("{}",line);
+    println!("{}", line);
     let data: serde_json::Value = serde_json::from_str(&line).unwrap();
-    if data["op"] == 1{//Add_ip
+    if data["op"] == 1 {
+        //Add_ip
         println!("got add ip");
-    }
-        
-    
-    println!("{:?}", data);
-    wr.write_all(b"test\n").await.unwrap();
-    return;
-    let ip_cop: String = line.clone();
-    let mut found: bool = false;
-    let mut index: usize = 0;
-    let ip_addr = &line;
-
-    for n in 0..ips.read().await.len() {
-        if ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
-            index = n;
-            found = true;
-            break;
+        let mut found: bool = false;
+        let mut index: usize = 0;
+        let ip_addr = &data["ip"].to_string();
+        for n in 0..ips.read().await.len() {
+            if ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
+                index = n;
+                found = true;
+                break;
+            }
         }
+        if found {
+            ips.write().await[index].write().await.expire =
+                SystemTime::now() + Duration::from_secs(30);
+            return;
+        }
+        ips.write().await.push(Arc::new(RwLock::new(Ip {
+            ip_addr: data["ip"].to_string(),
+            expire: SystemTime::now() + Duration::from_secs(30),
+        })));
+        wr.write_all(b"done\n").await.unwrap();
     }
-    if found {
-        ips.write().await[index].write().await.expire = SystemTime::now() + Duration::from_secs(30);
-        return;
-    }
-    ips.write().await.push(Arc::new(RwLock::new(Ip {
-        ip_addr: ip_cop,
-        expire: SystemTime::now() + Duration::from_secs(30),
-    })));
-    println!("not reached");
 }
 async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
     let listener = TcpListener::bind("0.0.0.0:1337").await.unwrap();
