@@ -1,3 +1,4 @@
+//use serde_json;
 use tokio::io;
 use tokio::net::{TcpListener, TcpStream};
 
@@ -44,23 +45,32 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
         }
     }
 }
-fn remove_whitespace(s: &mut String) {
-    s.retain(|c| !c.is_whitespace());
-}
 
 async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
-    let mut reader = BufReader::new(inbound);
+    println!("{}","test");
+    let (mut rd, mut wr) = io::split(inbound);
+    let mut reader = BufReader::new(rd);
     let mut line = String::new();
+    println!("{}","test");
     reader.read_line(&mut line).await.unwrap();
-    remove_whitespace(&mut line);
-    println!("adding {}", line);
+    //remove_whitespace(&mut line);
+    println!("{}",line);
+    let data: serde_json::Value = serde_json::from_str(&line).unwrap();
+    if data["op"] == 1{//Add_ip
+        println!("got add ip");
+    }
+        
+    
+    println!("{:?}", data);
+    wr.write_all(b"test\n").await.unwrap();
+    return;
     let ip_cop: String = line.clone();
     let mut found: bool = false;
     let mut index: usize = 0;
     let ip_addr = &line;
 
-    for n in 0..ips.read().await.len(){
-        if ips.read().await[n].read().await.ip_addr == ip_addr.to_string(){
+    for n in 0..ips.read().await.len() {
+        if ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
             index = n;
             found = true;
             break;
