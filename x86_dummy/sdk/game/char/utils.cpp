@@ -21,7 +21,8 @@ std::list<uint32_t*> sdk::game::chr::c_char::get_dead()
 	auto char_base = *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonCharacterManager);
 	if (!char_base) return {};
 
-	return *(std::list<uint32_t*>*)(char_base + 0x28);
+	if (use_alt_mode_list) return *(std::list<uint32_t*>*)(char_base + 0x2C);
+	else return *(std::list<uint32_t*>*)(char_base + 0x28);
 }
 
 std::map<uint32_t, uint32_t*> sdk::game::chr::c_char::get_alive()
@@ -29,7 +30,8 @@ std::map<uint32_t, uint32_t*> sdk::game::chr::c_char::get_alive()
 	auto char_base = *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonCharacterManager);
 	if (!char_base) return {};
 
-	return *(std::map<uint32_t, uint32_t*>*)(char_base + 0x20);
+	if (use_alt_mode_list) return *(std::map<uint32_t, uint32_t*>*)(char_base + 0x24);
+	else return *(std::map<uint32_t, uint32_t*>*)(char_base + 0x20);
 }
 
 uint32_t sdk::game::chr::c_char::get_main_actor()

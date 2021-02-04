@@ -195,8 +195,6 @@ void sdk::game::accconnector::c_login::work()
 			this->set_character();
 			this->force_slot = true;
 
-			*(uint8_t*)(py_net + sdk::game::connection_offsets::off_SELECT_CHAR_IDX) = std::stoi(this->account_selected.slot.c_str());
-
 			while (!strstr(cur_phase, "Load"))
 			{
 				this->last_login = GetTickCount64() + 10000;
@@ -209,7 +207,6 @@ void sdk::game::accconnector::c_login::work()
 
 			this->last_phase = cur_phase;
 
-			*(uint8_t*)(py_net + sdk::game::connection_offsets::off_SELECT_CHAR_IDX) = std::stoi(this->account_selected.slot.c_str());
 		}
 	}
 }

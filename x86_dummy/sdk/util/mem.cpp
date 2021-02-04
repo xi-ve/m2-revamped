@@ -26,6 +26,10 @@ bool sdk::util::c_mem::is_valid(uint32_t adr, size_t field_mem_size)
 
 sdk::util::t_size sdk::util::c_mem::get_section(const char* section, HMODULE base_module)
 {
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra"))
+	{
+		if (strstr(section, ".data")) section = ".text";
+	}
 	auto dos_header = (IMAGE_DOS_HEADER*)(base_module);
 	auto nt_headers = (IMAGE_NT_HEADERS*)((BYTE*)dos_header + dos_header->e_lfanew);
 	auto image_section = (PIMAGE_SECTION_HEADER)(nt_headers + 1);
@@ -34,7 +38,11 @@ sdk::util::t_size sdk::util::c_mem::get_section(const char* section, HMODULE bas
 		char string[(sizeof image_section[a].Name) + 1];
 		memcpy(string, image_section[a].Name, sizeof image_section[a].Name);
 		string[sizeof image_section[a].Name] = 0;
-		if (strstr(string, section)) return { image_section[a].VirtualAddress, image_section[a].SizeOfRawData };
+		if (strstr(string, section))
+		{
+			if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra")) return { image_section[a].VirtualAddress, 0x1E10DCC };
+			else return { image_section[a].VirtualAddress, image_section[a].SizeOfRawData };
+		}
 	}
 	return { 0,0 };
 }
@@ -155,6 +163,7 @@ size_t sdk::util::c_mem::find_size(uint32_t address)
 		if (!b) return 0;
 		memcpy(b, (void*)a, 8);
 		if (!b) return 0;
+		if (b[0] == 0xe9 && b[5] == 0xCC && b[6] == 0xCC) return a - address;
 		if (b[0] == 0xc3 && b[1] == 0x56 && b[2] == 0x8B && b[3] == 0xF1) return a - address;
 		if (b[0] == 0xc3 && b[1] == 0x55) return a - address;
 		if (b[0] == 0xc3 && b[1] == 0xcc) return a - address;

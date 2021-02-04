@@ -5,7 +5,6 @@ void sdk::util::c_fn_discover::setup()
 	this->get_server();
 	auto text_res = this->text_section();
 	auto data_res = this->data_section();
-	//auto singletons = this->singletons();
 	if (!text_res) { sdk::util::c_log::Instance().duo(XorStr("[ text discovery failed! ]\n")); return; }
 	if (!data_res) { sdk::util::c_log::Instance().duo(XorStr("[ data discovery failed! ]\n")); return; }
 	sdk::util::c_log::Instance().duo(XorStr("[ c_fn_discover::setup completed ]\n"));
@@ -24,7 +23,12 @@ void sdk::util::c_fn_discover::get_server()
 		"Kevra",
 		"Anoria2",
 		"SunshineMt2",
-		"Realm2"
+		"Realm2",
+		"Tamidia",
+		"Aeldra",
+		"Akeno2",
+		"Erco",
+		"Ekstasia"
 	};
 
 	auto cur_server = std::string("generic-server");
@@ -32,6 +36,8 @@ void sdk::util::c_fn_discover::get_server()
 	this->server_name = cur_server;
 
 	sdk::util::c_log::Instance().duo("[ server detected as: %s ]\n", this->server_name.c_str());
+
+	if (strstr(cur_server.c_str(), "Erco")) sdk::game::chr::c_char::Instance().use_alt_mode_list = 1;
 }
 
 bool sdk::util::c_fn_discover::is_ascii(const std::string& in)
@@ -129,7 +135,10 @@ bool sdk::util::c_fn_discover::is_python_fn(uint32_t address)
 {
 	auto pbase = GetModuleHandleA(XorStr("python27.dll"));
 	if (!pbase) pbase = GetModuleHandleA(XorStr("python22.dll"));
-	if (!pbase) { sdk::util::c_log::Instance().duo(XorStr("[ failed to get py instance ]\n")); return 0; }
+	if (!pbase) 
+	{ 
+		return 0;
+	}
 
 	MODULEINFO inf;
 	K32GetModuleInformation(GetCurrentProcess(), pbase, &inf, sizeof(inf));
@@ -179,7 +188,7 @@ sdk::util::t_addrs sdk::util::c_fn_discover::get_adr_str(const char* ref)
 	return l;
 }
 
-uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp)
+uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp, uint32_t must_be_above)
 {
 	auto origin_fn_size = sdk::util::c_mem::Instance().find_size(origin);
 	if (!origin_fn_size) return 0;
@@ -211,8 +220,19 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 		if (no_off_push_inside)
 		{
 			auto movs_in = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0x3000, 0xFFFFFFF, { "mov" });
-			sdk::util::c_log::Instance().duo(XorStr("[ movs scan: %04x => %04x, size: %04x, movs: %i ]\n"), origin, a, inside_fn_size, movs_in.size());
 			if (movs_in.size()) continue;
+		}
+		if (must_be_above)
+		{
+			auto offs = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0, 0, { "mov", "add", "push", "lea" });
+			auto should_skip = false;
+			for (auto b : offs)
+			{
+				sdk::util::c_log::Instance().duo(XorStr("[ must_be_above: %04x -> %04x ]\n"), b, must_be_above);
+
+				if (b < must_be_above) { should_skip = true; break; }
+			}
+			if (should_skip) continue;
 		}
 		if (no_calls_inside) if (!calls_inside.empty()) continue;
 		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
@@ -249,6 +269,8 @@ void sdk::util::worker_thread(s_mem* mem)
 	if (m_info.State != MEM_COMMIT) { mem->done = 1; return; }
 	if (m_info.Protect & PAGE_NOACCESS) { mem->done = 1; return; }
 
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra")) m_info.RegionSize = text_section.second;
+
 	sdk::util::c_log::Instance().duo(XorStr("[ (%04x) mem page: %04x, %04x ]\n"), mem->start, (uint32_t)m_info.AllocationBase + mem->start, ((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize));
 
 	auto fns = std::vector<std::pair<uint32_t, uint8_t*>>();
@@ -258,19 +280,18 @@ void sdk::util::worker_thread(s_mem* mem)
 		uint8_t b[0x10] = { };
 		memcpy(b, (void*)a, 0x10);
 		if (!b) continue;
-		if (b[0] == 0x55 && b[1] == 0x8B && b[2] == 0xEC) fns.push_back({ a, b });
+		if (b[0] == 0x55 && b[1] == 0x8B && b[2] == 0xEC)
+		{
+			fns.push_back({ a, b });			
+		}
 	}
 
 	for (auto&& a : fns)
 	{
 		auto size_of_function = sdk::util::c_mem::Instance().find_size(a.first);
-		if (!size_of_function) continue;
-		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, (uint32_t)((uint32_t)m_info.AllocationBase + mem->start));
-		if (!asm_fn.size())
-		{
-			//todo: rtti 9b singleton fn dtc
-			continue;
-		}
+		if (!size_of_function) continue;		
+		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function);
+		if (!asm_fn.size()) continue;
 		for (auto b : asm_fn)
 		{
 			if (!b || IsBadCodePtr((FARPROC)b)) continue;
@@ -359,7 +380,7 @@ yes:
 	};
 	struct s_register
 	{
-		s_string_container* str_ptr = 0;
+		s_string_container*		str_ptr = 0;
 		uint32_t				fnc_ptr = 0;
 		uint8_t					validator = 0;
 	};
