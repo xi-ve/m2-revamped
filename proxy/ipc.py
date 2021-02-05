@@ -3,8 +3,12 @@ import json
 from enum import IntEnum
 
 class OpCodes(IntEnum):
-    Add_Ip = 1
-
+    Add_Server = 1#Adds Servers
+    Add_Forwarding = 2 #Add a Forwarding to a server for multiple channels, so you just keep 1 whiteliste
+    Add_Ip = 3 #whitelists ip for x duration for a Server, 
+    Remove_Server = 4
+    Remove_Forwarding = 5
+    Remove_Ip = 6
 
 class m2proxy():
 

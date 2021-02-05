@@ -4,7 +4,7 @@ use tokio::net::{TcpListener, TcpStream};
 
 use futures::stream::{self, StreamExt};
 use futures::FutureExt;
-use std::error::Error;
+use std::{error::Error, thread::JoinHandle};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::io::AsyncBufReadExt;
@@ -15,6 +15,18 @@ use tokio::sync::RwLock;
 struct Ip {
     ip_addr: String,
     expire: SystemTime,
+}
+
+struct Forwarding{
+    listen: String,
+    foward: String,
+    thread: JoinHandle<()>
+}
+
+struct Server {
+    name: String,
+    fowardings: Arc<RwLock<Vec<Arc<RwLock<Forwarding>>>>>,
+    ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>
 }
 
 
@@ -48,7 +60,7 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
 }
 
 async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
-    let (mut rd, mut wr) = io::split(inbound);
+    let (rd, mut wr) = io::split(inbound);
     let mut reader = BufReader::new(rd);
     let mut line = String::new();
     reader.read_line(&mut line).await.unwrap();
