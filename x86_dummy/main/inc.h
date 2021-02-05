@@ -23,6 +23,7 @@
 #include <regex>
 #include <sstream>
 #include <math.h>
+#include <concurrencysal.h>
 //libs
 #pragma comment(lib, "Ws2_32.lib")
 #include <zydis/Zydis/Zydis.h>

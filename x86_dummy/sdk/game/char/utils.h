@@ -26,6 +26,7 @@ namespace sdk
 				std::list<uint32_t*>			get_dead();
 				std::map<uint32_t, uint32_t*>	get_alive();
 			public:
+				bool							use_alt_mode_list = 0;
 				uint32_t						get_main_actor();
 				uint32_t						get_graphic_thing(uint32_t instance_base);
 				bool							is_dead_actor(uint32_t instance_base);

@@ -17,6 +17,7 @@ namespace sdk
 				typedef void(__thiscall* t_SendCharacterStatePacket)(uint32_t, const sdk::util::metin_structs::Point2D&, float, UINT, UINT);
 				typedef bool(__thiscall* t_SendAttackPacket)(uint32_t, UINT, uint32_t);
 				typedef bool(__thiscall* t_IsAttacking)(uint32_t);
+				typedef void(__thiscall* t_OnHit)(uint32_t, UINT, uint32_t, BOOL);
 			}
 			class c_funcs : public s<c_funcs>
 			{
@@ -32,10 +33,12 @@ namespace sdk
 				t::t_SendCharacterStatePacket	f_SendCharacterStatePacket = 0;			//CPythonNetworkStream
 				t::t_SendAttackPacket			f_SendAttackPacket = 0;					//CPythonNetworkStream
 				t::t_IsAttacking				f_IsAttacking = 0;						//CPythonPlayer
+				t::t_OnHit						f_OnHit = 0;							//CPythonPlayerEventHandler
 
 				uint32_t						o_SendSelectCharacter = 0;
 				uint32_t						o_SendCharacterStatePacket = 0;
 				uint32_t						o_IsAttacking = 0;
+				uint32_t						o_SendHitEvent = 0;						//for servers that use lalaker patch, inline dmg
 			};
 		}
 	}

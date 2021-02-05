@@ -42,8 +42,12 @@ void sdk::util::c_thread::hide_thread(HANDLE target)
 
 void sdk::util::c_thread::setup()
 {
-	this->spawn((LPTHREAD_START_ROUTINE)sdk::util::init_worker);
-	this->spawn((LPTHREAD_START_ROUTINE)sdk::util::core_worker);
+	std::thread a(sdk::util::init_worker);
+	std::thread b(sdk::util::core_worker);
+	a.detach();
+	b.detach();
+	//this->spawn((LPTHREAD_START_ROUTINE)sdk::util::init_worker);
+	//this->spawn((LPTHREAD_START_ROUTINE)sdk::util::core_worker);
 }
 
 void __stdcall sdk::util::core_worker()
@@ -95,7 +99,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_fn_discover::Instance().setup();
 	sdk::util::c_address_gathering::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")))
 	{
 		char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
 		patch_cshield(XorStr("72 ? 8B 75 ? 83 C6 ?"), patch2, sizeof(patch2), 0);

@@ -14,6 +14,7 @@ namespace sdk
 			extern uint32_t		off_CPythonNetworkStream;
 			extern uint32_t		off_CPythonCharacterManager;
 			extern uint32_t		off_CPythonPlayer;
+			extern uint32_t		off_CPythonPlayerEventHandler;
 		}
 		namespace actor_offsets
 		{
@@ -43,7 +44,6 @@ namespace sdk
 			extern uint32_t		off_NETWORKING_PHASE;
 			extern uint32_t		off_IS_CONNECTED;
 			extern uint32_t		off_PACKET_SEQUENCE_MODE;
-			extern uint32_t		off_SELECT_CHAR_IDX;
 		}
 	}
 }

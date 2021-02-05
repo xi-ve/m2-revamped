@@ -151,7 +151,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 				if (hex > text_max || hex < min) continue;
 				if (skip_py_exports)
 				{
-					if (sdk::util::c_fn_discover::Instance().is_python_fn((uint32_t)hex)) continue;
+					if (sdk::util::c_fn_discover::Instance().is_python_fn((uint32_t)hex)) continue;	
 				}
 				ret.push_back((uint32_t)hex);
 			}
@@ -263,16 +263,16 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::dump_asm(uint32_t address, size_
 
 uint32_t sdk::util::c_disassembler::convert_rip(uint32_t start, int offset)
 {
-	BYTE bResult[0x8] = { 0x0 };
-	memcpy(bResult, (PVOID)(start + offset), 0x4);
+	BYTE res[0x8] = { 0x0 };
+	memcpy(res, (PVOID)(start + offset), 0x4);
 
-	if (bResult[3] == 0xFF)
+	if (res[3] == 0xFF)
 	{
-		bResult[4] = 0xFF;
-		bResult[5] = 0xFF;
-		bResult[6] = 0xFF;
-		bResult[7] = 0xFF;
+		res[4] = 0xFF;
+		res[5] = 0xFF;
+		res[6] = 0xFF;
+		res[7] = 0xFF;
 	}
 
-	return (start + offset + *((PDWORD32)bResult) + 0x4);
+	return (start + offset + *((PDWORD32)res) + 0x4);
 }

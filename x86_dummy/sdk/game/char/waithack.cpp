@@ -196,6 +196,7 @@ void sdk::game::c_waithack::selective_attack()
 
 	auto main_pos = sdk::game::chr::c_char::Instance().get_pos(this->main_actor);
 	auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
+	auto event_base = sdk::game::c_utils::Instance().baseclass_event_handler();
 
 	if (!network_base) return;
 
@@ -210,7 +211,13 @@ void sdk::game::c_waithack::selective_attack()
 			if (!mob_pos.valid()) continue;
 			auto mob_dst_to_me = sdk::game::chr::c_char::Instance().get_distance(mob_pos, main_pos);
 			if (mob_dst_to_me > 300) this->interpolate_to_pos(main_pos, mob_pos);
-			sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+			if (sdk::game::func::c_funcs::Instance().f_SendAttackPacket) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+			else
+			{
+				auto event_base = sdk::game::c_utils::Instance().baseclass_event_handler();
+				auto mob_graph = sdk::game::chr::c_char::Instance().get_graphic_thing(mob_instance);
+				sdk::game::func::c_funcs::Instance().f_OnHit(event_base, 0, mob_graph, TRUE);
+			}
 			if (mob_dst_to_me > 300) this->interpolate_to_pos(mob_pos, main_pos);
 		}
 	}

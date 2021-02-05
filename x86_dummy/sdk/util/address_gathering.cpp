@@ -15,6 +15,29 @@ bool sdk::util::c_address_gathering::error_out(int line)
 	return 0;
 }
 
+sdk::util::t_asm_res sdk::util::c_address_gathering::find_custom_range(uint32_t adr, uint32_t min, uint32_t max, uint32_t steps, std::vector<std::string> instructions, bool from_max)
+{
+	if (!from_max) 
+	{
+		for (auto a = min; a < max; a += steps)
+		{
+			auto f = sdk::util::c_disassembler::Instance().get_custom(adr, 0, a, a + steps, instructions);
+			if (f.empty()) continue;
+			return f;
+		}
+	}
+	else
+	{
+		for (auto a = max; a > min; a -= steps)
+		{
+			auto f = sdk::util::c_disassembler::Instance().get_custom(adr, 0, a, a + steps, instructions);
+			if (f.empty()) continue;
+			return f;
+		}
+	}
+	return {};
+}
+
 uint32_t sdk::util::c_address_gathering::find_singleton_or_instance(uint32_t f)
 {
 	auto off = (uint32_t)0x0;
@@ -81,14 +104,9 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 		dodirectenter_fn = sdk::util::c_fn_discover::Instance().discover_fn(directenter_fn, 0x30, 0x65, 1);
 		if (!dodirectenter_fn) return this->error_out(__LINE__);
 	}
-	auto ConnectToGameServer_off = sdk::util::c_disassembler::Instance().get_custom(dodirectenter_fn, 0, 0xFFF, 0xFFFF, { "mov", "add", "push", "lea" });
-	if (!ConnectToGameServer_off.size()) return this->error_out(__LINE__);
-
-	sdk::game::connection_offsets::off_SELECT_CHAR_IDX = ConnectToGameServer_off.front();
 	sdk::game::func::c_funcs::Instance().f_ConnectToGameServer = decltype(sdk::game::func::c_funcs::Instance().f_ConnectToGameServer)(dodirectenter_fn);
 
 	sdk::util::c_log::Instance().duo(XorStr("[ off_directenter fn: %04x ]\n"), dodirectenter_fn);
-	sdk::util::c_log::Instance().duo(XorStr("[ off_SELECT_CHAR_IDX fn: %04x ]\n"), sdk::game::connection_offsets::off_SELECT_CHAR_IDX);
 
 	//
 
@@ -174,7 +192,6 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	sdk::game::connection_offsets::off_NETWORKING_PHASE = CPythonNetworkStream_SetOffLinePhase_off.front();
 	sdk::util::c_log::Instance().duo(XorStr("[ off_NETWORKING_PHASE: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase_off.front());
-	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonNetworkStream_SetOffLinePhase: %04x ]\n"), CPythonNetworkStream_SetOffLinePhase);
 
 	//
 
@@ -226,56 +243,58 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 bool sdk::util::c_address_gathering::gather_actor_related()
 {
-	auto CPythonCharacterManager_FaintTest = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("FaintTest"));
-	if (!CPythonCharacterManager_FaintTest) this->error_out(__LINE__);
-
-	auto CPythonCharacterManager_instance = this->find_singleton_or_instance(CPythonCharacterManager_FaintTest);
-	if (!CPythonCharacterManager_instance) this->error_out(__LINE__);
-
-	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0xC, 0xE, 0, 0, true, true);
-	if (!IsFaint_fn)
-	{
-		auto IsFaint_calls = sdk::util::c_disassembler::Instance().get_calls(CPythonCharacterManager_FaintTest, 0, 0, 1);
-		if (IsFaint_calls.empty()) return this->error_out(__LINE__);
-		IsFaint_fn = IsFaint_calls[IsFaint_calls.size() - 2];
-		if (!IsFaint_fn) this->error_out(__LINE__);
-	}
-
-	auto IsFaint_off = sdk::util::c_disassembler::Instance().get_custom(IsFaint_fn, 0, 0x300, 0x2000, { "mov", "lea", "push" });
-	if (IsFaint_off.empty()) return this->error_out(__LINE__);
-
-	sdk::game::actor_offsets::off_FAINT = IsFaint_off.front();
-	sdk::game::actor_offsets::off_SLEEP = IsFaint_off.front() - 0x4;
-	sdk::game::actor_offsets::off_STUN = IsFaint_off.front() + 0x8;
-	sdk::game::actor_offsets::off_DEAD = IsFaint_off.front() + 0xC;
-	sdk::game::pointer_offsets::off_CPythonCharacterManager = CPythonCharacterManager_instance;
-
-	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonCharacterManager: %04x ]\n"), CPythonCharacterManager_instance);
-	sdk::util::c_log::Instance().duo(XorStr("[ off_FAINT: %04x ]\n"), IsFaint_off.front());
-	sdk::util::c_log::Instance().duo(XorStr("[ off_SLEEP: %04x ]\n"), IsFaint_off.front() - 0x4);
-	sdk::util::c_log::Instance().duo(XorStr("[ off_STUN : %04x ]\n"), IsFaint_off.front() + 0x8);
-	sdk::util::c_log::Instance().duo(XorStr("[ off_DEAD : %04x ]\n"), IsFaint_off.front() + 0xC);
-
-	//
-
 	auto GetInstanceType_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("GetInstanceType"));
 	if (!GetInstanceType_fn) return this->error_out(__LINE__);
 
-	auto GetInstanceType_calls = sdk::util::c_disassembler::Instance().get_calls(GetInstanceType_fn, 0, 0, 0);
+	auto GetInstanceType_calls = sdk::util::c_disassembler::Instance().get_calls(GetInstanceType_fn, 0, 0, 1);
 	if (GetInstanceType_calls.empty()) return this->error_out(__LINE__);
 
+	auto CPythonCharacterManager_GetInstancePtr_fn = GetInstanceType_calls.back();
 	auto CPythonCharacterManager_GetInstancePtr_off = sdk::util::c_disassembler::Instance().get_custom(GetInstanceType_calls.back(), 0, 0x100, 0x2000, { "mov", "add", "push", "lea" });
-	if (CPythonCharacterManager_GetInstancePtr_off.empty()) return this->error_out(__LINE__);
-
-	auto CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_calls(GetInstanceType_calls.back(), 0, 0, 0);
-	if (CInstanceBase_GetInstanceType_fn.empty())
+	
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Ekstasia"))
 	{
-		CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_jumps(GetInstanceType_calls.back(), 0, 0);
-		if (CInstanceBase_GetInstanceType_fn.empty()) return this->error_out(__LINE__);
+		CPythonCharacterManager_GetInstancePtr_off = sdk::util::c_disassembler::Instance().get_custom(GetInstanceType_calls[GetInstanceType_calls.size() - 3], 0, 0x100, 0x2000, { "mov", "add", "push", "lea" });
+		CPythonCharacterManager_GetInstancePtr_fn = GetInstanceType_calls[GetInstanceType_calls.size() - 3];
 	}
 
+	if (CPythonCharacterManager_GetInstancePtr_off.empty())
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ GetInstanceType_calls : %04x ]\n"), GetInstanceType_calls.back());
+		CPythonCharacterManager_GetInstancePtr_off = sdk::util::c_disassembler::Instance().get_custom(GetInstanceType_calls[GetInstanceType_calls.size()-3], 0, 0x50, 0x2000, { "mov", "add", "push", "lea" });
+		CPythonCharacterManager_GetInstancePtr_fn = GetInstanceType_calls[GetInstanceType_calls.size() - 3];
+		if (!CPythonCharacterManager_GetInstancePtr_off.size())
+		{
+			CPythonCharacterManager_GetInstancePtr_off = sdk::util::c_disassembler::Instance().get_custom(GetInstanceType_calls[GetInstanceType_calls.size() - 2], 0, 0x50, 0x2000, { "mov", "add", "push", "lea" });
+			if (CPythonCharacterManager_GetInstancePtr_off.empty()) return this->error_out(__LINE__);
+			CPythonCharacterManager_GetInstancePtr_fn = GetInstanceType_calls[GetInstanceType_calls.size() - 2];
+		}
+	}
+
+	auto CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_calls(CPythonCharacterManager_GetInstancePtr_fn, 0, 0, 0);
+	if (CInstanceBase_GetInstanceType_fn.empty())
+	{
+		CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_jumps(CPythonCharacterManager_GetInstancePtr_fn, 0, 0);
+		if (CInstanceBase_GetInstanceType_fn.empty())
+		{
+			CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_calls(CPythonCharacterManager_GetInstancePtr_fn, 0x16, 0, 0);
+			if (CInstanceBase_GetInstanceType_fn.empty())
+			{
+				CInstanceBase_GetInstanceType_fn = sdk::util::c_disassembler::Instance().get_jumps(CPythonCharacterManager_GetInstancePtr_fn, 0x16, 0);
+				if (CInstanceBase_GetInstanceType_fn.empty()) return this->error_out(__LINE__);
+			}
+		}
+	}
+
+	sdk::util::c_log::Instance().duo(XorStr("[ CInstanceBase_GetInstanceType_fn : %04x ]\n"), CInstanceBase_GetInstanceType_fn.back());
+
 	auto CInstanceBase_GetInstanceType_off = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_GetInstanceType_fn.back(), 0, 0x100, 0x2000, { "mov", "add", "push", "lea" });
-	if (CInstanceBase_GetInstanceType_off.empty()) return this->error_out(__LINE__);
+	if (CInstanceBase_GetInstanceType_off.empty())
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ CInstanceBase_GetInstanceType_fn : %04x ]\n"), CInstanceBase_GetInstanceType_fn.back());
+		CInstanceBase_GetInstanceType_off = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_GetInstanceType_fn.back(), 0, 0x50, 0x2000, { "mov", "add", "push", "lea" });
+		if (CInstanceBase_GetInstanceType_off.empty()) return this->error_out(__LINE__);
+	}
 
 	sdk::game::actor_offsets::off_GRAPHIC_THING = CPythonCharacterManager_GetInstancePtr_off.front();
 	sdk::game::actor_offsets::off_ACTOR_TYPE = CInstanceBase_GetInstanceType_off.front();
@@ -290,6 +309,11 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	if (!CPythonPlayer_OpenCharacterMenu) return this->error_out(__LINE__);
 
 	auto possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SetPCTargetBoard"), 2);
+	if (possible_NEW_GetMainActorPtr.empty())
+	{
+		possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SetPCTargetBoard"), 6);//singletona assert
+		if (possible_NEW_GetMainActorPtr.empty()) return this->error_out(__LINE__);
+	}
 
 	auto CPythonPlayer_NEW_GetMainActorPtr_off = sdk::util::c_disassembler::Instance().get_custom(possible_NEW_GetMainActorPtr.front(), 0, 0x20, 0x100, { "call", "mov" });
 	if (CPythonPlayer_NEW_GetMainActorPtr_off.empty()) return this->error_out(__LINE__);
@@ -345,7 +369,7 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	auto GetPixelPosition_fn = sdk::util::c_fn_discover::Instance().get_fn_py("GetPixelPosition");
 	if (!GetPixelPosition_fn) return this->error_out(__LINE__);
 
-	auto CInstanceBase_NEW_GetPixelPosition = sdk::util::c_fn_discover::Instance().discover_fn(GetPixelPosition_fn, 0x20, 0x40, 1);
+	auto CInstanceBase_NEW_GetPixelPosition = sdk::util::c_fn_discover::Instance().discover_fn(GetPixelPosition_fn, 0x20, 0x39, 1);
 	if (!CInstanceBase_NEW_GetPixelPosition) return this->error_out(__LINE__);
 
 	auto CInstanceBase_NEW_GetPixelPosition_calls = sdk::util::c_disassembler::Instance().get_calls(CInstanceBase_NEW_GetPixelPosition, 0, 0, 1);
@@ -355,8 +379,14 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 		if (CInstanceBase_NEW_GetPixelPosition_calls.empty()) return this->error_out(__LINE__);
 	}
 
+	sdk::util::c_log::Instance().duo(XorStr("[ CInstanceBase_NEW_GetPixelPosition_calls: %04x ]\n"), CInstanceBase_NEW_GetPixelPosition_calls.back());
+
 	auto CInstanceBase_NEW_GetPixelPosition_off = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_NEW_GetPixelPosition_calls.front(), 0, 0x200, 0x3000, { "mov" });
-	if (CInstanceBase_NEW_GetPixelPosition_off.empty()) return this->error_out(__LINE__);
+	if (CInstanceBase_NEW_GetPixelPosition_off.empty())
+	{
+		CInstanceBase_NEW_GetPixelPosition_off = sdk::util::c_disassembler::Instance().get_custom(CInstanceBase_NEW_GetPixelPosition_calls.back(), 0, 0x200, 0x3000, { "mov" });
+		if (CInstanceBase_NEW_GetPixelPosition_off.empty()) return this->error_out(__LINE__);
+	}
 
 	sdk::game::actor_offsets::off_POSITION = CInstanceBase_NEW_GetPixelPosition_off.front();
 	sdk::util::c_log::Instance().duo(XorStr("[ off_POSITION: %04x ]\n"), CInstanceBase_NEW_GetPixelPosition_off.front());
@@ -382,24 +412,46 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SendCharacterStatePacket: %04x ]\n"), CPythonNetworkStream_SendCharacterStatePacket);
 
 	//
+	auto use_special_fn = 0;
 
-	auto CPyhtonNetworkStream_SendAttack = sdk::util::c_fn_discover::Instance().get_fn("Send Battle Attack Packet Error");
+	auto CPyhtonNetworkStream_SendAttack = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Send Battle Attack Packet Error"));
 	if (!CPyhtonNetworkStream_SendAttack)
 	{
 		//alt through ref
-		auto CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget = sdk::util::c_fn_discover::Instance().get_fn("Shoot : Hitting another target : %");
-		if (!CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget) return this->error_out(__LINE__);
+		auto CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Shoot : Hitting another target : %"));
+		if (!CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget)
+		{
+			CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayerEventHandler::OnHit"));
+			if (!CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget) return this->error_out(__LINE__);
+			use_special_fn = 1;
+		}
 
 		CPyhtonNetworkStream_SendAttack = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget, 0x50, 0x80, 3, 0, 0, 1);
-		if (!CPyhtonNetworkStream_SendAttack) return this->error_out(__LINE__);
+		if (use_special_fn)
+		{
+			CPyhtonNetworkStream_SendAttack = CPythonPlayerEventHandler_CNormalBowAttack_FlyEventHandler_AutoClear_OnExplodingAtAnotherTarget;
+			sdk::game::func::c_funcs::Instance().o_SendHitEvent = CPyhtonNetworkStream_SendAttack;
+			sdk::game::func::c_funcs::Instance().f_OnHit = decltype(sdk::game::func::c_funcs::Instance().f_OnHit)(CPyhtonNetworkStream_SendAttack);
+			auto CPythonPlayerEventHandler_instance = this->find_singleton_or_instance(sdk::util::c_fn_discover::Instance().get_fn(XorStr("RefreshStamina")));
+			if (!CPythonPlayerEventHandler_instance) return this->error_out(__LINE__);		
+			sdk::game::pointer_offsets::off_CPythonPlayerEventHandler = CPythonPlayerEventHandler_instance;
+		}
 	}
 
-	sdk::game::func::c_funcs::Instance().f_SendAttackPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendAttackPacket)(CPyhtonNetworkStream_SendAttack);
-	sdk::util::c_log::Instance().duo(XorStr("[ f_SendAttackPacket: %04x ]\n"), CPyhtonNetworkStream_SendAttack);
+	if (!use_special_fn)
+	{
+		sdk::game::func::c_funcs::Instance().f_SendAttackPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendAttackPacket)(CPyhtonNetworkStream_SendAttack);
+		sdk::util::c_log::Instance().duo(XorStr("[ f_SendAttackPacket: %04x ]\n"), CPyhtonNetworkStream_SendAttack);
+	}
+	else
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ o_SendHitEvent: %04x ]\n"), sdk::game::func::c_funcs::Instance().o_SendHitEvent);
+		sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonPlayerEventHandler_instance: %04x ]\n"), sdk::game::pointer_offsets::off_CPythonPlayerEventHandler);
+	}
 
 	//
 
-	auto CPythonNetworkStream_SendItemUsePacket = sdk::util::c_fn_discover::Instance().get_fn("SendItemMovePacket Error");
+	auto CPythonNetworkStream_SendItemUsePacket = sdk::util::c_fn_discover::Instance().get_fn((XorStr("SendItemMovePacket Error")));
 	if (!CPythonNetworkStream_SendItemUsePacket) return this->error_out(__LINE__);
 
 	auto CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x1A, 0x20, 2);
@@ -416,5 +468,52 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	sdk::game::func::c_funcs::Instance().o_IsAttacking = CPythonNetworkStream_IsPlayerAttacking_calls.back();
 	sdk::util::c_log::Instance().duo(XorStr("[ f_IsAttacking: %04x ]\n"), CPythonNetworkStream_IsPlayerAttacking_calls.back());
 
+	//
+
+	auto CPythonCharacterManager_FaintTest = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("FaintTest"));
+	if (!CPythonCharacterManager_FaintTest) this->error_out(__LINE__);
+
+	auto CPythonCharacterManager_instance = this->find_singleton_or_instance(CPythonCharacterManager_FaintTest);
+	if (!CPythonCharacterManager_instance) this->error_out(__LINE__);
+
+	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0xC, 0xE, 0, 0, true, true, 1, 0, 0, sdk::game::actor_offsets::off_COMBO_INDEX);
+	if (!IsFaint_fn)
+	{
+		IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0x8, 0x12, 0, 0, true, true, 1, 0, 0, sdk::game::actor_offsets::off_COMBO_INDEX);
+		if (!IsFaint_fn)
+		{
+			auto IsFaint_calls = sdk::util::c_disassembler::Instance().get_calls(CPythonCharacterManager_FaintTest, 0, 0, 1);
+			if (IsFaint_calls.empty()) return this->error_out(__LINE__);
+			IsFaint_fn = IsFaint_calls[IsFaint_calls.size() - 2];
+			if (!IsFaint_fn) this->error_out(__LINE__);
+
+			if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Tamidia")) IsFaint_fn = IsFaint_calls[2];
+		}
+	}
+
+	sdk::util::c_log::Instance().duo(XorStr("[ IsFaint_fn: %04x ]\n"), IsFaint_fn);
+
+	auto IsFaint_off = sdk::util::c_disassembler::Instance().get_custom(IsFaint_fn, 0, 0x300, 0x2000, { "mov", "lea", "push" });
+	if (IsFaint_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::actor_offsets::off_FAINT = IsFaint_off.front();
+	sdk::game::actor_offsets::off_SLEEP = IsFaint_off.front() - 0x4;
+	sdk::game::actor_offsets::off_STUN = IsFaint_off.front() + 0x8;
+	sdk::game::actor_offsets::off_DEAD = IsFaint_off.front() + 0xC;
+	sdk::game::pointer_offsets::off_CPythonCharacterManager = CPythonCharacterManager_instance;
+
+	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonCharacterManager: %04x ]\n"), CPythonCharacterManager_instance);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_FAINT: %04x ]\n"), IsFaint_off.front());
+	sdk::util::c_log::Instance().duo(XorStr("[ off_SLEEP: %04x ]\n"), IsFaint_off.front() - 0x4);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_STUN : %04x ]\n"), IsFaint_off.front() + 0x8);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_DEAD : %04x ]\n"), IsFaint_off.front() + 0xC);
+
+	//
+
 	return 1;
+}
+
+bool sdk::util::c_address_gathering::gather_item_related()
+{
+
 }
