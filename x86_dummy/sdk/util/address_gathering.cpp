@@ -548,10 +548,13 @@ bool sdk::util::c_address_gathering::gather_item_related()
 	auto SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendItemPickUpPacket"));
 
 	//untested
-	auto CPythonNetworkStream_SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendItemPickUpPacket Error"));
+	auto CPythonNetworkStream_SendItemPickUpPacket_list = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SendItemPickUpPacket Error"), 1);
+	if (CPythonNetworkStream_SendItemPickUpPacket_list.empty()) return this->error_out(__LINE__);
+	auto CPythonNetworkStream_SendItemPickUpPacket = CPythonNetworkStream_SendItemPickUpPacket_list.front();
 	if (CPythonNetworkStream_SendItemPickUpPacket)
 	{
 		//use str ref
+		sdk::util::c_log::Instance().duo(XorStr("[ R1 f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket - (uint32_t)GetModuleHandleA(0) + 0x400000);
 		sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket)(CPythonNetworkStream_SendItemPickUpPacket);
 		auto SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("OnCannotPickItem"));
 		if (!SendClickItemPacket) SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::SendClickItemPacket(dwIID"));
@@ -561,13 +564,14 @@ bool sdk::util::c_address_gathering::gather_item_related()
 	else
 	{
 		//use pyfunc method
+		sdk::util::c_log::Instance().duo(XorStr("[ R2 f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket - (uint32_t)GetModuleHandleA(0) + 0x400000); 
 		if (!SendItemPickUpPacket) return this->error_out(__LINE__);
 		CPythonNetworkStream_SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().discover_fn(SendItemPickUpPacket, 0x50, 0x70, 3);
 		if (!CPythonNetworkStream_SendItemPickUpPacket) return this->error_out(__LINE__);
 		sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket)(CPythonNetworkStream_SendItemPickUpPacket);
 		sdk::game::pointer_offsets::off_CPythonItem = this->find_singleton_or_instance(SendItemPickUpPacket);
 	}
-	sdk::util::c_log::Instance().duo(XorStr("[ f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket);
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket - (uint32_t)GetModuleHandleA(0));
 	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonItem: %04x ]\n"), sdk::game::pointer_offsets::off_CPythonItem);
 
 	return 1;
