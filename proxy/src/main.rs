@@ -4,7 +4,7 @@ use tokio::net::{TcpListener, TcpStream};
 
 use futures::stream::{self, StreamExt};
 use futures::FutureExt;
-use std::error::Error;
+use std::{error::Error, thread::JoinHandle};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::io::AsyncBufReadExt;
@@ -16,6 +16,19 @@ struct Ip {
     ip_addr: String,
     expire: SystemTime,
 }
+
+struct Forwarding{
+    listen: String,
+    foward: String,
+    thread: JoinHandle<()>
+}
+
+struct Server {
+    name: String,
+    fowardings: Arc<RwLock<Vec<Arc<RwLock<Forwarding>>>>>,
+    ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>
+}
+
 
 async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, server_addr: String) {
     println!("proxying {} -> {}", listen_addr, server_addr);
@@ -47,21 +60,16 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
 }
 
 async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
-    println!("{}", "test");
-    let (mut rd, mut wr) = io::split(inbound);
+    let (rd, mut wr) = io::split(inbound);
     let mut reader = BufReader::new(rd);
     let mut line = String::new();
-    println!("{}", "test");
     reader.read_line(&mut line).await.unwrap();
-    //remove_whitespace(&mut line);
-    println!("{}", line);
     let data: serde_json::Value = serde_json::from_str(&line).unwrap();
     if data["op"] == 1 {
-        //Add_ip
-        println!("got add ip");
         let mut found: bool = false;
         let mut index: usize = 0;
         let ip_addr = &data["ip"].to_string();
+        println!("adding ip {}",ip_addr);
         for n in 0..ips.read().await.len() {
             if ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
                 index = n;
