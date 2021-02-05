@@ -154,14 +154,6 @@ void main::c_ui::work()
 	font = nk_gdifont_create("Consolas", 16);
 	ctx = nk_gdi_init(font, dc, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	/* style.c */
-#ifdef INCLUDE_STYLE
-/*set_style(ctx, THEME_WHITE);*/
-/*set_style(ctx, THEME_RED);*/
-/*set_style(ctx, THEME_BLUE);*/
-/*set_style(ctx, THEME_DARK);*/
-#endif
-
 	sdk::util::c_log::Instance().duo(XorStr("[ ui setup complete ]\n"));
 
 	while (running)
@@ -196,10 +188,11 @@ void main::c_ui::work()
 			if (sdk::util::c_address_gathering::Instance().done)
 			{
 				nk_layout_row_dynamic(ctx, 20, 2);
-				nk_checkbox_label(ctx, XorStr("debug-con"), (nk_bool*)&this->debug_serverdata);
-				nk_checkbox_label(ctx, XorStr("debug-actors"), (nk_bool*)&this->debug_actors);
+				nk_checkbox_label(ctx, XorStr("con-info"), &this->debug_serverdata);
+				nk_checkbox_label(ctx, XorStr("actor-info"), &this->debug_actors);
+				nk_checkbox_label(ctx, XorStr("item-info"), &this->debug_items);
 
-				nk_checkbox_label(ctx, XorStr("log-next-login"), (nk_bool*)&sdk::game::accconnector::c_login::Instance().should_grab_details);
+				nk_checkbox_label(ctx, XorStr("log-next-login"), &sdk::game::accconnector::c_login::Instance().should_grab_details);
 				this->checkbox(XorStr("login"), XorStr("login"), XorStr("enable"));
 
 				this->checkbox(XorStr("waithack"), XorStr("waithack"), XorStr("toggle"));
@@ -207,10 +200,15 @@ void main::c_ui::work()
 				this->checkbox(XorStr("mobs"), XorStr("waithack"), XorStr("mobs"));
 				this->checkbox(XorStr("on_attack"), XorStr("waithack"), XorStr("on_attack"));
 				this->checkbox(XorStr("bp_on_attack"), XorStr("waithack"), XorStr("bp_on_attack"));
-				this->slider(XorStr("range"), XorStr("waithack"), XorStr("range"), 300, 20000, 1.f);
+
+				this->checkbox(XorStr("pickup"), XorStr("pickup"), XorStr("toggle"));
+				this->slider(XorStr("pick-range"), XorStr("pickup"), XorStr("range"), 300, 20000, 100.f);
+				this->slider(XorStr("pick-delay"), XorStr("pickup"), XorStr("delay"), 0, 1000, 5.f);
+
+				this->slider(XorStr("range"), XorStr("waithack"), XorStr("range"), 300, 20000, 100.f);
 				this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25, 1.f);
 				this->slider(XorStr("speed"), XorStr("waithack"), XorStr("speed"), 1, 100, 1.f);
-				this->slider(XorStr("anchor"), XorStr("waithack"), XorStr("anchor"), 1000, 6000, 1.f);
+				this->slider(XorStr("anchor"), XorStr("waithack"), XorStr("anchor"), 1000, 4000, 100.f);
 
 				auto main_act = sdk::game::chr::c_char::Instance().get_main_actor();
 
@@ -218,6 +216,21 @@ void main::c_ui::work()
 				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("alive : %i"), sdk::game::chr::c_char::Instance().get_alive().size()), NK_TEXT_LEFT);
 				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("dead : %i"), sdk::game::chr::c_char::Instance().get_dead().size()), NK_TEXT_LEFT);
 				if (main_act) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("attacking : %i"), sdk::game::func::c_funcs::Instance().f_IsAttacking(main_act)), NK_TEXT_LEFT);
+
+				if (main_act && this->debug_items)
+				{
+					auto it = sdk::game::item::c_item_gather::Instance().items;
+					if (it.size())
+					{
+						auto main_pos = sdk::game::chr::c_char::Instance().get_pos(main_act);
+						nk_layout_row_dynamic(ctx, 20, 1);
+						for (auto && a : it)
+						{
+							auto dst_to_item = 0.f; dst_to_item = sdk::game::chr::c_char::Instance().get_distance(main_pos, a.pos);
+							nk_label(ctx, sdk::util::c_log::Instance().string("item vid: %04x, owner: %s, dst: %.2f", a.vid, a.owner.c_str(), dst_to_item), NK_TEXT_LEFT);
+						}
+					}
+				}
 
 				auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
 				auto account_connector_base = sdk::game::c_utils::Instance().baseclass_account_connector();

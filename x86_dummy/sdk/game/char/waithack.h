@@ -28,11 +28,12 @@ namespace sdk
 			uint32_t						main_actor = 0;
 			std::vector<s_mobs_area_point>	mobs;
 		private:
-			void							force_position(float x, float y);
-			void							interpolate_to_pos(vec from, vec to);
+			void							force_position(float x, float y);			
 			bool							should_attack(uint32_t a);
 			bool							populate();
 			void							selective_attack();
+		public:
+			void							interpolate_to_pos(vec from, vec to);
 		public:
 			int								get_range();
 			int								get_targets();

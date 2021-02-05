@@ -65,7 +65,7 @@ namespace sdk
 				void				set_character();
 			public:
 				t_char				f_char;
-				bool				should_grab_details = false;
+				int					should_grab_details = false;
 				bool				force_slot = false;
 				json::s_account		account_selected;
 				void				set_account(json::s_account a) { this->account_last_grabbed = a; };

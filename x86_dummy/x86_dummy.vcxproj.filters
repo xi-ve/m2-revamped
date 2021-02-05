@@ -147,6 +147,12 @@
     <ClCompile Include="sdk\game\char\waithack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sdk\game\item\item_gather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sdk\game\item\pickup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main\inc.h">
@@ -372,6 +378,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sdk\util\structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\item\item_gather.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\game\item\pickup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

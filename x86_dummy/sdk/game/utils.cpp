@@ -28,3 +28,8 @@ uint32_t sdk::game::c_utils::baseclass_event_handler()
     if (!gi) return 0;
     return *(uint32_t*)(gi + sdk::game::actor_offsets::off_SHOULD_SKIP_COLLISION + 0x1c);
 }
+
+uint32_t sdk::game::c_utils::baseclass_python_item()
+{
+	return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonItem);
+}

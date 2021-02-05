@@ -4,9 +4,9 @@ namespace sdk
 {
 	namespace game
 	{
-		namespace function_offsets
+		namespace item_offsets
 		{
-
+			extern uint32_t		off_OWNER_NAME;
 		}
 		namespace pointer_offsets
 		{
@@ -15,6 +15,7 @@ namespace sdk
 			extern uint32_t		off_CPythonCharacterManager;
 			extern uint32_t		off_CPythonPlayer;
 			extern uint32_t		off_CPythonPlayerEventHandler;
+			extern uint32_t		off_CPythonItem;
 		}
 		namespace actor_offsets
 		{

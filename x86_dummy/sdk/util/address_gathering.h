@@ -17,6 +17,7 @@ namespace sdk
 		public:
 			bool					done = false;
 			void					setup();
+			bool					check_baseclasses();
 		};
 	}
 }

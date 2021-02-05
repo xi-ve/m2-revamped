@@ -44,18 +44,5 @@ namespace sdk
 			_RTTIClassHierarchyDescriptor* pClassHierarchyDescriptor;
 		};
 		_RTTICompleteObjectLocator* get(_base_class* instance);
-		typedef void (*vtable_ptr)(void);
-		static inline const vtable_ptr* get_vtable(void* obj)
-		{
-			return *(const vtable_ptr**)obj;
-		}
-
-		static inline const _RTTICompleteObjectLocator* get_obj_locator(void* cppobj)
-		{
-			const vtable_ptr* vtable = get_vtable(cppobj);
-			if (!vtable) return 0;
-			if (!vtable[0]) return 0;
-			return (const _RTTICompleteObjectLocator*)vtable[-1];
-		}
 	}
 }

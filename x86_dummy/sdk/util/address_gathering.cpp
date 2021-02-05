@@ -5,6 +5,8 @@ void sdk::util::c_address_gathering::setup()
 	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_connection_related ]\n")); return; }
 	r = this->gather_actor_related();
 	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_actor_related ]\n")); return; }
+	r = this->gather_item_related();
+	if (!r) { sdk::util::c_log::Instance().duo(XorStr("[ failed gather_item_related ]\n")); return; }
 	sdk::util::c_log::Instance().duo(XorStr("[ c_address_gathering::setup completed ]\n"));
 	done = true;
 }
@@ -515,5 +517,78 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 bool sdk::util::c_address_gathering::gather_item_related()
 {
+	auto CPythonPlayer_SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::SendClickItemPacket(dwIID=%d)"));
+	if (!CPythonPlayer_SendClickItemPacket)
+	{
+		CPythonPlayer_SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("PickCloseItem"));
+		if (!CPythonPlayer_SendClickItemPacket) return this->error_out(__LINE__);
+		CPythonPlayer_SendClickItemPacket = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x100, 0x160, 10);
+		if (!CPythonPlayer_SendClickItemPacket) return this->error_out(__LINE__);
+	}
 
+	auto CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 3, 0, 0, 1, 1);
+	if (!CPythonItem_GetOwnership)
+	{
+		CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 0, 0, 0, 1);
+		if (!CPythonItem_GetOwnership) return this->error_out(__LINE__);
+	}
+
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Celestial World 2.0")) CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 0, 0, 0, 1);
+
+	sdk::util::c_log::Instance().duo(XorStr("[ CPythonItem_GetOwnership: %04x ]\n"), CPythonItem_GetOwnership);
+
+	auto GetOwnership_off = sdk::util::c_disassembler::Instance().get_custom(CPythonItem_GetOwnership, 0, 0x100, 0x500, { "mov", "lea", "add" });
+	if (GetOwnership_off.empty()) return this->error_out(__LINE__);
+
+	sdk::game::item_offsets::off_OWNER_NAME = GetOwnership_off.back();
+	sdk::util::c_log::Instance().duo(XorStr("[ off_OWNER_NAME: %04x ]\n"), GetOwnership_off.back());
+
+	//
+
+	auto SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendItemPickUpPacket"));
+
+	//untested
+	auto CPythonNetworkStream_SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendItemPickUpPacket Error"));
+	if (CPythonNetworkStream_SendItemPickUpPacket)
+	{
+		//use str ref
+		sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket)(CPythonNetworkStream_SendItemPickUpPacket);
+		auto SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("OnCannotPickItem"));
+		if (!SendClickItemPacket) SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::SendClickItemPacket(dwIID"));
+		if (!SendClickItemPacket) return this->error_out(__LINE__);
+		sdk::game::pointer_offsets::off_CPythonItem = this->find_singleton_or_instance(SendClickItemPacket);
+	}
+	else
+	{
+		//use pyfunc method
+		if (!SendItemPickUpPacket) return this->error_out(__LINE__);
+		CPythonNetworkStream_SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().discover_fn(SendItemPickUpPacket, 0x50, 0x70, 3);
+		if (!CPythonNetworkStream_SendItemPickUpPacket) return this->error_out(__LINE__);
+		sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket)(CPythonNetworkStream_SendItemPickUpPacket);
+		sdk::game::pointer_offsets::off_CPythonItem = this->find_singleton_or_instance(SendItemPickUpPacket);
+	}
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket);
+	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonItem: %04x ]\n"), sdk::game::pointer_offsets::off_CPythonItem);
+
+	return 1;
+}
+
+bool sdk::util::c_address_gathering::check_baseclasses()
+{
+	auto rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CAccountConnector);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCAccountConnector"))) return this->error_out(__LINE__);
+	
+	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonCharacterManager);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonCharacterManager"))) return this->error_out(__LINE__);
+
+	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonItem);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonItem"))) return this->error_out(__LINE__);
+
+	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonPlayer);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonPlayer"))) return this->error_out(__LINE__);
+
+	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonNetworkStream);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonNetworkStream"))) return this->error_out(__LINE__);
+
+	return 1;
 }

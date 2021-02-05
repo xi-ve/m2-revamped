@@ -238,7 +238,7 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 		if (approx_calls) if (calls_inside.size() < approx_calls) continue;
 		if (approx_off_movs)
 		{
-			auto off_pushes_inside = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0, 0, { "mov" });
+			auto off_pushes_inside = sdk::util::c_disassembler::Instance().get_custom(a, inside_fn_size, 0, 0, { "mov", "push" });
 			//sdk::util::c_log::Instance().duo("[ scanning: %04x => %04x, size: %04x, movs: %i ]\n", origin, a, inside_fn_size, off_pushes_inside.size());
 			if (off_pushes_inside.size() < approx_off_movs) continue;
 		}

@@ -13,6 +13,7 @@ namespace sdk
 			uint32_t	baseclass_character_manager();
 			uint32_t	baseclass_python_player();
 			uint32_t	baseclass_event_handler();
+			uint32_t	baseclass_python_item();
 		};
 	}
 }

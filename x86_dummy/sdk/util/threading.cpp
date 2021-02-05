@@ -114,6 +114,8 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::accconnector::c_login::Instance().setup();
 	sdk::game::chr::c_char::Instance().setup();
 	sdk::game::c_waithack::Instance().setup();
+	sdk::game::item::c_item_gather::Instance().setup();
+	sdk::game::c_pickup::Instance().setup();
 
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")))
 	{
@@ -177,7 +179,9 @@ void __stdcall sdk::util::init_worker()
 	{
 		sdk::game::accconnector::c_login::Instance().work();
 		sdk::game::c_waithack::Instance().work();
-	}, 15);
+		sdk::game::item::c_item_gather::Instance().work();
+		sdk::game::c_pickup::Instance().work();
+	}, 5);
 
 	main::c_ui::Instance().work();
 }

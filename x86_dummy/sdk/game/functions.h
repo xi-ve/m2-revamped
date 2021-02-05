@@ -18,6 +18,7 @@ namespace sdk
 				typedef bool(__thiscall* t_SendAttackPacket)(uint32_t, UINT, uint32_t);
 				typedef bool(__thiscall* t_IsAttacking)(uint32_t);
 				typedef void(__thiscall* t_OnHit)(uint32_t, UINT, uint32_t, BOOL);
+				typedef bool(__thiscall* t_SendItemPickUpPacket)(uint32_t, uint32_t);
 			}
 			class c_funcs : public s<c_funcs>
 			{
@@ -34,6 +35,7 @@ namespace sdk
 				t::t_SendAttackPacket			f_SendAttackPacket = 0;					//CPythonNetworkStream
 				t::t_IsAttacking				f_IsAttacking = 0;						//CPythonPlayer
 				t::t_OnHit						f_OnHit = 0;							//CPythonPlayerEventHandler
+				t::t_SendItemPickUpPacket		f_SendItemPickUpPacket = 0;				//CPythonNetworkStream
 
 				uint32_t						o_SendSelectCharacter = 0;
 				uint32_t						o_SendCharacterStatePacket = 0;

@@ -199,6 +199,8 @@
     <ClCompile Include="sdk\game\char\utils.cpp" />
     <ClCompile Include="sdk\game\char\waithack.cpp" />
     <ClCompile Include="sdk\game\hardware_id.cpp" />
+    <ClCompile Include="sdk\game\item\item_gather.cpp" />
+    <ClCompile Include="sdk\game\item\pickup.cpp" />
     <ClCompile Include="sdk\game\offsets.cpp" />
     <ClCompile Include="sdk\game\utils.cpp" />
     <ClCompile Include="sdk\util\address_gathering.cpp" />
@@ -273,6 +275,8 @@
     <ClInclude Include="sdk\game\char\waithack.h" />
     <ClInclude Include="sdk\game\functions.h" />
     <ClInclude Include="sdk\game\hardware_id.h" />
+    <ClInclude Include="sdk\game\item\item_gather.h" />
+    <ClInclude Include="sdk\game\item\pickup.h" />
     <ClInclude Include="sdk\game\offsets.h" />
     <ClInclude Include="sdk\game\utils.h" />
     <ClInclude Include="sdk\util\address_gathering.h" />

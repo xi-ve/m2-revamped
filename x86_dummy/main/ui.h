@@ -6,8 +6,9 @@ namespace main
 	class c_ui : public s<c_ui>
 	{
 	private:
-		bool		debug_serverdata = false;
-		bool		debug_actors = false;
+		int		debug_serverdata = false;
+		int		debug_actors = false;
+		int		debug_items = false;
 	private:		
 		WNDCLASSW wc;
 		RECT rect = { 0, 0, 350, 550 };
