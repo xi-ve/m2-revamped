@@ -33,3 +33,8 @@ uint32_t sdk::game::c_utils::baseclass_python_item()
 {
 	return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonItem);
 }
+
+uint32_t sdk::game::c_utils::baseclass_item_manager()
+{
+	return *(uint32_t*)(sdk::game::pointer_offsets::off_CItemManager);
+}

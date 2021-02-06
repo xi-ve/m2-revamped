@@ -43,6 +43,13 @@ WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 
+std::string main::c_ui::to_lower(std::string in)
+{
+	std::string r = "";
+	for (auto a : in) r.push_back(std::tolower(a));
+	return r;
+}
+
 void main::c_ui::create_device(HWND d)
 {
 	GdiFont* font;
@@ -106,7 +113,7 @@ void main::c_ui::slider(std::string label, std::string varhead, std::string varb
 	auto val = sdk::util::c_config::Instance().get_var(varhead.c_str(), varbod.c_str());
 	if (!val) { sdk::util::c_log::Instance().duo("cant get var\n"); return; }
 	float asflt = std::stof(val->container.c_str());
-	
+
 	nk_layout_row_dynamic(ctx, 16, 2);
 	nk_label(ctx, sdk::util::c_log::Instance().string("%s - %.2f", label.c_str(), asflt), NK_TEXT_ALIGN_LEFT);
 	nk_slider_float(ctx, (float)min, &asflt, (float)max, steps);
@@ -132,7 +139,7 @@ void main::c_ui::work()
 	HDC dc;
 	int running = 1;
 	int needs_refresh = 1;
-
+	int maxlen = 0;
 	/* Win32 */
 	memset(&wc, 0, sizeof(wc));
 	wc.style = CS_DBLCLKS;
@@ -191,6 +198,7 @@ void main::c_ui::work()
 				nk_checkbox_label(ctx, XorStr("con-info"), &this->debug_serverdata);
 				nk_checkbox_label(ctx, XorStr("actor-info"), &this->debug_actors);
 				nk_checkbox_label(ctx, XorStr("item-info"), &this->debug_items);
+				nk_checkbox_label(ctx, XorStr("item-conf"), &this->debug_item_edit);
 
 				nk_checkbox_label(ctx, XorStr("log-next-login"), &sdk::game::accconnector::c_login::Instance().should_grab_details);
 				this->checkbox(XorStr("login"), XorStr("login"), XorStr("enable"));
@@ -200,8 +208,10 @@ void main::c_ui::work()
 				this->checkbox(XorStr("mobs"), XorStr("waithack"), XorStr("mobs"));
 				this->checkbox(XorStr("on_attack"), XorStr("waithack"), XorStr("on_attack"));
 				this->checkbox(XorStr("bp_on_attack"), XorStr("waithack"), XorStr("bp_on_attack"));
+				this->checkbox(XorStr("dmg-boost"), XorStr("waithack"), XorStr("boost"));
 
 				this->checkbox(XorStr("pickup"), XorStr("pickup"), XorStr("toggle"));
+				nk_checkbox_label(ctx, XorStr("only-blacklist"), &sdk::game::c_pickup::Instance().item_conf.only_pick_blacklist);
 				this->slider(XorStr("pick-range"), XorStr("pickup"), XorStr("range"), 300, 20000, 100.f);
 				this->slider(XorStr("pick-delay"), XorStr("pickup"), XorStr("delay"), 0, 1000, 5.f);
 
@@ -214,8 +224,107 @@ void main::c_ui::work()
 
 				nk_layout_row_dynamic(ctx, 20, 2);
 				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("alive : %i"), sdk::game::chr::c_char::Instance().get_alive().size()), NK_TEXT_LEFT);
-				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("dead : %i"), sdk::game::chr::c_char::Instance().get_dead().size()), NK_TEXT_LEFT);
-				if (main_act) nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("attacking : %i"), sdk::game::func::c_funcs::Instance().f_IsAttacking(main_act)), NK_TEXT_LEFT);
+
+				if (this->debug_item_edit && sdk::game::item::c_item_manager::Instance().did_grab)
+				{
+					nk_layout_row_dynamic(ctx, 28, 2);
+
+					nk_label(ctx, "search:", NK_TEXT_LEFT);
+					nk_edit_string_zero_terminated(ctx, NK_EDIT_SIMPLE, this->input_search_item, 26, nk_filter_default);
+
+					if (this->input_search_item)
+					{
+						struct s_item_view
+						{
+							std::string		name;
+							uint32_t		vnum;
+							bool			is_blacklisted;
+						};
+
+						std::vector<s_item_view> res = {};
+
+						auto serach_term = this->to_lower(this->input_search_item);
+
+						for (auto a : sdk::game::item::c_item_manager::Instance().item_names)
+						{
+							auto lower = this->to_lower(a.second);
+							if (!strstr(lower.c_str(), serach_term.c_str())) continue;
+							auto vr = s_item_view();
+							vr.name = a.second;
+							vr.vnum = a.first;
+							vr.is_blacklisted = sdk::game::c_pickup::Instance().is_blacklisted(a.first);
+							res.push_back(vr);
+						}
+
+						if (res.size())
+						{
+							nk_layout_row_dynamic(ctx, 300, 1);
+
+							if (nk_group_begin(ctx, "items", 0))
+							{								
+								nk_layout_row_dynamic(ctx, 20, 2);
+								for (int i = 0; i < (int)res.size(); ++i)
+								{
+									int selected = 0;
+
+									auto obj = res[i];
+									if (obj.name.empty()) continue;
+
+									auto cchar = obj.name.data();
+
+									if (nk_select_label(ctx, (const char*)cchar, NK_TEXT_LEFT, selected))
+									{
+										if (obj.is_blacklisted)
+										{
+											sdk::game::c_pickup::Instance().unblacklist(obj.vnum);
+											sdk::game::c_pickup::Instance().add_whitelist(obj.vnum);											
+										}
+										else
+										{
+											sdk::game::c_pickup::Instance().unwhitelist(obj.vnum); 
+											sdk::game::c_pickup::Instance().add_blacklist(obj.vnum);											
+										}
+									}
+									if (obj.is_blacklisted) nk_label(ctx, "blacklisted", NK_TEXT_RIGHT);
+									else nk_label(ctx, "whitelisted", NK_TEXT_RIGHT);
+								}
+							} nk_group_end(ctx);
+
+							//if (nk_list_view_begin(ctx, &view, "items", NK_WINDOW_BORDER | NK_WINDOW_SCROLL_AUTO_HIDE | NK_WINDOW_DYNAMIC, 20, 15))
+							//{
+							//	for (auto a = 0; a < (int)res.size(); a++)
+							//	{
+							//		auto b = res[a];
+							//		if (b.name.empty()) continue;
+
+							//		nk_layout_row_dynamic(ctx, 20, 2);
+
+							//		int selected = false;
+							//		if (nk_select_label(ctx, b.name.c_str(), NK_TEXT_LEFT, selected))
+							//		{
+							//			//swap pickmode
+							//			sdk::util::c_log::Instance().duo("[ switching => vnum: %i, name: %s, blacklisted: %i ]\n", b.vnum, b.name.c_str(), b.is_blacklisted);
+
+							//			if (b.is_blacklisted)
+							//			{
+							//				sdk::game::c_pickup::Instance().add_whitelist(b.vnum);
+							//				sdk::game::c_pickup::Instance().unblacklist(b.vnum);
+							//			}
+							//			else
+							//			{
+							//				sdk::game::c_pickup::Instance().add_blacklist(b.vnum);
+							//				sdk::game::c_pickup::Instance().unwhitelist(b.vnum);
+							//			}
+							//		}
+
+							//		if (b.is_blacklisted) nk_label(ctx, "blacklisted", NK_TEXT_RIGHT);
+							//		else nk_label(ctx, "whitelisted", NK_TEXT_RIGHT);
+							//	}
+							//	nk_list_view_end(&view);
+							//}
+						}
+					}
+				}
 
 				if (main_act && this->debug_items)
 				{
@@ -224,7 +333,7 @@ void main::c_ui::work()
 					{
 						auto main_pos = sdk::game::chr::c_char::Instance().get_pos(main_act);
 						nk_layout_row_dynamic(ctx, 20, 1);
-						for (auto && a : it)
+						for (auto&& a : it)
 						{
 							auto dst_to_item = 0.f; dst_to_item = sdk::game::chr::c_char::Instance().get_distance(main_pos, a.pos);
 							nk_label(ctx, sdk::util::c_log::Instance().string("item vid: %04x, owner: %s, dst: %.2f", a.vid, a.owner.c_str(), dst_to_item), NK_TEXT_LEFT);

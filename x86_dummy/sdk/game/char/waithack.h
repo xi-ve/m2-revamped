@@ -21,7 +21,7 @@ namespace sdk
 		class c_waithack : public s<c_waithack>
 		{
 		private:
-			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack;
+			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack, *boost;
 		private:
 			ULONGLONG						timeout = 0, attack_timeout = 0;
 		private:
@@ -41,6 +41,7 @@ namespace sdk
 			int								get_toggle();
 			int								get_anchor();
 			int								get_bp_on_attack();
+			int								get_boost();
 		private:
 			int								get_mobs();
 			int								get_metins();

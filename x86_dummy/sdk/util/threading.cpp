@@ -178,9 +178,14 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_thread::Instance().append([]()
 	{
 		sdk::game::accconnector::c_login::Instance().work();
-		sdk::game::c_waithack::Instance().work();
-		sdk::game::item::c_item_gather::Instance().work();
-		sdk::game::c_pickup::Instance().work();
+
+		if (sdk::game::item::c_item_manager::Instance().did_grab)
+		{
+			sdk::game::c_waithack::Instance().work();
+			sdk::game::item::c_item_gather::Instance().work();
+			sdk::game::c_pickup::Instance().work();
+		}
+		else sdk::game::item::c_item_manager::Instance().grab();
 	}, 5);
 
 	main::c_ui::Instance().work();

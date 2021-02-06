@@ -7,6 +7,8 @@ namespace sdk
 		namespace item_offsets
 		{
 			extern uint32_t		off_OWNER_NAME;
+			extern uint32_t		off_ITEM_NAME;
+
 		}
 		namespace pointer_offsets
 		{
@@ -16,6 +18,7 @@ namespace sdk
 			extern uint32_t		off_CPythonPlayer;
 			extern uint32_t		off_CPythonPlayerEventHandler;
 			extern uint32_t		off_CPythonItem;
+			extern uint32_t		off_CItemManager;
 		}
 		namespace actor_offsets
 		{

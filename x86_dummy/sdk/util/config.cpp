@@ -24,6 +24,7 @@ void sdk::util::c_config::registrant()
 	this->add_variable(XorStr("waithack"), XorStr("range"), "2000", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("targets"), "5", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("speed"), "1", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("boost"), "0", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("anchor"), "1000", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("metins"), "1", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("mobs"), "1", CONF_TYPE_INT);

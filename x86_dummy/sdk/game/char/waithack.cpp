@@ -10,6 +10,7 @@ void sdk::game::c_waithack::setup()
 	this->anchor = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("anchor"));
 	this->mobs_ = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("mobs"));
 	this->on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("on_attack"));
+	this->boost = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("boost"));
 	this->bp_on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bp_on_attack"));
 
 	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking, (void*)sdk::game::hooks::f_IsPlayerAttacking, (void**)&sdk::game::hooks::o_IsPlayerAttacking);
@@ -67,6 +68,12 @@ int sdk::game::c_waithack::get_on_attack()
 int sdk::game::c_waithack::get_bp_on_attack()
 {
 	auto r = (sdk::util::json_cfg::s_config_value*)(this->bp_on_attack);
+	return std::stoi(r->container.c_str());
+}
+
+int sdk::game::c_waithack::get_boost()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->boost);
 	return std::stoi(r->container.c_str());
 }
 
@@ -211,12 +218,17 @@ void sdk::game::c_waithack::selective_attack()
 			if (!mob_pos.valid()) continue;
 			auto mob_dst_to_me = sdk::game::chr::c_char::Instance().get_distance(mob_pos, main_pos);
 			if (mob_dst_to_me > 300) this->interpolate_to_pos(main_pos, mob_pos);
-			if (sdk::game::func::c_funcs::Instance().f_SendAttackPacket) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+			if (sdk::game::func::c_funcs::Instance().f_SendAttackPacket)
+			{
+				sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+			}
 			else
 			{
 				auto event_base = sdk::game::c_utils::Instance().baseclass_event_handler();
 				auto mob_graph = sdk::game::chr::c_char::Instance().get_graphic_thing(mob_instance);
 				sdk::game::func::c_funcs::Instance().f_OnHit(event_base, 0, mob_graph, TRUE);
+				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_OnHit(event_base, 0, mob_graph, TRUE);
 			}
 			if (mob_dst_to_me > 300) this->interpolate_to_pos(mob_pos, main_pos);
 		}
