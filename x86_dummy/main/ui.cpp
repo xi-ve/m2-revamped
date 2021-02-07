@@ -147,20 +147,19 @@ void main::c_ui::work()
 	wc.hInstance = GetModuleHandleW(0);
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.lpszClassName = L"   ";
+	wc.lpszClassName = L"e";
 	atom = RegisterClassW(&wc);
 
 	AdjustWindowRectEx(&rect, style, FALSE, exstyle);
-	wnd = CreateWindowExW(exstyle, wc.lpszClassName, L"  ",
+	wnd = CreateWindowExW(exstyle, wc.lpszClassName, L"r",
 						  style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
 						  rect.right - rect.left, rect.bottom - rect.top,
 						  NULL, NULL, wc.hInstance, NULL);
-	dc = GetDC(wnd);
 
+	dc = GetDC(wnd);
 	/* GUI */
 	font = nk_gdifont_create("Consolas", 16);
 	ctx = nk_gdi_init(font, dc, WINDOW_WIDTH, WINDOW_HEIGHT);
-
 	sdk::util::c_log::Instance().duo(XorStr("[ ui setup complete ]\n"));
 
 	while (running)

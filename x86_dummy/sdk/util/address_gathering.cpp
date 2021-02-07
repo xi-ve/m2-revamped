@@ -149,7 +149,7 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ off_USERNAME: %04x ]\n"), sdk::game::connection_offsets::off_USERNAME);
 		sdk::util::c_log::Instance().duo(XorStr("[ off_PASSWORD: %04x ]\n"), sdk::game::connection_offsets::off_PASSWORD);
-		if (CAccountConnector_Set_off.size() > 2) sdk::util::c_log::Instance().duo(XorStr("[ off_PASSCODE: %04x ]\n"), sdk::game::connection_offsets::off_PASSCODE);
+		if (!strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Zeros2")) if (CAccountConnector_Set_off.size() > 2) sdk::util::c_log::Instance().duo(XorStr("[ off_PASSCODE: %04x ]\n"), sdk::game::connection_offsets::off_PASSCODE);
 	}
 	//
 
@@ -526,10 +526,10 @@ bool sdk::util::c_address_gathering::gather_item_related()
 		if (!CPythonPlayer_SendClickItemPacket) return this->error_out(__LINE__);
 	}
 
-	auto CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 3, 0, 0, 1, 1);
+	auto CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 0, 0, 0, 1);
 	if (!CPythonItem_GetOwnership)
 	{
-		CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 0, 0, 0, 1);
+		CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 3, 0, 0, 1, 1);
 		if (!CPythonItem_GetOwnership) return this->error_out(__LINE__);
 	}
 
@@ -545,7 +545,7 @@ bool sdk::util::c_address_gathering::gather_item_related()
 
 	//
 
-	auto SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendItemPickUpPacket"));
+	auto SendItemPickUpPacket = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SendItemPickUpPacket"));
 
 	//untested
 	auto CPythonNetworkStream_SendItemPickUpPacket_list = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SendItemPickUpPacket Error"), 1);
@@ -554,12 +554,25 @@ bool sdk::util::c_address_gathering::gather_item_related()
 	if (CPythonNetworkStream_SendItemPickUpPacket)
 	{
 		//use str ref
-		sdk::util::c_log::Instance().duo(XorStr("[ R1 f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket - (uint32_t)GetModuleHandleA(0) + 0x400000);
+		sdk::util::c_log::Instance().duo(XorStr("[ R1 f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket);
 		sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket)(CPythonNetworkStream_SendItemPickUpPacket);
 		auto SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("OnCannotPickItem"));
 		if (!SendClickItemPacket) SendClickItemPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::SendClickItemPacket(dwIID"));
 		if (!SendClickItemPacket) return this->error_out(__LINE__);
+		sdk::util::c_log::Instance().duo(XorStr("[ SendClickItemPacket: %04x ]\n"), SendClickItemPacket);
 		sdk::game::pointer_offsets::off_CPythonItem = this->find_singleton_or_instance(SendClickItemPacket);
+		if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")))
+		{			
+			auto f = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::SendClickItemPacket(dwIID=%d) : Non-exist item"));
+			auto f_movs = sdk::util::c_disassembler::Instance().get_custom(f, 0, 0, 0, { "mov" });
+			sdk::game::pointer_offsets::off_CPythonItem = f_movs.front();
+		}
+		if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Zeros2")))
+		{
+			auto f = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::__OnPressItem - ALREADY"));
+			auto f_movs = sdk::util::c_disassembler::Instance().get_custom(f, 0, 0, 0, { "mov" });
+			sdk::game::pointer_offsets::off_CPythonItem = f_movs.front();
+		}
 	}
 	else
 	{
@@ -586,7 +599,11 @@ bool sdk::util::c_address_gathering::gather_item_related()
 	if (GetItemName_name_off.empty())
 	{
 		GetItemName_name_off = sdk::util::c_disassembler::Instance().get_custom(GetItemName_calls[GetItemName_calls.size() - 2], 0, 0x50, 0x1000, { "mov", "lea", "add" });
-		if (GetItemName_name_off.empty()) return this->error_out(__LINE__);
+		if (GetItemName_name_off.empty())
+		{
+			GetItemName_name_off = sdk::util::c_disassembler::Instance().get_custom(GetItemName_calls[GetItemName_calls.size() - 3], 0, 0x50, 0x1000, { "mov", "lea", "add" });
+			if (GetItemName_name_off.empty()) return this->error_out(__LINE__);
+		}
 	}
 
 	auto CItemManager_Instance = this->find_singleton_or_instance(GetItemName);
@@ -607,19 +624,40 @@ bool sdk::util::c_address_gathering::gather_item_related()
 bool sdk::util::c_address_gathering::check_baseclasses()
 {
 	auto rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CAccountConnector);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCAccountConnector"))) return this->error_out(__LINE__);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCAccountConnector"))) 
+	{
+		sdk::util::c_log::Instance().duo("[ off_CAccountConnector: %s ]\n", rtti->pTypeDescriptor->pname);
+		return this->error_out(__LINE__);
+	}
 
 	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonCharacterManager);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonCharacterManager"))) return this->error_out(__LINE__);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonCharacterManager")))
+	{
+		sdk::util::c_log::Instance().duo("[ off_CPythonCharacterManager: %s ]\n", rtti->pTypeDescriptor->pname);
+		return this->error_out(__LINE__);
+	}
 
 	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonItem);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonItem"))) return this->error_out(__LINE__);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonItem"))) 
+	{
+		sdk::util::c_log::Instance().duo("[ off_CPythonItem: %s ]\n", rtti->pTypeDescriptor->pname);
+		return this->error_out(__LINE__);
+	}
 
 	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonPlayer);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonPlayer"))) return this->error_out(__LINE__);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonPlayer")))
+	{
+		sdk::util::c_log::Instance().duo("[ off_CPythonPlayer: %s ]\n", rtti->pTypeDescriptor->pname);
+		return this->error_out(__LINE__);
+	}
 
 	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonNetworkStream);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonNetworkStream"))) return this->error_out(__LINE__);
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonNetworkStream")))
+	{
+		sdk::util::c_log::Instance().duo("[ off_CPythonNetworkStream: %s ]\n", rtti->pTypeDescriptor->pname);
+		return this->error_out(__LINE__);
+	}
+	sdk::util::c_log::Instance().duo("[ all ok ]\n");
 
 	return 1;
 }
