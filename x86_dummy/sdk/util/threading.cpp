@@ -79,6 +79,12 @@ void patch_cshield(std::string a, char* buf, size_t size, uint32_t offset)
 	if (!cs_checkheader || cs_checkheader == offset) return;
 	auto ret_wpm = WriteProcessMemory(GetCurrentProcess(), (void*)cs_checkheader, &buf, size, nullptr);
 }
+uint32_t get_cshield_addr(std::string a)
+{
+	if (!(uintptr_t)GetModuleHandleA(XorStr("CShield.dll"))) return 0;
+	auto cs_checkheader = sdk::util::c_mem::Instance().find_pattern_directed((uintptr_t)GetModuleHandleA(XorStr("CShield.dll")), a.c_str());
+	return cs_checkheader;
+}
 
 void empt_func()
 {
@@ -87,6 +93,12 @@ void empt_func()
 void __fastcall ac_shit(uint32_t self, int a2, int a3)
 {
 
+}
+typedef uint32_t(__fastcall* cshield_worker)(uint32_t);
+uint32_t __fastcall ac_cshield_worker(uint32_t base)
+{
+	//printf("[ CShield attempts to do bad thing, BONK! ]\n");
+	return 1;
 }
 
 void __stdcall sdk::util::init_worker()
@@ -99,11 +111,15 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_fn_discover::Instance().setup();
 	sdk::util::c_address_gathering::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
 	{
-		char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
-		patch_cshield(XorStr("72 ? 8B 75 ? 83 C6 ?"), patch2, sizeof(patch2), 0);
-		patch_cshield(XorStr("75 ? 33 C0 EB ? 1B C0 83 C8 ? 85 C0 74 ? 8D 4D ? 8D 51 ? 90"), patch2, sizeof(patch2), 0);
+		auto _code_55_fun = get_cshield_addr(XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 55 ?"));
+		void* rr;
+		MH_CreateHook((void*)_code_55_fun, (void*)ac_cshield_worker, (void**)&rr);
+		MH_EnableHook((void*)_code_55_fun);
+		//char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
+		//patch_cshield(XorStr("72 ? 8B 75 ? 83 C6 ?"), patch2, sizeof(patch2), 0);
+		//patch_cshield(XorStr("75 ? 33 C0 EB ? 1B C0 83 C8 ? 85 C0 74 ? 8D 4D ? 8D 51 ? 90"), patch2, sizeof(patch2), 0);
 		sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk executed ]\n"));
 	}
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")))

@@ -9,12 +9,14 @@ bool sdk::game::item::c_item_manager::grab()
 	auto manager = sdk::game::c_utils::Instance().baseclass_item_manager();
 	if (!manager) return 0;
 
-	std::this_thread::sleep_for(1s);
-
-	if (*(uint32_t*)(manager + 0x8) <= 0) return 0;//items registered
-
 	auto map = *(std::map<uint32_t, uint32_t*>*)(manager + 0x4);
 	if (map.empty()) return 0;
+
+	if (map.size() > 15000)
+	{
+		map = *(std::map<uint32_t, uint32_t*>*)(manager + 0x8);
+		if (map.empty() || map.size() > 15000) return 0;
+	}
 
 	sdk::util::c_log::Instance().duo("[ found %i items ]\n", map.size());
 
