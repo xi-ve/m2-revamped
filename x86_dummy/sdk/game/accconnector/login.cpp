@@ -134,6 +134,7 @@ void sdk::game::accconnector::c_login::work()
 		return;
 	}
 	auto enabled = sdk::util::c_config::Instance().get_var("login", "enable");
+	if (!enabled) return;
 	if (strstr(enabled->container.c_str(), "1") && this->account_selected.username.size() > 2)
 	{
 		auto py_net = sdk::game::c_utils::Instance().baseclass_networking();

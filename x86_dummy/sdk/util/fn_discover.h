@@ -43,7 +43,7 @@ namespace sdk
 		{
 		public:
 			std::string		server_name = "";
-		private:
+		public:
 			void			get_server();
 		private:
 			bool			should_gen_fn_list = false;

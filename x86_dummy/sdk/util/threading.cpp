@@ -94,15 +94,20 @@ void __fastcall ac_shit(uint32_t self, int a2, int a3)
 {
 
 }
-typedef uint32_t(__fastcall* cshield_worker)(uint32_t);
+typedef void(__fastcall* cshield_worker)(uint32_t);
+cshield_worker o_cshield_worker = 0;
 uint32_t __fastcall ac_cshield_worker(uint32_t base)
 {
-	//printf("[ CShield attempts to do bad thing, BONK! ]\n");
+	printf(XorStr("[ CShield attempts to do bad thing, BONK! ]\n"));
 	return 1;
 }
-
+void __stdcall ac_cshield_worker2()
+{
+	printf("[ 2 CShield attempts to do bad thing, BONK! ]\n");
+}
 void __stdcall sdk::util::init_worker()
 {
+	void* rr; 
 	MH_Initialize();
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
@@ -111,15 +116,13 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_fn_discover::Instance().setup();
 	sdk::util::c_address_gathering::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
 	{
 		auto _code_55_fun = get_cshield_addr(XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 55 ?"));
-		void* rr;
+
 		MH_CreateHook((void*)_code_55_fun, (void*)ac_cshield_worker, (void**)&rr);
 		MH_EnableHook((void*)_code_55_fun);
-		//char patch2[2] = { (char)0x90,(char)0x90 };//.text:73EC946B 72 BA                                   jb      short loc_73EC9427
-		//patch_cshield(XorStr("72 ? 8B 75 ? 83 C6 ?"), patch2, sizeof(patch2), 0);
-		//patch_cshield(XorStr("75 ? 33 C0 EB ? 1B C0 83 C8 ? 85 C0 74 ? 8D 4D ? 8D 51 ? 90"), patch2, sizeof(patch2), 0);
+
 		sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk executed ]\n"));
 	}
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")))
@@ -184,8 +187,6 @@ void __stdcall sdk::util::init_worker()
 		sdk::util::c_log::Instance().duo(XorStr("[ patched Realm2 protection ]\n"));
 	}
 
-	std::this_thread::sleep_for(2s);
-
 	sdk::util::c_thread::Instance().append([]()
 	{
 		sdk::util::c_config::Instance().save();
@@ -193,16 +194,19 @@ void __stdcall sdk::util::init_worker()
 
 	sdk::util::c_thread::Instance().append([]()
 	{
-		sdk::game::accconnector::c_login::Instance().work();
-
-		if (sdk::game::item::c_item_manager::Instance().did_grab)
+		if (sdk::util::c_address_gathering::Instance().done)
 		{
-			sdk::game::c_waithack::Instance().work();
-			sdk::game::item::c_item_gather::Instance().work();
-			sdk::game::c_pickup::Instance().work();
+			sdk::game::accconnector::c_login::Instance().work();
+
+			if (sdk::game::item::c_item_manager::Instance().did_grab)
+			{
+				sdk::game::c_waithack::Instance().work();
+				sdk::game::item::c_item_gather::Instance().work();
+				sdk::game::c_pickup::Instance().work();
+			}
+			else sdk::game::item::c_item_manager::Instance().grab();
 		}
-		else sdk::game::item::c_item_manager::Instance().grab();
-	}, 5);
+	}, 15);
 
 	main::c_ui::Instance().work();
 }
