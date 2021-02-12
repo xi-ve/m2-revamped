@@ -53,6 +53,7 @@ namespace sdk
 				bool				should_login = false;
 				bool				enabled_hook = false;
 				ULONGLONG			last_login = 0;
+				ULONGLONG			initial_delay = 0;
 				std::string			last_phase = "";
 			public:
 				void				save_accs();

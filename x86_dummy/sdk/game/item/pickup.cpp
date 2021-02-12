@@ -107,7 +107,6 @@ bool sdk::game::c_pickup::should_loot(uint32_t vnum)
 	{
 		if (this->is_blacklisted(vnum))
 		{
-			sdk::util::c_log::Instance().duo("[ blacklisted: %i ]\n", vnum);
 			return 1;
 		}
 		else return 0;
@@ -116,7 +115,6 @@ bool sdk::game::c_pickup::should_loot(uint32_t vnum)
 	{
 		if (this->is_whitelisted(vnum))
 		{
-			sdk::util::c_log::Instance().duo("[ whitelisted: %i ]\n", vnum);
 			return 1;
 		}
 		else return 0;
@@ -188,7 +186,6 @@ void sdk::game::c_pickup::load()
 		if (l.size() < 14) continue;
 		auto jparse = nlohmann::json::parse(l);
 		auto asobj = jparse.get<json_pickup::s_item_config>();
-		sdk::util::c_log::Instance().duo("[ loaded bobj: %i, wobj: %i, opb: %i ]\n", asobj.item_blacklist.size(), asobj.item_whitelist.size(), asobj.only_pick_blacklist);
 		this->item_conf = asobj;
 	}
 	f.close();

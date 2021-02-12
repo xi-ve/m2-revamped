@@ -208,6 +208,7 @@ void main::c_ui::work()
 				this->checkbox(XorStr("on_attack"), XorStr("waithack"), XorStr("on_attack"));
 				this->checkbox(XorStr("bp_on_attack"), XorStr("waithack"), XorStr("bp_on_attack"));
 				this->checkbox(XorStr("dmg-boost"), XorStr("waithack"), XorStr("boost"));
+				this->checkbox(XorStr("wallhack"), XorStr("misc"), XorStr("wallhack"));
 
 				this->checkbox(XorStr("pickup"), XorStr("pickup"), XorStr("toggle"));
 				nk_checkbox_label(ctx, XorStr("only-blacklist"), &sdk::game::c_pickup::Instance().item_conf.only_pick_blacklist);

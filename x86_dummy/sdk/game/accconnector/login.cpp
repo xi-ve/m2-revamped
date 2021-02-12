@@ -128,6 +128,7 @@ __declspec(naked) bool __stdcall naked_select_hook(BYTE base, uint32_t id)
 
 void sdk::game::accconnector::c_login::work()
 {
+	if (this->initial_delay > GetTickCount64()) return;
 	if (this->should_grab_details)
 	{
 		this->read_details();
@@ -215,6 +216,8 @@ void sdk::game::accconnector::c_login::work()
 void sdk::game::accconnector::c_login::setup()
 {	
 	this->load_accs();
+
+	this->initial_delay = GetTickCount64() + 5000;
 
 	if (sdk::game::connection_offsets::off_PASSCODE) this->acccon_passcode = true;
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Zeros2"))

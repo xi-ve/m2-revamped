@@ -34,6 +34,8 @@ void sdk::util::c_config::registrant()
 	this->add_variable(XorStr("pickup"), XorStr("toggle"), "0", CONF_TYPE_INT);
 	this->add_variable(XorStr("pickup"), XorStr("range"), "300", CONF_TYPE_INT);
 	this->add_variable(XorStr("pickup"), XorStr("delay"), "100", CONF_TYPE_INT);
+
+	this->add_variable(XorStr("misc"), XorStr("wallhack"), "0", CONF_TYPE_INT);
 }
 
 bool sdk::util::c_config::save()

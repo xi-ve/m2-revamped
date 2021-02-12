@@ -57,6 +57,7 @@
 #include <game/item/item_gather.h>
 #include <game/item/item_manager.h>
 #include <game/item/pickup.h>
+#include <game/char/misc.h>
 #include <game/accconnector/login.h>
 #include <game/hardware_id.h>
 #include <game/char/waithack.h>

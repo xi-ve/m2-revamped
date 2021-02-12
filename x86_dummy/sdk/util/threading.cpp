@@ -135,6 +135,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::c_waithack::Instance().setup();
 	sdk::game::item::c_item_gather::Instance().setup();
 	sdk::game::c_pickup::Instance().setup();
+	sdk::game::chr::c_misc::Instance().setup();
 
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")))
 	{
@@ -203,6 +204,7 @@ void __stdcall sdk::util::init_worker()
 				sdk::game::c_waithack::Instance().work();
 				sdk::game::item::c_item_gather::Instance().work();
 				sdk::game::c_pickup::Instance().work();
+				sdk::game::chr::c_misc::Instance().work();
 			}
 			else sdk::game::item::c_item_manager::Instance().grab();
 		}

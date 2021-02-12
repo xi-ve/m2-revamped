@@ -30,7 +30,8 @@ void sdk::util::c_fn_discover::get_server()
 		"Erco",
 		"Ekstasia",
 		"Yumano3",
-		"Zeros2"
+		"Zeros2",
+		"Kuragari2"
 	};
 
 	auto cur_server = std::string("generic-server");
@@ -39,7 +40,7 @@ void sdk::util::c_fn_discover::get_server()
 
 	sdk::util::c_log::Instance().duo("[ server detected as: %s ]\n", this->server_name.c_str());
 
-	if (strstr(cur_server.c_str(), "Erco") || strstr(cur_server.c_str(), "xaleas") || strstr(cur_server.c_str(), "Zeros2")) sdk::game::chr::c_char::Instance().use_alt_mode_list = 1;
+	if (strstr(cur_server.c_str(), "Erco") || strstr(cur_server.c_str(), "xaleas") || strstr(cur_server.c_str(), "Zeros2") || strstr(cur_server.c_str(), "Kuragari2")) sdk::game::chr::c_char::Instance().use_alt_mode_list = 1;
 }
 
 bool sdk::util::c_fn_discover::is_ascii(const std::string& in)
