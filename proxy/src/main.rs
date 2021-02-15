@@ -95,7 +95,10 @@ async fn admin(server: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>) {
     }
 }
 
-async fn find_server_by_name(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name: String) -> Result<Arc<RwLock<Server>>,&'static str>{
+async fn find_server_by_name(
+    servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,
+    name: String,
+) -> Result<Arc<RwLock<Server>>, &'static str> {
     let mut found: bool = false;
     let mut index: usize = 0;
     for n in 0..servers.read().await.len() {
@@ -105,24 +108,32 @@ async fn find_server_by_name(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name
             break;
         }
     }
-    if found == true{
+    if found == true {
         return Ok(Arc::clone(&servers.read().await[index]));
-        
-}else{
-    return Err("no server found");
-}
+    } else {
+        return Err("no server found");
+    }
 }
 
-async fn add_forwarding(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name: String,listen: String,forward: String ) -> Result<bool,&'static str>{
-    match find_server_by_name(servers, name).await{
-        Ok(v) => {
-            v.read().await.fowardings.write().await.push(Arc::new(RwLock::new(Forwarding{listen:listen.clone(),foward:forward.clone(),thread: tokio::spawn(proxy(
-                Arc::clone(&v.read().await.ips),
-                listen,
-                forward,
-            ))})))
-        },
-        Err(e) => return Err(e)
+async fn add_forwarding(
+    servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,
+    name: String,
+    listen: String,
+    forward: String,
+) -> Result<bool, &'static str> {
+    match find_server_by_name(servers, name).await {
+        Ok(v) => v
+            .read()
+            .await
+            .fowardings
+            .write()
+            .await
+            .push(Arc::new(RwLock::new(Forwarding {
+                listen: listen.clone(),
+                foward: forward.clone(),
+                thread: tokio::spawn(proxy(Arc::clone(&v.read().await.ips), listen, forward)),
+            }))),
+        Err(e) => return Err(e),
     }
     return Ok(true);
 }
@@ -137,7 +148,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ips: Arc::new(RwLock::new(Vec::new())),
         fowardings: Arc::new(RwLock::new(Vec::new())),
     })));
-    add_forwarding(servers.clone(), "test".to_string(),"0.0.0.0:13001".to_string(),"192.168.178.130:13001".to_string()).await? ;
+    add_forwarding(
+        servers.clone(),
+        "test".to_string(),
+        "0.0.0.0:13001".to_string(),
+        "192.168.178.130:13001".to_string(),
+    )
+    .await?;
     println!("added!");
     handles.push(tokio::spawn(admin(servers.clone())));
     futures::future::join_all(handles).await;
