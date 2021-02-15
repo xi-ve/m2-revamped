@@ -88,10 +88,10 @@ async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
         wr.write_all(b"done\n").await.unwrap();
     }
 }
-async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
+async fn admin(server: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>) {
     let listener = TcpListener::bind("0.0.0.0:1337").await.unwrap();
     while let Ok((inbound, _)) = listener.accept().await {
-        tokio::spawn(process(ips.clone(), inbound));
+        //tokio::spawn(process(server.clone(), inbound));
     }
 }
 
@@ -113,13 +113,13 @@ async fn find_server_by_name(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name
 }
 }
 
-async fn add_forwarding(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name: String,listen: String,forard: String ) -> Result<bool,&'static str>{
+async fn add_forwarding(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name: String,listen: String,forward: String ) -> Result<bool,&'static str>{
     match find_server_by_name(servers, name).await{
         Ok(v) => {
-            v.read().await.fowardings.write().await.push(Arc::new(RwLock::new(Forwarding{listen:"0.0.0.0:13001".to_string(),foward:"192.168.178.130:13001".to_string(),thread: tokio::spawn(proxy(
+            v.read().await.fowardings.write().await.push(Arc::new(RwLock::new(Forwarding{listen:listen.clone(),foward:forward.clone(),thread: tokio::spawn(proxy(
                 Arc::clone(&v.read().await.ips),
-                "0.0.0.0:13001".to_string(),
-                "192.168.178.130:13001".to_string(),
+                listen,
+                forward,
             ))})))
         },
         Err(e) => return Err(e)
@@ -137,10 +137,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ips: Arc::new(RwLock::new(Vec::new())),
         fowardings: Arc::new(RwLock::new(Vec::new())),
     })));
-    add_forwarding(servers, "test".to_string(),"0.0.0.0:13001".to_string(),"192.168.178.130:13001".to_string()).await? ;
+    add_forwarding(servers.clone(), "test".to_string(),"0.0.0.0:13001".to_string(),"192.168.178.130:13001".to_string()).await? ;
     println!("added!");
-    let ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>> = Arc::new(RwLock::new(Vec::new()));
-    handles.push(tokio::spawn(admin(ips.clone())));
+    handles.push(tokio::spawn(admin(servers.clone())));
     futures::future::join_all(handles).await;
     Ok(())
 }
