@@ -4,9 +4,9 @@ use tokio::net::{TcpListener, TcpStream};
 
 use futures::stream::{self, StreamExt};
 use futures::FutureExt;
-use std::{error::Error, thread::JoinHandle};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+use std::{error::Error, thread::JoinHandle};
 use tokio::io::AsyncBufReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::BufReader;
@@ -17,18 +17,17 @@ struct Ip {
     expire: SystemTime,
 }
 
-struct Forwarding{
+struct Forwarding {
     listen: String,
     foward: String,
-    thread: JoinHandle<()>
+    thread: tokio::task::JoinHandle<()>,
 }
 
 struct Server {
     name: String,
     fowardings: Arc<RwLock<Vec<Arc<RwLock<Forwarding>>>>>,
-    ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>
+    ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>,
 }
-
 
 async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, server_addr: String) {
     println!("proxying {} -> {}", listen_addr, server_addr);
@@ -69,7 +68,7 @@ async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
         let mut found: bool = false;
         let mut index: usize = 0;
         let ip_addr = &data["ip"].to_string();
-        println!("adding ip {}",ip_addr);
+        println!("adding ip {}", ip_addr);
         for n in 0..ips.read().await.len() {
             if ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
                 index = n;
@@ -96,21 +95,51 @@ async fn admin(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>) {
     }
 }
 
+async fn find_server_by_name(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name: String) -> Result<Arc<RwLock<Server>>,&'static str>{
+    let mut found: bool = false;
+    let mut index: usize = 0;
+    for n in 0..servers.read().await.len() {
+        if servers.read().await[n].read().await.name == name {
+            index = n;
+            found = true;
+            break;
+        }
+    }
+    if found == true{
+        return Ok(Arc::clone(&servers.read().await[index]));
+        
+}else{
+    return Err("no server found");
+}
+}
+
+async fn add_forwarding(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>,name: String,listen: String,forard: String ) -> Result<bool,&'static str>{
+    match find_server_by_name(servers, name).await{
+        Ok(v) => {
+            v.read().await.fowardings.write().await.push(Arc::new(RwLock::new(Forwarding{listen:"0.0.0.0:13001".to_string(),foward:"192.168.178.130:13001".to_string(),thread: tokio::spawn(proxy(
+                Arc::clone(&v.read().await.ips),
+                "0.0.0.0:13001".to_string(),
+                "192.168.178.130:13001".to_string(),
+            ))})))
+        },
+        Err(e) => return Err(e)
+    }
+    return Ok(true);
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let mut handles = vec![];
-    let ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>> = Arc::new(RwLock::new(Vec::new()));
 
-    handles.push(tokio::spawn(proxy(
-        ips.clone(),
-        "0.0.0.0:13001".to_string(),
-        "192.168.178.130:13001".to_string(),
-    )));
-    handles.push(tokio::spawn(proxy(
-        ips.clone(),
-        "0.0.0.0:8001".to_string(),
-        "192.168.178.130:8001".to_string(),
-    )));
+    let servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>> = Arc::new(RwLock::new(Vec::new()));
+    servers.write().await.push(Arc::new(RwLock::new(Server {
+        name: "test".to_string(),
+        ips: Arc::new(RwLock::new(Vec::new())),
+        fowardings: Arc::new(RwLock::new(Vec::new())),
+    })));
+    add_forwarding(servers, "test".to_string(),"0.0.0.0:13001".to_string(),"192.168.178.130:13001".to_string()).await? ;
+    println!("added!");
+    let ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>> = Arc::new(RwLock::new(Vec::new()));
     handles.push(tokio::spawn(admin(ips.clone())));
     futures::future::join_all(handles).await;
     Ok(())
