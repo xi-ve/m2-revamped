@@ -57,41 +57,57 @@ async fn proxy(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, listen_addr: String, serv
         }
     }
 }
-
-async fn process(ips: Arc<RwLock<Vec<Arc<RwLock<Ip>>>>>, inbound: TcpStream) {
+async fn add_ip(server: Arc<RwLock<Server>>, ip: String) {
+    let mut found: bool = false;
+    let mut index: usize = 0;
+    let ip_addr = ip.to_string();
+    println!("adding ip {}", ip_addr);
+    for n in 0..server.read().await.ips.read().await.len() {
+        if server.read().await.ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
+            index = n;
+            found = true;
+            break;
+        }
+    }
+    if found {
+        server.read().await.ips.write().await[index]
+            .write()
+            .await
+            .expire = SystemTime::now() + Duration::from_secs(30);
+        return;
+    }
+    server
+        .read()
+        .await
+        .ips
+        .write()
+        .await
+        .push(Arc::new(RwLock::new(Ip {
+            ip_addr: ip,
+            expire: SystemTime::now() + Duration::from_secs(30),
+        })));
+}
+async fn process(servers: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>, inbound: TcpStream) {
     let (rd, mut wr) = io::split(inbound);
     let mut reader = BufReader::new(rd);
     let mut line = String::new();
     reader.read_line(&mut line).await.unwrap();
     let data: serde_json::Value = serde_json::from_str(&line).unwrap();
     if data["op"] == 1 {
-        let mut found: bool = false;
-        let mut index: usize = 0;
-        let ip_addr = &data["ip"].to_string();
-        println!("adding ip {}", ip_addr);
-        for n in 0..ips.read().await.len() {
-            if ips.read().await[n].read().await.ip_addr == ip_addr.to_string() {
-                index = n;
-                found = true;
-                break;
+        match find_server_by_name(servers, data["server_name"].to_string()).await {
+            Ok(v) => {
+                add_ip(v, data["ip"].to_string()).await;
+                wr.write_all(b"done\n").await.unwrap();
             }
+            Err(e) => return,
         }
-        if found {
-            ips.write().await[index].write().await.expire =
-                SystemTime::now() + Duration::from_secs(30);
-            return;
-        }
-        ips.write().await.push(Arc::new(RwLock::new(Ip {
-            ip_addr: data["ip"].to_string(),
-            expire: SystemTime::now() + Duration::from_secs(30),
-        })));
         wr.write_all(b"done\n").await.unwrap();
     }
 }
 async fn admin(server: Arc<RwLock<Vec<Arc<RwLock<Server>>>>>) {
     let listener = TcpListener::bind("0.0.0.0:1337").await.unwrap();
     while let Ok((inbound, _)) = listener.accept().await {
-        //tokio::spawn(process(server.clone(), inbound));
+        tokio::spawn(process(server.clone(), inbound));
     }
 }
 
