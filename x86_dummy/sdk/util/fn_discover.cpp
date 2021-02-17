@@ -191,11 +191,11 @@ sdk::util::t_addrs sdk::util::c_fn_discover::get_adr_str(const char* ref)
 	return l;
 }
 
-uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp, uint32_t must_be_above)
+uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls/*min cnt*/, size_t approx_off_movs/*min cnt*/, bool no_calls_inside, bool no_off_push_inside, bool skip_py_exports, bool shoul_reverse_calls, bool should_include_jmp, uint32_t must_be_above, uint32_t size_fn)
 {
-	auto origin_fn_size = sdk::util::c_mem::Instance().find_size(origin);
-	if (!origin_fn_size) return 0;
-	auto fns_in_origin = sdk::util::c_disassembler::Instance().get_calls(origin, origin_fn_size, 0, skip_py_exports);
+	if (!size_fn) size_fn = sdk::util::c_mem::Instance().find_size(origin);
+	if (!size_fn) return 0;
+	auto fns_in_origin = sdk::util::c_disassembler::Instance().get_calls(origin, size_fn, 0, skip_py_exports);
 	if (!fns_in_origin.size()) return 0;
 	if (shoul_reverse_calls) std::reverse(fns_in_origin.begin(), fns_in_origin.end());
 	for (auto&& a : fns_in_origin)
@@ -208,7 +208,7 @@ uint32_t sdk::util::c_fn_discover::discover_fn(uint32_t origin, size_t approx_si
 		{
 			calls_inside = sdk::util::c_disassembler::Instance().get_calls(a, inside_fn_size, 0, skip_py_exports);
 			
-			auto list_jmps = sdk::util::c_disassembler::Instance().get_jumps(a, origin_fn_size, 0);
+			auto list_jmps = sdk::util::c_disassembler::Instance().get_jumps(a, size_fn, 0);
 			for (auto a : list_jmps)
 			{
 				sdk::util::c_log::Instance().duo(XorStr("[ jmp: %04x ]\n"), a);

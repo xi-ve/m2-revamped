@@ -76,7 +76,7 @@ namespace sdk
 			t_addrs			get_adr_str(const char* ref, int max_strings);
 			t_addrs			get_adr_str(const char* ref);
 			uint32_t		get_fn(const char* fn_str_ref);
-			uint32_t		discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls = 0/*min cnt*/, size_t approx_off_movs = 0/*min cnt*/, bool no_calls_inside = false, bool no_off_push_inside = false, bool skip_py_exports = true, bool shoul_reverse_calls = false, bool should_include_jmp = false, uint32_t not_equal_to = 0);
+			uint32_t		discover_fn(uint32_t origin, size_t approx_size_min, size_t approx_size_max, size_t approx_calls = 0/*min cnt*/, size_t approx_off_movs = 0/*min cnt*/, bool no_calls_inside = false, bool no_off_push_inside = false, bool skip_py_exports = true, bool shoul_reverse_calls = false, bool should_include_jmp = false, uint32_t not_equal_to = 0, uint32_t size_fn=0);
 		public:
 			void			add_singleton(uint32_t address);
 		public:

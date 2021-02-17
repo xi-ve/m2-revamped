@@ -188,12 +188,8 @@ bool sdk::game::c_waithack::populate()
 		}
 
 		this->mobs.push_back(mob_group);
-		//sdk::util::c_log::Instance().duo("[ found group of mobs (%i) lead by %04x ]\n", mob_group.mobs.size(), mob_group.vid);
 		if ((int)this->mobs.size() >= this->get_targets()) break;
 	}
-
-	//sdk::util::c_log::Instance().duo("[ total of %i groups ]\n", this->mobs.size());
-
 	return 1;
 }
 

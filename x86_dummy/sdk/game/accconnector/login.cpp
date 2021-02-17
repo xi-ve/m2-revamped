@@ -261,20 +261,31 @@ void sdk::game::accconnector::c_login::read_details()
 
 		if (!cur_username || cur_username[0] == 0 || !strlen(cur_username)) return;
 
+		if (!sdk::util::c_fn_discover::Instance().is_ascii(cur_username))
+		{
+			auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_USERNAME);
+			strcpy(cur_username, r.c_str());
+			if (!cur_username || cur_username[0] == 0 || !strlen(cur_username)) return;
+		}
+
 		char cur_password[32] = "\0";
-		if (!strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "SunshineMt2")) memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
-		else
+		memcpy(cur_password, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD), 32);
+		
+		if (!cur_password || cur_password[0] == 0 || !strlen(cur_password)) return;
+		if (!sdk::util::c_fn_discover::Instance().is_ascii(cur_password))
 		{
 			auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_PASSWORD);
 			strcpy(cur_password, r.c_str());
+			if (!cur_password || cur_password[0] == 0 || !strlen(cur_password)) return;
 		}
-
-		if (!cur_password || cur_password[0] == 0 || !strlen(cur_password)) return;
 
 		char cur_passcode[32] = "\0";
 		if (sdk::game::connection_offsets::off_PASSCODE && !strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Celestial World 2.0"))
 		{
 			memcpy(cur_passcode, (void*)(account_connector_base + sdk::game::connection_offsets::off_PASSCODE), 32);
+			if (!cur_passcode || cur_passcode[0] == 0 || !strlen(cur_passcode)) return;
+			auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_PASSCODE);
+			strcpy(cur_passcode, r.c_str());
 			if (!cur_passcode || cur_passcode[0] == 0 || !strlen(cur_passcode)) return;
 		}
 
@@ -285,6 +296,7 @@ void sdk::game::accconnector::c_login::read_details()
 		{
 			auto r = *(std::string*)(account_connector_base + sdk::game::connection_offsets::off_IP);
 			strcpy(cur_ip, r.c_str());
+			if (!cur_ip || cur_ip[0] == 0 || !strlen(cur_ip)) return;
 		}
 
 		auto cur_port = *(uint32_t*)(account_connector_base + sdk::game::connection_offsets::off_PORT);

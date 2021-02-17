@@ -452,14 +452,33 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	}
 
 	//
-
+	bool use_fixed_size = 0;
 	auto CPythonNetworkStream_SendItemUsePacket = sdk::util::c_fn_discover::Instance().get_fn((XorStr("SendItemMovePacket Error")));
-	if (!CPythonNetworkStream_SendItemUsePacket) return this->error_out(__LINE__);
+	if (!CPythonNetworkStream_SendItemUsePacket)
+	{
+		CPythonNetworkStream_SendItemUsePacket = sdk::util::c_fn_discover::Instance().get_fn((XorStr("CANNOT_EQUIP_EXCHANGE")));
+		if (!CPythonNetworkStream_SendItemUsePacket)
+		{
+			CPythonNetworkStream_SendItemUsePacket = sdk::util::c_fn_discover::Instance().get_fn_py((XorStr("SendItemMovePacket")));
+			if (!CPythonNetworkStream_SendItemUsePacket) return this->error_out(__LINE__);
 
-	auto CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x1A, 0x20, 2);
+			auto CPythonNetworkStream_SendItemUsePacket_calls = sdk::util::c_disassembler::Instance().get_calls(CPythonNetworkStream_SendItemUsePacket, 0, 0, 1);
+
+			sdk::util::c_log::Instance().duo("[ last fn in senditemusepacket: %04x ]\n", CPythonNetworkStream_SendItemUsePacket_calls[CPythonNetworkStream_SendItemUsePacket_calls.size() - 2]);
+
+			CPythonNetworkStream_SendItemUsePacket = CPythonNetworkStream_SendItemUsePacket_calls[CPythonNetworkStream_SendItemUsePacket_calls.size() - 2];
+
+			use_fixed_size = 1;
+		}
+	}
+
+	auto addor = 0x0;
+	if (use_fixed_size) addor = 0x111;
+
+	auto CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x1A, 0x20, 2, 0, 0, 0, 1, 0, 0, 0, addor);
 	if (!CPythonNetworkStream_IsPlayerAttacking)
 	{
-		CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x3A, 0x3F, 2);
+		CPythonNetworkStream_IsPlayerAttacking = sdk::util::c_fn_discover::Instance().discover_fn(CPythonNetworkStream_SendItemUsePacket, 0x3A, 0x3F, 2, 0, 0, 0, 1, 0, 0, 0, addor);
 		if (!CPythonNetworkStream_IsPlayerAttacking) return this->error_out(__LINE__);
 	}
 
@@ -562,7 +581,7 @@ bool sdk::util::c_address_gathering::gather_item_related()
 		sdk::util::c_log::Instance().duo(XorStr("[ SendClickItemPacket: %04x ]\n"), SendClickItemPacket);
 		sdk::game::pointer_offsets::off_CPythonItem = this->find_singleton_or_instance(SendClickItemPacket);
 		if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")))
-		{			
+		{
 			auto f = sdk::util::c_fn_discover::Instance().get_fn(XorStr("CPythonPlayer::SendClickItemPacket(dwIID=%d) : Non-exist item"));
 			auto f_movs = sdk::util::c_disassembler::Instance().get_custom(f, 0, 0, 0, { "mov" });
 			sdk::game::pointer_offsets::off_CPythonItem = f_movs.front();
@@ -624,7 +643,7 @@ bool sdk::util::c_address_gathering::gather_item_related()
 bool sdk::util::c_address_gathering::check_baseclasses()
 {
 	auto rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CAccountConnector);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCAccountConnector"))) 
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCAccountConnector")))
 	{
 		sdk::util::c_log::Instance().duo("[ off_CAccountConnector: %s ]\n", rtti->pTypeDescriptor->pname);
 		return this->error_out(__LINE__);
@@ -638,7 +657,7 @@ bool sdk::util::c_address_gathering::check_baseclasses()
 	}
 
 	rtti = sdk::util::get((sdk::util::_base_class*)sdk::game::pointer_offsets::off_CPythonItem);
-	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonItem"))) 
+	if (!strstr(rtti->pTypeDescriptor->pname, XorStr("AVCPythonItem")))
 	{
 		sdk::util::c_log::Instance().duo("[ off_CPythonItem: %s ]\n", rtti->pTypeDescriptor->pname);
 		return this->error_out(__LINE__);
