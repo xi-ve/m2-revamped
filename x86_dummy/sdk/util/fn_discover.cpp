@@ -31,7 +31,9 @@ void sdk::util::c_fn_discover::get_server()
 		"Ekstasia",
 		"Yumano3",
 		"Zeros2",
-		"Kuragari2"
+		"Kuragari2",
+		"Hybrid2"
+
 	};
 
 	auto cur_server = std::string("generic-server");

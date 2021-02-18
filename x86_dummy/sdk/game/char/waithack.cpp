@@ -9,6 +9,7 @@ void sdk::game::c_waithack::setup()
 	this->metins = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("metins"));
 	this->anchor = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("anchor"));
 	this->mobs_ = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("mobs"));
+	this->player = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("player"));
 	this->on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("on_attack"));
 	this->boost = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("boost"));
 	this->bp_on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bp_on_attack"));
@@ -56,6 +57,12 @@ int sdk::game::c_waithack::get_mobs()
 int sdk::game::c_waithack::get_metins()
 {
 	auto r = (sdk::util::json_cfg::s_config_value*)(this->metins);
+	return std::stoi(r->container.c_str());
+}
+
+int sdk::game::c_waithack::get_player()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->player);
 	return std::stoi(r->container.c_str());
 }
 
@@ -118,9 +125,10 @@ bool sdk::game::c_waithack::should_attack(uint32_t a)
 {
 	if (sdk::game::chr::c_char::Instance().is_dead_actor(a)) return 0;
 	auto type = sdk::game::chr::c_char::Instance().get_type(a);
-	if (type != 0 && type != 2 && type != 15) return false;
+	if (type != 0 && type != 2 && type != 15 && type != 6) return false;
 	if (this->get_metins() && type == 2) return false;
 	if (this->get_mobs() && type == 0) return false;
+	if (this->get_player() && type == 6) return false;
 	return 1;
 }
 

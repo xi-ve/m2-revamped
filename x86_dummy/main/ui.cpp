@@ -205,6 +205,7 @@ void main::c_ui::work()
 				this->checkbox(XorStr("waithack"), XorStr("waithack"), XorStr("toggle"));
 				this->checkbox(XorStr("metins"), XorStr("waithack"), XorStr("metins"));
 				this->checkbox(XorStr("mobs"), XorStr("waithack"), XorStr("mobs"));
+				this->checkbox(XorStr("player"), XorStr("waithack"), XorStr("player"));
 				this->checkbox(XorStr("on_attack"), XorStr("waithack"), XorStr("on_attack"));
 				this->checkbox(XorStr("bp_on_attack"), XorStr("waithack"), XorStr("bp_on_attack"));
 				this->checkbox(XorStr("dmg-boost"), XorStr("waithack"), XorStr("boost"));

@@ -10,7 +10,8 @@ bool sdk::game::item::c_item_manager::grab()
 	if (!manager) return 0;
 
 	auto map = std::map<uint32_t, uint32_t*>();
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2"))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2") ||
+		strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Hybrid2"))
 	{
 		map = *(std::map<uint32_t, uint32_t*>*)(manager + 0x8);
 		if (map.empty()) return 0;
@@ -23,7 +24,8 @@ bool sdk::game::item::c_item_manager::grab()
 
 	std::this_thread::sleep_for(5s);
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2"))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Anoria2") ||
+		strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Hybrid2"))
 	{
 		map = *(std::map<uint32_t, uint32_t*>*)(manager + 0x8);
 		if (map.empty()) return 0;

@@ -314,7 +314,11 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	if (possible_NEW_GetMainActorPtr.empty())
 	{
 		possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SetPCTargetBoard"), 6);//singletona assert
-		if (possible_NEW_GetMainActorPtr.empty()) return this->error_out(__LINE__);
+		if (possible_NEW_GetMainActorPtr.empty())
+		{
+			possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SetPCTargetBoard"), 4);//singletona assert
+			if (possible_NEW_GetMainActorPtr.empty()) return this->error_out(__LINE__);
+		}
 	}
 
 	auto CPythonPlayer_NEW_GetMainActorPtr_off = sdk::util::c_disassembler::Instance().get_custom(possible_NEW_GetMainActorPtr.front(), 0, 0x20, 0x100, { "call", "mov" });
@@ -552,7 +556,11 @@ bool sdk::util::c_address_gathering::gather_item_related()
 		if (!CPythonItem_GetOwnership) return this->error_out(__LINE__);
 	}
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Celestial World 2.0") || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Yumano3")) CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 0, 0, 0, 1);
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Celestial World 2.0") || 
+		strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Yumano3"))
+		CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x50, 0x70, 0, 0, 0, 1);
+
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Hybrid2")) CPythonItem_GetOwnership = sdk::util::c_fn_discover::Instance().discover_fn(CPythonPlayer_SendClickItemPacket, 0x76, 0x77, 0, 0, 0, 1);
 
 	sdk::util::c_log::Instance().duo(XorStr("[ CPythonItem_GetOwnership: %04x ]\n"), CPythonItem_GetOwnership);
 
