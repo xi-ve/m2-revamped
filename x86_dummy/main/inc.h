@@ -24,7 +24,10 @@
 #include <sstream>
 #include <math.h>
 #include <concurrencysal.h>
+#include <filesystem>
 //libs
+#include <d3d9.h>
+#pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "Ws2_32.lib")
 #include <zydis/Zydis/Zydis.h>
 #include <zydis/Zycore/LibC.h>
@@ -33,6 +36,12 @@
 #include <minhook/MinHook.h>
 #pragma comment(lib, "minhook/libMinHook.lib")
 #include <json/json.h>
+//
+#include "..\\lib\\imgui\\imgui_impl_win32.h"
+#include "..\\lib\\imgui\\imgui_impl_dx9.h"
+#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
+#include <tchar.h>
 //cheat predefs
 #include <win_strct.h>
 //cheat core

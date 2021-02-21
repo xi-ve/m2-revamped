@@ -139,57 +139,8 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::chr::c_pull::Instance().setup();
 	sdk::game::chr::c_tp_point::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")))
-	{
-		//ajaja server shit
-		auto first_patch_start = sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x25;
-
-		auto fn_size = sdk::util::c_mem::Instance().find_size(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket);
-
-		DWORD old_prot = 0;
-		VirtualProtectEx(GetCurrentProcess(), (void*)sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket, fn_size, PAGE_EXECUTE_READWRITE, &old_prot);
-
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x13), 0xEB, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x13 + 1), 0x03, 1);
-
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x25), 0x75, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x25 + 1), 0x48, 1);
-
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x10B), 0xEB, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x10B + 1), 0x11, 1);
-
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x11E), 0xEB, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x11E + 1), 0x48, 1);
-
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A), 0xE9, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 1), 0x8E, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 2), 0x00, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 3), 0x00, 1);
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x17A + 4), 0x00, 1);
-
-		memset((void*)(sdk::game::func::c_funcs::Instance().o_SendCharacterStatePacket + 0x20D), 0x90, 0x11);
-
-		auto shit_funcs = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("Unknown file detected: "));
-		for (auto a : shit_funcs)
-		{
-			sdk::util::c_log::Instance().duo(XorStr("[ FILE-AC Realm2 %04x ]\n"), a);
-			void* aaa;
-			MH_CreateHook((void*)a, (void*)empt_func, (void**)&aaa);
-			MH_EnableHook((void*)a);
-		}
-
-		auto bs_ac_shit = sdk::util::c_mem::Instance().find_pattern((uint32_t)GetModuleHandleA(0), XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? A1 ? ? ? ? 33 C5 89 45 ? 50 8D 45 ? 64 A3 ? ? ? ? 89 4D ? 8D 45 ? 50 E8 ? ? ? ?"));
-		if (bs_ac_shit)
-		{
-			sdk::util::c_log::Instance().duo(XorStr("[ AC-CORE Realm2 %04x ]\n"), bs_ac_shit);
-			void* aaa;
-			MH_CreateHook((void*)bs_ac_shit, (void*)ac_shit, (void**)&aaa);
-			MH_EnableHook((void*)bs_ac_shit);
-		}
-
-		sdk::util::c_log::Instance().duo(XorStr("[ patched Realm2 protection ]\n"));
-	}
-
+	main::c_ui::Instance().setup();
+	
 	sdk::util::c_thread::Instance().append([]()
 	{
 		sdk::util::c_config::Instance().save();
