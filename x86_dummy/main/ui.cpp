@@ -211,6 +211,9 @@ void main::c_ui::work()
 				this->checkbox(XorStr("dmg-boost"), XorStr("waithack"), XorStr("boost"));
 				this->checkbox(XorStr("wallhack"), XorStr("misc"), XorStr("wallhack"));
 
+				this->checkbox(XorStr("pull"), XorStr("pull"), XorStr("toggle"));
+				this->checkbox(XorStr("use_packets"), XorStr("pull"), XorStr("packet"));
+
 				this->checkbox(XorStr("pickup"), XorStr("pickup"), XorStr("toggle"));
 				nk_checkbox_label(ctx, XorStr("only-blacklist"), &sdk::game::c_pickup::Instance().item_conf.only_pick_blacklist);
 				this->slider(XorStr("pick-range"), XorStr("pickup"), XorStr("range"), 300, 20000, 100.f);
@@ -224,7 +227,7 @@ void main::c_ui::work()
 				auto main_act = sdk::game::chr::c_char::Instance().get_main_actor();
 
 				nk_layout_row_dynamic(ctx, 20, 2);
-				nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("alive : %i"), sdk::game::chr::c_char::Instance().get_alive().size()), NK_TEXT_LEFT);
+				//nk_label(ctx, sdk::util::c_log::Instance().string(XorStr("alive : %i"), sdk::game::chr::c_char::Instance().get_alive().size()), NK_TEXT_LEFT);
 
 				if (this->debug_item_edit && sdk::game::item::c_item_manager::Instance().did_grab)
 				{
@@ -457,6 +460,74 @@ void main::c_ui::work()
 					if (target)
 					{
 						sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, target);
+					}
+				}
+
+				if (!this->debug_item_edit)
+				{
+					auto background_base = sdk::game::c_utils::Instance().baseclass_background();
+					if (background_base)
+					{
+						nk_layout_row_dynamic(ctx, 30, 1);
+						auto bg_name = *(std::string*)(background_base + sdk::game::background::off_CUR_MAP_NAME);
+						nk_label(ctx, bg_name.c_str(), NK_TEXT_LEFT);
+					}
+
+					nk_layout_row_dynamic(ctx, 30, 2);
+					nk_label(ctx, "point name:", NK_TEXT_LEFT);
+					nk_edit_string_zero_terminated(ctx, NK_EDIT_SIMPLE, this->input_point_name, 26, nk_filter_default);
+
+					nk_layout_row_dynamic(ctx, 30, 1);
+					if (nk_button_label(ctx, XorStr("add-point")))
+					{
+						if (main_act && strlen(this->input_point_name) > 2)
+						{
+							sdk::util::c_log::Instance().duo("[ added point %s ]\n", this->input_point_name);
+							auto main_pos = sdk::game::chr::c_char::Instance().get_pos(main_act);
+							sdk::game::chr::c_tp_point::Instance().add(main_pos.x, main_pos.y, main_pos.z, std::string(this->input_point_name));
+							sdk::game::chr::c_tp_point::Instance().save();
+						}
+					}
+					auto points = sdk::game::chr::c_tp_point::Instance().get_points();
+					if (points.size())
+					{
+						nk_layout_row_dynamic(ctx, 150, 1);
+
+						if (nk_group_begin(ctx, "tp_points", 0))
+						{
+							nk_layout_row_dynamic(ctx, 20, 2);
+							auto selected_point = sdk::game::chr::c_tp_point::Instance().get_last_point();
+							for (int i = 0; i < (int)points.size(); ++i)
+							{
+								int selected = 0;
+
+								auto obj = points[i];
+								if (obj.point_name.empty()) continue;
+
+								auto cchar = obj.point_name.data();
+
+								if (nk_select_label(ctx, (const char*)cchar, NK_TEXT_LEFT, selected))
+								{
+									if (!strstr(cchar, selected_point.c_str()))
+									{
+										auto a = (sdk::util::json_cfg::s_config_value*)(sdk::util::c_config::Instance().get_var(XorStr("tp_point"), XorStr("last_used")));
+										a->container = cchar;
+									}
+								}
+								if (strstr(cchar, selected_point.c_str())) nk_label(ctx, "is set", NK_TEXT_RIGHT);
+								else nk_label(ctx, " ", NK_TEXT_RIGHT);
+							}
+						} nk_group_end(ctx);
+					}
+					nk_layout_row_dynamic(ctx, 30, 3);
+					if (nk_button_label(ctx, XorStr("tp-point")))
+					{
+						if (main_act && strlen(this->input_point_name) > 2)
+						{
+							auto a = (sdk::util::json_cfg::s_config_value*)(sdk::util::c_config::Instance().get_var(XorStr("tp_point"), XorStr("last_used")));
+							sdk::game::chr::c_tp_point::Instance().work(a->container);
+							sdk::util::c_log::Instance().duo("[ tp to %s ]\n", a->container.c_str());
+						}
 					}
 				}
 			}

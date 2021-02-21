@@ -8,7 +8,14 @@ namespace sdk
 		{
 			extern uint32_t		off_OWNER_NAME;
 			extern uint32_t		off_ITEM_NAME;
-
+		}
+		namespace background
+		{
+			extern uint32_t		off_CUR_MAP_NAME;
+		}
+		namespace minimap_offsets
+		{
+			extern uint32_t		off_TEXTURE;
 		}
 		namespace pointer_offsets
 		{
@@ -19,6 +26,8 @@ namespace sdk
 			extern uint32_t		off_CPythonPlayerEventHandler;
 			extern uint32_t		off_CPythonItem;
 			extern uint32_t		off_CItemManager;
+			extern uint32_t		off_CPythonBackgroundManager;
+			extern uint32_t		off_CPythonMiniMap;
 		}
 		namespace actor_offsets
 		{

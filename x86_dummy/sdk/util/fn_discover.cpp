@@ -32,8 +32,10 @@ void sdk::util::c_fn_discover::get_server()
 		"Yumano3",
 		"Zeros2",
 		"Kuragari2",
-		"Hybrid2"
-
+		"Hybrid2",
+		"Calliope2",
+		"Rosaria2",
+		"Kuba2"
 	};
 
 	auto cur_server = std::string("generic-server");

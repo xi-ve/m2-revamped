@@ -197,6 +197,8 @@
     <ClCompile Include="main\ui.cpp" />
     <ClCompile Include="sdk\game\accconnector\login.cpp" />
     <ClCompile Include="sdk\game\char\misc.cpp" />
+    <ClCompile Include="sdk\game\char\pull.cpp" />
+    <ClCompile Include="sdk\game\char\tp_point.cpp" />
     <ClCompile Include="sdk\game\char\utils.cpp" />
     <ClCompile Include="sdk\game\char\waithack.cpp" />
     <ClCompile Include="sdk\game\hardware_id.cpp" />
@@ -274,6 +276,8 @@
     <ClInclude Include="main\win_strct.h" />
     <ClInclude Include="sdk\game\accconnector\login.h" />
     <ClInclude Include="sdk\game\char\misc.h" />
+    <ClInclude Include="sdk\game\char\pull.h" />
+    <ClInclude Include="sdk\game\char\tp_point.h" />
     <ClInclude Include="sdk\game\char\utils.h" />
     <ClInclude Include="sdk\game\char\waithack.h" />
     <ClInclude Include="sdk\game\functions.h" />

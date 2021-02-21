@@ -32,6 +32,11 @@ void sdk::util::c_config::registrant()
 	this->add_variable(XorStr("waithack"), XorStr("on_attack"), "1", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("bp_on_attack"), "1", CONF_TYPE_INT);
 
+	this->add_variable(XorStr("pull"), XorStr("toggle"), "0", CONF_TYPE_INT);
+	this->add_variable(XorStr("pull"), XorStr("packet"), "1", CONF_TYPE_INT);
+
+	this->add_variable(XorStr("tp_point"), XorStr("last_used"), "0", CONF_TYPE_STR);
+
 	this->add_variable(XorStr("pickup"), XorStr("toggle"), "0", CONF_TYPE_INT);
 	this->add_variable(XorStr("pickup"), XorStr("range"), "300", CONF_TYPE_INT);
 	this->add_variable(XorStr("pickup"), XorStr("delay"), "100", CONF_TYPE_INT);

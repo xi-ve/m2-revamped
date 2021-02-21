@@ -13,6 +13,7 @@ namespace main
 		int*	selected_element_item = {};
 	private:
 		char input_search_item[26] = "";
+		char input_point_name[26] = "";
 	private:
 		WNDCLASSW wc;
 		RECT rect = { 0, 0, 350, 550 };

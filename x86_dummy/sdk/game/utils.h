@@ -15,6 +15,7 @@ namespace sdk
 			uint32_t	baseclass_event_handler();
 			uint32_t	baseclass_python_item();
 			uint32_t	baseclass_item_manager();
+			uint32_t	baseclass_background();
 		};
 	}
 }

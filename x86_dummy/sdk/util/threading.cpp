@@ -116,7 +116,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_fn_discover::Instance().setup();
 	sdk::util::c_address_gathering::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
 	{
 		auto _code_55_fun = get_cshield_addr(XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 55 ?"));
 
@@ -136,6 +136,8 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::item::c_item_gather::Instance().setup();
 	sdk::game::c_pickup::Instance().setup();
 	sdk::game::chr::c_misc::Instance().setup();
+	sdk::game::chr::c_pull::Instance().setup();
+	sdk::game::chr::c_tp_point::Instance().setup();
 
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")))
 	{
@@ -205,6 +207,7 @@ void __stdcall sdk::util::init_worker()
 				sdk::game::item::c_item_gather::Instance().work();
 				sdk::game::c_pickup::Instance().work();
 				sdk::game::chr::c_misc::Instance().work();
+				sdk::game::chr::c_pull::Instance().work();
 			}
 			else sdk::game::item::c_item_manager::Instance().grab();
 		}

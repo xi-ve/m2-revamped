@@ -14,6 +14,7 @@ namespace sdk
 			bool					gather_connection_related();
 			bool					gather_actor_related();
 			bool					gather_item_related();
+			bool					gather_background_related();
 		public:
 			bool					done = false;
 			void					setup();

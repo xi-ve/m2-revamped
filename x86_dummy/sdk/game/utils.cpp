@@ -38,3 +38,8 @@ uint32_t sdk::game::c_utils::baseclass_item_manager()
 {
 	return *(uint32_t*)(sdk::game::pointer_offsets::off_CItemManager);
 }
+
+uint32_t sdk::game::c_utils::baseclass_background()
+{
+    return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonBackgroundManager);
+}

@@ -61,5 +61,7 @@
 #include <game/accconnector/login.h>
 #include <game/hardware_id.h>
 #include <game/char/waithack.h>
+#include <game/char/pull.h>
+#include <game/char/tp_point.h>
 #include <ui.h>
 #include <startup.h>

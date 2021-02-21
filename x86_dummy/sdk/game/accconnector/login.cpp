@@ -3,14 +3,14 @@ using namespace std::chrono;
 
 void sdk::game::accconnector::c_login::save_accs()
 {
+	std::ofstream f(this->accs_file);
 	for (auto a : this->accs)
 	{
 		auto j = nlohmann::json();
-		nlohmann::to_json(j, a);
-		std::ofstream f(this->accs_file);
-		f << j << "\n";
-		f.close();
+		nlohmann::to_json(j, a);		
+		f << j << "\n";		
 	}
+	f.close();
 }
 
 void sdk::game::accconnector::c_login::load_accs()
@@ -101,7 +101,6 @@ void sdk::game::accconnector::c_login::set_grab_details()
 bool __stdcall selectchar(uint32_t ecx, BYTE id)
 {
 	auto py_net = sdk::game::c_utils::Instance().baseclass_networking();
-	//sdk::util::c_log::Instance().duo("[ select char: %04x %04x ]\n", py_net, id);
 	if (!sdk::game::accconnector::c_login::Instance().force_slot) return sdk::game::accconnector::c_login::Instance().f_char(py_net, id);
 	else return sdk::game::accconnector::c_login::Instance().f_char(py_net, std::stoi(sdk::game::accconnector::c_login::Instance().account_selected.slot.c_str()));
 }
