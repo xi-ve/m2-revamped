@@ -19,7 +19,7 @@ void sdk::util::c_thread::create_buffer(NtCreateThreadExBuffer* buffer)
 HANDLE sdk::util::c_thread::create_ntthread(LPTHREAD_START_ROUTINE fn, void* param)
 {
 	auto ntdll_handle = GetModuleHandleA(XorStr("ntdll.dll"));
-	if (!ntdll_handle) return 0;
+	if (!ntdll_handle) return nullptr;
 	auto fn_nt_create_thread_ex = (NtCreateThreadExType)(GetProcAddress(ntdll_handle, XorStr("NtCreateThreadEx")));
 	if (!fn_nt_create_thread_ex) { sdk::util::c_log::Instance().duo(XorStr("[ failed to get NtCreateThreadEx ]\n")); return 0; }
 	auto buffer = NtCreateThreadExBuffer() = {};

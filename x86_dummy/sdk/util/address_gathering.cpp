@@ -629,6 +629,7 @@ bool sdk::util::c_address_gathering::gather_item_related()
 		sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendItemPickUpPacket)(CPythonNetworkStream_SendItemPickUpPacket);
 		sdk::game::pointer_offsets::off_CPythonItem = this->find_singleton_or_instance(SendItemPickUpPacket);
 	}
+	// ReSharper disable once CppCStyleCast
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SendItemPickUpPacket: %04x ]\n"), CPythonNetworkStream_SendItemPickUpPacket - (uint32_t)GetModuleHandleA(0));
 	sdk::util::c_log::Instance().duo(XorStr("[ off_CPythonItem: %04x ]\n"), sdk::game::pointer_offsets::off_CPythonItem);
 
