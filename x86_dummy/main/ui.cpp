@@ -33,31 +33,97 @@ void main::c_ui::render()
 		ImGui::DockSpace(idx);
 
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
-		if (ImGui::Begin(XorStr("login")))
+		if (ImGui::Begin(XorStr("login"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
+		{
+			this->checkbox(XorStr("login"), XorStr("login"), XorStr("enable"));
+			ImGui::SameLine();
+			ImGui::Checkbox(XorStr("log next login"), &sdk::game::accconnector::c_login::Instance().should_grab_details);
+
+			//TODO: selector for accounts, slot, ch
+			
+			ImGui::End();
+		}
+		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
+		if (ImGui::Begin(XorStr("loot"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
+		{
+			this->checkbox(XorStr("pickup"), XorStr("pickup"), XorStr("toggle"));
+			ImGui::SameLine();
+			ImGui::Checkbox(XorStr("only blacklist"), &sdk::game::c_pickup::Instance().item_conf.only_pick_blacklist);
+			this->slider(XorStr("range"), XorStr("pickup"), XorStr("range"), 300, 20000, 100.f);
+			this->slider(XorStr("delay"), XorStr("pickup"), XorStr("delay"), 0, 1000, 5.f);
+
+			ImGui::InputText(XorStr("search item: "), this->input_search_item, 16);
+			if (strlen(this->input_search_item))
+			{
+				struct s_item_view
+				{
+					std::string		name;
+					uint32_t		vnum;
+					bool			is_blacklisted;
+				};
+
+				std::vector<s_item_view> res = {};
+
+				auto serach_term = this->to_lower(this->input_search_item);
+
+				for (auto a : sdk::game::item::c_item_manager::Instance().item_names)
+				{
+					auto lower = this->to_lower(a.second);
+					if (!strstr(lower.c_str(), serach_term.c_str())) continue;
+					auto vr = s_item_view();
+					vr.name = a.second;
+					vr.vnum = a.first;
+					vr.is_blacklisted = sdk::game::c_pickup::Instance().is_blacklisted(a.first);
+					res.push_back(vr);
+				}
+
+				ImGui::BeginChild("##filter_results", {0,0}, true, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize);
+				
+				if (!res.empty())
+				{
+					for (auto a : res)
+					{
+						if (a.is_blacklisted) ImGui::PushStyleColor(ImGuiCol_Text, { 255,0,0,255 });
+						else ImGui::PushStyleColor(ImGuiCol_Text, { 0,255,0,255 });						
+						if (ImGui::Button(a.name.c_str(), {ImGui::GetWindowWidth() - 25, 0}))
+						{
+							if (a.is_blacklisted)
+							{
+								sdk::game::c_pickup::Instance().unblacklist(a.vnum);
+								sdk::game::c_pickup::Instance().add_whitelist(a.vnum);
+							}
+							else
+							{
+								sdk::game::c_pickup::Instance().unwhitelist(a.vnum);
+								sdk::game::c_pickup::Instance().add_blacklist(a.vnum);
+							}
+						}
+						ImGui::PopStyleColor(1);
+					}
+				}
+				else ImGui::TextColored({ 255,0,0,255 }, "no results found");
+				
+				ImGui::EndChild();
+			}
+
+			ImGui::End();
+		}
+		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
+		if (ImGui::Begin(XorStr("waithack"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
 		{
 			
 			ImGui::End();
 		}
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
-		if (ImGui::Begin(XorStr("loot")))
-		{
-			
-			ImGui::End();
-		}
-		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
-		if (ImGui::Begin(XorStr("waithack")))
-		{
-			
-			ImGui::End();
-		}
-		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
-		if (ImGui::Begin(XorStr("debug")))
+		if (ImGui::Begin(XorStr("debug"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
 		{
 
 			ImGui::End();
 		}
 		ImGui::End();
 	}
+
+	ImGui::ShowDemoWindow();
 }
 
 void main::c_ui::checkbox(std::string label, std::string varhead, std::string varbod, std::function<void()> fn)
@@ -67,7 +133,18 @@ void main::c_ui::checkbox(std::string label, std::string varhead, std::string va
 	bool b_var = false;
 	if (var->container == "1") b_var = true;
 	ImGui::Checkbox(label.c_str(), &b_var);
-	if (b_var == )
+	if (b_var == true) var->container = "1";
+	else var->container = "0";
+}
+
+void main::c_ui::slider(std::string label, std::string varhead, std::string varbod, int min, int max, float steps)
+{
+	const auto var = sdk::util::c_config::Instance().get_var(varhead.c_str(), varbod.c_str());
+	if (!var) return;
+	float value = 0.f;
+	value = std::stof(var->container);
+	ImGui::SliderFloat(label.c_str(), &value, min, max, "%.2f", steps);
+	var->container = std::string(std::to_string(value));
 }
 
 void main::c_ui::setup()

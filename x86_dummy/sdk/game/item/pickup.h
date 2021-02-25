@@ -10,7 +10,7 @@ namespace sdk
 			{
 				std::vector<uint32_t>		item_blacklist = {};
 				std::vector<uint32_t>		item_whitelist = {};
-				int							only_pick_blacklist = 0;
+				bool						only_pick_blacklist = 0;
 
 				NLOHMANN_DEFINE_TYPE_INTRUSIVE(s_item_config, item_blacklist, item_whitelist, only_pick_blacklist);
 			};
