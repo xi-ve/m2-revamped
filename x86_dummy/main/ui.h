@@ -3,6 +3,10 @@
 
 namespace main
 {
+	extern LPDIRECT3D9              g_pD3D;
+	extern LPDIRECT3DDEVICE9        g_pd3dDevice;
+	extern D3DPRESENT_PARAMETERS    g_d3dpp;
+	
 	class c_ui : public s<c_ui>
 	{
 	private:
@@ -26,6 +30,7 @@ namespace main
 		void		checkbox(std::string label, std::string varhead, std::string varbod, std::function<void()> fn = NULL);
 		void		slider(std::string label, std::string varhead, std::string varbod, int min, int max, float steps = 0.1f);
 	public:
+		bool		load_texture(const char* filename, PDIRECT3DTEXTURE9* out_texture, int* out_width, int* out_height);		
 		void		setup();
 		void		work();
 	};

@@ -98,12 +98,11 @@ typedef void(__fastcall* cshield_worker)(uint32_t);
 cshield_worker o_cshield_worker = 0;
 uint32_t __fastcall ac_cshield_worker(uint32_t base)
 {
-	printf(XorStr("[ CShield attempts to do bad thing, BONK! ]\n"));
 	return 1;
 }
 void __stdcall ac_cshield_worker2()
 {
-	printf("[ 2 CShield attempts to do bad thing, BONK! ]\n");
+
 }
 void __stdcall sdk::util::init_worker()
 {
@@ -116,16 +115,24 @@ void __stdcall sdk::util::init_worker()
 	sdk::util::c_fn_discover::Instance().setup();
 	sdk::util::c_address_gathering::Instance().setup();
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Anoria2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Akeno2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Yumano3")))
+	if (GetModuleHandleA(XorStr("CShield.dll")))
 	{
+		sdk::util::c_log::Instance().duo(XorStr("[ server is using cshield ]\n"));
+
 		auto _code_55_fun = get_cshield_addr(XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 55 ?"));
+
+		if (!_code_55_fun)
+		{
+			sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk using V2 bypass ]\n"));
+			_code_55_fun = get_cshield_addr(XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 55 ?"));
+		}		
 
 		MH_CreateHook((void*)_code_55_fun, (void*)ac_cshield_worker, (void**)&rr);
 		MH_EnableHook((void*)_code_55_fun);
 
 		sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk executed ]\n"));
 	}
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")))
 	{
 		sdk::game::c_hwid::Instance().setup();
 	}

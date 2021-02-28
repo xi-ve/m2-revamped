@@ -324,11 +324,15 @@ void sdk::game::accconnector::c_login::read_details()
 													 (std::string)std::to_string(seq_mode));
 
 		sdk::util::c_log::Instance().duo("[ logged info, user %s pass %s ch ip %s auth ip %s ch port %s auth port %s seq %s ]\n", this->account_last_grabbed.username.c_str(), this->account_last_grabbed.password.c_str(), this->account_last_grabbed.ip_ch.c_str(), this->account_last_grabbed.ip_auth.c_str(), this->account_last_grabbed.port_ch.c_str(), this->account_last_grabbed.port_auth.c_str(), this->account_last_grabbed.seq_mode.c_str());
+		
 		this->add_acc(this->account_last_grabbed);
 		this->save_accs();
+		
 		auto v = sdk::util::c_config::Instance().get_var("login", "last_character");
 		v->container = cur_username;
+		
 		sdk::util::c_config::Instance().save();
+		sdk::util::c_config::Instance().load();
 
 		this->should_grab_details = false;
 	}

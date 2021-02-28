@@ -27,7 +27,9 @@
 #include <filesystem>
 //libs
 #include <d3d9.h>
+#include "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include\d3dx9.h"
 #pragma comment(lib, "d3d9.lib")
+#pragma comment(lib, "C:\\Program Files (x86)\\Microsoft DirectX SDK (June 2010)\\Lib\\x86\\d3dx9.lib")
 #pragma comment(lib, "Ws2_32.lib")
 #include <zydis/Zydis/Zydis.h>
 #include <zydis/Zycore/LibC.h>
@@ -72,5 +74,6 @@
 #include <game/char/waithack.h>
 #include <game/char/pull.h>
 #include <game/char/tp_point.h>
+#include <game/map/map_files.h>
 #include <ui.h>
 #include <startup.h>

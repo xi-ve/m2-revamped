@@ -109,7 +109,7 @@ void sdk::game::c_waithack::force_position(float x, float y)
 void sdk::game::c_waithack::interpolate_to_pos(vec from, vec to)
 {
 	auto dst = sdk::game::chr::c_char::Instance().get_distance(from, to);
-	auto steps = (float)dst / 1000.f;
+	auto steps = (float)dst / (float)this->get_anchor();
 	steps = std::roundf(steps);
 	if (!steps) steps = 1;
 	for (auto i = 0; i <= steps; ++i)
@@ -242,6 +242,6 @@ void sdk::game::c_waithack::selective_attack()
 decltype(sdk::game::hooks::o_IsPlayerAttacking) sdk::game::hooks::o_IsPlayerAttacking = 0;
 bool __fastcall sdk::game::hooks::f_IsPlayerAttacking(uint32_t base)
 {
-	if (sdk::game::c_waithack::Instance().get_bp_on_attack()) return 1;
+	if (sdk::game::c_waithack::Instance().get_bp_on_attack() && sdk::game::chr::c_char::Instance().get_main_actor() == base) return 1;
 	else return sdk::game::hooks::o_IsPlayerAttacking(base);
 }
