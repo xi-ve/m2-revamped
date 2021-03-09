@@ -24,7 +24,6 @@ void sdk::game::map::c_map_files::setup()
 		{
 			if (a.path().string().find(".") == std::string::npos) continue;
 			files.push_back(a.path().string());
-			sdk::util::c_log::Instance().duo("found file: %s\n", a.path().string().c_str());
 		}
 	}
 	this->files = files;

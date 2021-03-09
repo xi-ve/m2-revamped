@@ -43,3 +43,13 @@ uint32_t sdk::game::c_utils::baseclass_background()
 {
     return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonBackgroundManager);
 }
+
+uint32_t sdk::game::c_utils::baseclass_python_map()
+{
+    return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonMiniMap);
+}
+
+uint32_t sdk::game::c_utils::baseclass_eter_pack()
+{
+    return *(uint32_t*)(sdk::game::pointer_offsets::off_CEterPackManager);
+}

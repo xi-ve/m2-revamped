@@ -4,7 +4,6 @@
 #define MICROSOFT_WINDOWS_WINBASE_H_DEFINE_INTERLOCKED_CPLUSPLUS_OVERLOADS 1
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-
 #include <WinSock2.h>
 #include <Windows.h>
 #include <vector>
@@ -25,11 +24,11 @@
 #include <math.h>
 #include <concurrencysal.h>
 #include <filesystem>
+#include <io.h>
+#include <fcntl.h>
 //libs
 #include <d3d9.h>
 #include "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include\d3dx9.h"
-#pragma comment(lib, "d3d9.lib")
-#pragma comment(lib, "C:\\Program Files (x86)\\Microsoft DirectX SDK (June 2010)\\Lib\\x86\\d3dx9.lib")
 #pragma comment(lib, "Ws2_32.lib")
 #include <zydis/Zydis/Zydis.h>
 #include <zydis/Zycore/LibC.h>
@@ -74,6 +73,7 @@
 #include <game/char/waithack.h>
 #include <game/char/pull.h>
 #include <game/char/tp_point.h>
+#include <game/file/dump.h>
 #include <game/map/map_files.h>
 #include <ui.h>
 #include <startup.h>

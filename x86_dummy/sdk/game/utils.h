@@ -16,6 +16,8 @@ namespace sdk
 			uint32_t	baseclass_python_item();
 			uint32_t	baseclass_item_manager();
 			uint32_t	baseclass_background();
+			uint32_t	baseclass_python_map();
+			uint32_t	baseclass_eter_pack();
 		};
 	}
 }

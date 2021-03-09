@@ -102,7 +102,7 @@ void sdk::game::c_waithack::force_position(float x, float y)
 	p.absoluteY();
 	auto net_base = sdk::game::c_utils::Instance().baseclass_networking();
 	if (!net_base) return;
-	sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket(net_base, p, 0.5, 2, 0);
+	sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket(net_base, p, 0.5, 2, 0);//0 ok too
 	sdk::game::func::c_funcs::Instance().f_SendCharacterStatePacket(net_base, p, 0.5, 0, 0);
 }
 

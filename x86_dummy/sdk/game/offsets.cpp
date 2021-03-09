@@ -5,7 +5,12 @@ uint32_t sdk::game::item_offsets::off_ITEM_NAME = 0x0;
 
 uint32_t sdk::game::background::off_CUR_MAP_NAME = 0x0;
 
+uint32_t sdk::game::pack_offsets::off_CMAPPED_FILE_SIZE = 0x0;
+uint32_t sdk::game::pack_offsets::off_CEterPackManager_GET = 0x0;
+
 uint32_t sdk::game::minimap_offsets::off_TEXTURE = 0x0;
+uint32_t sdk::game::minimap_offsets::off_SHOW_ATLAS = 0x0;
+uint32_t sdk::game::minimap_offsets::off_ATLAS_INSTANCE = 0x0;
 
 uint32_t sdk::game::pointer_offsets::off_CAccountConnector = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonNetworkStream = 0x0;
@@ -16,6 +21,7 @@ uint32_t sdk::game::pointer_offsets::off_CPythonItem = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CItemManager = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonBackgroundManager = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonMiniMap = 0x0;
+uint32_t sdk::game::pointer_offsets::off_CEterPackManager = 0x0;
 
 uint32_t sdk::game::connection_offsets::off_IP = 0x0; 
 uint32_t sdk::game::connection_offsets::off_PORT = 0x0;

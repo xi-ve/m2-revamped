@@ -1,5 +1,4 @@
 #pragma once
-#include <inc.h>
 namespace sdk
 {
 	namespace game
@@ -13,9 +12,16 @@ namespace sdk
 		{
 			extern uint32_t		off_CUR_MAP_NAME;
 		}
+		namespace pack_offsets
+		{
+			extern uint32_t		off_CMAPPED_FILE_SIZE;
+			extern uint32_t		off_CEterPackManager_GET;
+		}
 		namespace minimap_offsets
 		{
 			extern uint32_t		off_TEXTURE;
+			extern uint32_t		off_SHOW_ATLAS;
+			extern uint32_t		off_ATLAS_INSTANCE;
 		}
 		namespace pointer_offsets
 		{
@@ -28,6 +34,7 @@ namespace sdk
 			extern uint32_t		off_CItemManager;
 			extern uint32_t		off_CPythonBackgroundManager;
 			extern uint32_t		off_CPythonMiniMap;
+			extern uint32_t		off_CEterPackManager;
 		}
 		namespace actor_offsets
 		{

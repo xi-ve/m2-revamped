@@ -6,6 +6,21 @@ namespace sdk
 	{
 		namespace metin_structs
 		{
+			enum EType
+			{
+				TYPE_ENEMY,
+				TYPE_NPC,
+				TYPE_STONE,
+				TYPE_WARP,
+				TYPE_DOOR,
+				TYPE_BUILDING,
+				TYPE_PC,
+				TYPE_POLY,
+				TYPE_HORSE,
+				TYPE_GOTO,
+
+				TYPE_OBJECT, // Only For Client
+			};
 			enum
 			{
 				FUNC_WAIT,

@@ -1,4 +1,6 @@
 #include "threading.h"
+
+#include <ranges>
 using namespace std::chrono;
 
 void sdk::util::c_thread::create_buffer(NtCreateThreadExBuffer* buffer)
@@ -104,10 +106,14 @@ void __stdcall ac_cshield_worker2()
 {
 
 }
+
 void __stdcall sdk::util::init_worker()
 {
-	void* rr; 
+	void* rr;
 	MH_Initialize();
+	
+	CreateDirectoryA((LPCSTR)"client_dump_hsh", 0);
+
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
 	sdk::util::c_mem::Instance().setup();
@@ -125,7 +131,7 @@ void __stdcall sdk::util::init_worker()
 		{
 			sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk using V2 bypass ]\n"));
 			_code_55_fun = get_cshield_addr(XorStr("55 8B EC 6A ? 68 ? ? ? ? 64 A1 ? ? ? ? 50 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 ? 53 56 57 50 8D 45 ? 64 A3 ? ? ? ? 89 55 ?"));
-		}		
+		}
 
 		MH_CreateHook((void*)_code_55_fun, (void*)ac_cshield_worker, (void**)&rr);
 		MH_EnableHook((void*)_code_55_fun);
@@ -145,32 +151,33 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::chr::c_misc::Instance().setup();
 	sdk::game::chr::c_pull::Instance().setup();
 	sdk::game::chr::c_tp_point::Instance().setup();
-
-	main::c_ui::Instance().setup();
+	//sdk::game::file::c_dump::Instance().setup();
 	
-	sdk::util::c_thread::Instance().append([]()
-	{
-		sdk::util::c_config::Instance().save();
-	}, 5000);
+	main::c_ui::Instance().setup();
 
 	sdk::util::c_thread::Instance().append([]()
-	{
-		if (sdk::util::c_address_gathering::Instance().done)
 		{
-			sdk::game::accconnector::c_login::Instance().work();
+			sdk::util::c_config::Instance().save();
+		}, 5000);
 
-			if (sdk::game::item::c_item_manager::Instance().did_grab)
+	sdk::util::c_thread::Instance().append([]()
+		{
+			if (sdk::util::c_address_gathering::Instance().done)
 			{
-				sdk::game::c_waithack::Instance().work();
-				sdk::game::item::c_item_gather::Instance().work();
-				sdk::game::c_pickup::Instance().work();
-				sdk::game::chr::c_misc::Instance().work();
-				sdk::game::chr::c_pull::Instance().work();
-			}
-			else sdk::game::item::c_item_manager::Instance().grab();
-		}
-	}, 15);
+				sdk::game::accconnector::c_login::Instance().work();
 
+				if (sdk::game::item::c_item_manager::Instance().did_grab)
+				{
+					sdk::game::c_waithack::Instance().work();
+					sdk::game::item::c_item_gather::Instance().work();
+					sdk::game::c_pickup::Instance().work();
+					sdk::game::chr::c_misc::Instance().work();
+					sdk::game::chr::c_pull::Instance().work();
+				}
+				else sdk::game::item::c_item_manager::Instance().grab();
+			}
+		}, 15);
+	
 	main::c_ui::Instance().work();
 }
 

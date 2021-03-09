@@ -11,7 +11,7 @@ DWORD lastpid;
 
 std::vector<DWORD> getpids() {
     std::vector<DWORD> pids;
-    std::vector<std::string> Names = { "Kuba2.exe", "hybrid2.bin", "glador2akademia.bin", "Zeros2.exe", "Yumano3Client.exe", "rbclient.exe", "Origins2.exe", "xaleas.exe", "Ekstasia-30.exe", "ancient2.bin", "Tamidia.exe", "valium.exe", "Olympia2.exe", "metin2client.bin", "metin2client.exe", "Anoria2.exe", "Kevra.exe", "Arithra2-Client.exe", "Akeno2_new.exe", "SunshineMt2.exe" };
+    std::vector<std::string> Names = { "Metin2Release.exe", "Legends.bin", "Omnium2.exe", "Kuba2.exe", "hybrid2.bin", "glador2akademia.bin", "Zeros2.exe", "Yumano3Client.exe", "rbclient.exe", "Origins2.exe", "xaleas.exe", "Ekstasia-30.exe", "ancient2.bin", "Tamidia.exe", "valium.exe", "Olympia2.exe", "metin2client.bin", "metin2client.exe", "Anoria2.exe", "Kevra.exe", "Arithra2-Client.exe", "Akeno2_new.exe", "SunshineMt2.exe" };
     for (auto a : Names) {
         std::vector<DWORD> buf = Process::EnumByName(std::wstring(a.begin(),a.end()));
         for (auto i : buf) {
