@@ -107,12 +107,59 @@ void __stdcall ac_cshield_worker2()
 
 }
 
+void* base = 0;
+void* skill = 0;
+void* unk3 = 0;
+
+uint32_t retva = 0;
+
+sdk::game::func::t::t_SendShootPacket o_SendShoot = 0;
+void f_SetShootPacket()
+{
+	if (!base || !skill) return;
+	sdk::util::c_log::Instance().duo(XorStr("[ %04x - %04x ]\n"), (uint32_t)base, (uint32_t)skill);
+}
+__declspec(naked) bool __stdcall p_SetShootPacket()
+{
+	__asm
+	{
+		push eax
+		mov eax, dword ptr[esp + 0x8]
+		mov skill, eax
+		mov eax, dword ptr[esp + 0xC]
+		mov base, eax
+		pop eax
+
+		pop retva
+		push retad
+
+		jmp[o_SendShoot]
+
+	retad:
+
+		push retva
+
+		push ebp
+		mov ebp, esp
+		push eax
+
+		call f_SetShootPacket
+
+		pop eax
+		mov esp, ebp
+		pop ebp
+
+		ret
+	}
+}
+
+
 void __stdcall sdk::util::init_worker()
 {
 	void* rr;
 	MH_Initialize();
 	
-	CreateDirectoryA((LPCSTR)"client_dump_hsh", 0);
+	CreateDirectoryA((LPCSTR)XorStr("client_dump_hsh"), 0);
 
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
@@ -152,6 +199,10 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::chr::c_pull::Instance().setup();
 	sdk::game::chr::c_tp_point::Instance().setup();
 	//sdk::game::file::c_dump::Instance().setup();
+
+	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket, (void*)p_SetShootPacket, (void**)&o_SendShoot);
+	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket);
+	
 	
 	main::c_ui::Instance().setup();
 

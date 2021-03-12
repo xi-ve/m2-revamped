@@ -27,6 +27,9 @@ namespace sdk
 		private:
 			uint32_t						main_actor = 0;
 			std::vector<s_mobs_area_point>	mobs;
+		public:
+			int								attack_num = 0;//hook and see what num bow is?
+			int								flag_num = 0;
 		private:
 			void							force_position(float x, float y);			
 			bool							should_attack(uint32_t a);

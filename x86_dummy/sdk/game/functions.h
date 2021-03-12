@@ -16,10 +16,12 @@ namespace sdk
 				typedef bool(__thiscall* t_SendSelectCharacter)(uint32_t, BYTE);
 				typedef void(__thiscall* t_SendCharacterStatePacket)(uint32_t, const sdk::util::metin_structs::Point2D&, float, UINT, UINT);
 				typedef bool(__thiscall* t_SendAttackPacket)(uint32_t, UINT, uint32_t);
+				typedef bool(__thiscall* t_SendShootPacket)(uint32_t, UINT);
+				typedef bool(__thiscall* t_SendFlyTargetingPacket)(uint32_t, DWORD, const sdk::util::metin_structs::Point2D&);
 				typedef bool(__thiscall* t_IsAttacking)(uint32_t);
 				typedef void(__thiscall* t_OnHit)(uint32_t, UINT, uint32_t, BOOL);
 				typedef bool(__thiscall* t_SendItemPickUpPacket)(uint32_t, uint32_t);
-				typedef bool(__thiscall* t_EterPackGet)(uint32_t, uint32_t, const char*, const void**);
+				typedef bool(__thiscall* t_EterPackGet)(uint32_t, uint32_t, const char*, const void**);				
 			}
 			class c_funcs : public s<c_funcs>
 			{
@@ -34,6 +36,8 @@ namespace sdk
 				t::t_SendSelectCharacter		f_SendSelectCharacter = 0;				//CPythonCharacterManager
 				t::t_SendCharacterStatePacket	f_SendCharacterStatePacket = 0;			//CPythonNetworkStream
 				t::t_SendAttackPacket			f_SendAttackPacket = 0;					//CPythonNetworkStream
+				t::t_SendShootPacket			f_SendShootPacket = 0;					//CPythonNetworkStream
+				t::t_SendFlyTargetingPacket		f_SendFlyTargetingPacket = 0;			//CPythonNetworkStream
 				t::t_IsAttacking				f_IsAttacking = 0;						//CPythonPlayer
 				t::t_OnHit						f_OnHit = 0;							//CPythonPlayerEventHandler
 				t::t_SendItemPickUpPacket		f_SendItemPickUpPacket = 0;				//CPythonNetworkStream
@@ -43,6 +47,7 @@ namespace sdk
 				uint32_t						o_SendCharacterStatePacket = 0;
 				uint32_t						o_IsAttacking = 0;
 				uint32_t						o_SendHitEvent = 0;						//for servers that use lalaker patch, inline dmg
+				uint32_t						o_SendShootPacket = 0;
 			};
 		}
 	}

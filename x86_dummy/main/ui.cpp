@@ -161,6 +161,7 @@ void main::c_ui::render()
 			this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25, 1.f);
 			this->slider(XorStr("speed  "), XorStr("waithack"), XorStr("speed"), 1, 100, 1.f);
 			this->slider(XorStr("anchor "), XorStr("waithack"), XorStr("anchor"), 100, 5000, 100.f);
+			ImGui::SliderInt(XorStr("attack num"), &sdk::game::c_waithack::Instance().attack_num, 0, 100);
 
 			ImGui::End();
 		}
@@ -199,8 +200,7 @@ void main::c_ui::render()
 							{ tex->width / 4.f, tex->height / 4.f },
 							{ (float)(map_pos.x / (tex->width / 4.f)) - 0.10f, (float)((map_pos.y / (tex->height / 4.f))) - 0.10f },
 							{ (float)(map_pos.x / (tex->width / 4.f)) + 0.10f, (float)((map_pos.y / (tex->height / 4.f))) + 0.10f }
-						);
-	
+						);	
 
 						auto zoom_start = ImGui::GetItemRectMin();//zoom image start imgui pos
 					
@@ -311,7 +311,7 @@ void main::c_ui::slider(std::string label, std::string varhead, std::string varb
 	float value = 0.f;
 	value = std::stof(var->container);
 	ImGui::Text(label.c_str()); ImGui::SameLine(0, 15);
-	SliderFloatWithSteps(std::string("##").append(label).c_str(), &value, min, max, steps, "%.3f");
+	SliderFloatWithSteps(std::string("##").append(label).c_str(), &value, (float)min, (float)max, steps, "%.3f");
 	var->container = std::string(std::to_string(value));
 }
 bool GetImageSize(const char* fn, int* x, int* y)

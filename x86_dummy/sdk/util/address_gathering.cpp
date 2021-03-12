@@ -676,6 +676,23 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 	//
 
+	auto SendShootPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SendShootPacket Error"));
+	if (!SendShootPacket) return this->error_out(__LINE__);
+
+	sdk::game::func::c_funcs::Instance().f_SendShootPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendShootPacket)(SendShootPacket);
+	sdk::game::func::c_funcs::Instance().o_SendShootPacket = SendShootPacket ;
+	
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SendShootPacket: %04x ]\n"), SendShootPacket );
+
+	////
+
+	auto SendFlyTargetingPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Send FlyTargeting Packet Error"));
+	if (!SendFlyTargetingPacket) return this->error_out(__LINE__);
+
+	sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket)(SendFlyTargetingPacket);
+	
+	sdk::util::c_log::Instance().duo(XorStr("[ f_SendFlyTargetingPacket: %04x ]\n"), SendFlyTargetingPacket);
+
 	return 1;
 }
 

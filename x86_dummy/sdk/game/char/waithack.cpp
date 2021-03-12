@@ -224,8 +224,21 @@ void sdk::game::c_waithack::selective_attack()
 			if (mob_dst_to_me > 300) this->interpolate_to_pos(main_pos, mob_pos);
 			if (sdk::game::func::c_funcs::Instance().f_SendAttackPacket)
 			{
-				sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
-				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+				if (this->attack_num == 0)
+				{
+					sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+					if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+				}
+				if (this->attack_num == 1)
+				{
+					sdk::util::metin_structs::Point2D p(mob_pos.x, mob_pos.y);
+					p.absoluteY();
+					
+					sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket(network_base, mob, p);
+					
+					sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, 0);
+					if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, 0);
+				}
 			}
 			else
 			{
