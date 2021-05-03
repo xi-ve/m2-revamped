@@ -2,6 +2,7 @@
 
 void sdk::game::c_reducer::setup()
 {
+	sdk::util::c_log::Instance().duo(XorStr("c_reduce setup\n"));
 	this->toggle = sdk::util::c_config::Instance().get_var(XorStr("reducer"), XorStr("toggle"));
 }
 
