@@ -21,7 +21,8 @@ namespace sdk
 				typedef bool(__thiscall* t_IsAttacking)(uint32_t);
 				typedef void(__thiscall* t_OnHit)(uint32_t, UINT, uint32_t, BOOL);
 				typedef bool(__thiscall* t_SendItemPickUpPacket)(uint32_t, uint32_t);
-				typedef bool(__thiscall* t_EterPackGet)(uint32_t, uint32_t, const char*, const void**);				
+				typedef bool(__thiscall* t_EterPackGet)(uint32_t, uint32_t, const char*, const void**);
+				typedef void(__thiscall* t_SetFrameSkil)(bool);
 			}
 			class c_funcs : public s<c_funcs>
 			{
@@ -42,7 +43,7 @@ namespace sdk
 				t::t_OnHit						f_OnHit = 0;							//CPythonPlayerEventHandler
 				t::t_SendItemPickUpPacket		f_SendItemPickUpPacket = 0;				//CPythonNetworkStream
 				t::t_EterPackGet				f_EterPackGet = 0;						//CEterPackManager
-
+				t::t_SetFrameSkil				f_SetFrameSkip = 0;
 				uint32_t						o_SendSelectCharacter = 0;
 				uint32_t						o_SendCharacterStatePacket = 0;
 				uint32_t						o_IsAttacking = 0;

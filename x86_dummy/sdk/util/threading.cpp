@@ -220,6 +220,7 @@ void __stdcall sdk::util::init_worker()
 				if (sdk::game::item::c_item_manager::Instance().did_grab)
 				{
 					sdk::game::c_waithack::Instance().work();
+					sdk::game::c_reducer::Instance().work();
 					sdk::game::item::c_item_gather::Instance().work();
 					sdk::game::c_pickup::Instance().work();
 					sdk::game::chr::c_misc::Instance().work();

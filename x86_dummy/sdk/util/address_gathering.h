@@ -17,6 +17,7 @@ namespace sdk
 			bool					gather_background_related();
 			bool					gather_pack_related();
 			bool					gather_pointer_scans();
+			bool					gather_reducer_related();
 		public:
 			bool					done = false;
 			void					setup();

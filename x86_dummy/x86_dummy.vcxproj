@@ -205,6 +205,7 @@
     <ClCompile Include="sdk\game\accconnector\login.cpp" />
     <ClCompile Include="sdk\game\char\misc.cpp" />
     <ClCompile Include="sdk\game\char\pull.cpp" />
+    <ClCompile Include="sdk\game\char\reducer.cpp" />
     <ClCompile Include="sdk\game\char\tp_point.cpp" />
     <ClCompile Include="sdk\game\char\utils.cpp" />
     <ClCompile Include="sdk\game\char\waithack.cpp" />
@@ -310,6 +311,7 @@
     <ClInclude Include="sdk\game\accconnector\login.h" />
     <ClInclude Include="sdk\game\char\misc.h" />
     <ClInclude Include="sdk\game\char\pull.h" />
+    <ClInclude Include="sdk\game\char\reducer.h" />
     <ClInclude Include="sdk\game\char\tp_point.h" />
     <ClInclude Include="sdk\game\char\utils.h" />
     <ClInclude Include="sdk\game\char\waithack.h" />
