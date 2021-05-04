@@ -169,6 +169,7 @@ void main::c_ui::render()
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(XorStr("debug"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
 		{
+			if(std::filesystem::exists("Maps") && std::filesystem::is_directory("Maps")){
 			auto background_base = sdk::game::c_utils::Instance().baseclass_background();
 			if (background_base)
 			{
@@ -275,6 +276,10 @@ void main::c_ui::render()
 					n->work();*/
 				}
 			}
+				}else
+				{
+				ImGui::Text("missing Map folder");
+				}
 			ImGui::End();
 		}
 		ImGui::End();
@@ -429,8 +434,9 @@ void main::c_ui::setup()
 
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
-
-	sdk::game::map::c_map_files::Instance().setup();
+	if (std::filesystem::exists("Maps") && std::filesystem::is_directory("Maps")) 
+		sdk::game::map::c_map_files::Instance().setup();
+	
 	for (auto a : sdk::game::map::c_map_files::Instance().files)
 	{
 		sdk::game::map::s_img_data i;
