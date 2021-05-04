@@ -21,14 +21,13 @@ namespace sdk
 		class c_waithack : public s<c_waithack>
 		{
 		private:
-			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack, *boost, *player;
+			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack, *boost, *player,*bow_mode;
 		private:
 			ULONGLONG						timeout = 0, attack_timeout = 0;
 		private:
 			uint32_t						main_actor = 0;
 			std::vector<s_mobs_area_point>	mobs;
 		public:
-			int								attack_num = 0;//hook and see what num bow is?
 			int								flag_num = 0;
 		private:
 			void							force_position(float x, float y);			
@@ -45,6 +44,7 @@ namespace sdk
 			int								get_anchor();
 			int								get_bp_on_attack();
 			int								get_boost();
+			int								get_bow_mode();
 		private:
 			int								get_mobs();
 			int								get_metins();
