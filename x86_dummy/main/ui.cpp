@@ -162,7 +162,7 @@ void main::c_ui::render()
 			this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25, 1.f);
 			this->slider(XorStr("speed  "), XorStr("waithack"), XorStr("speed"), 1, 100, 1.f);
 			this->slider(XorStr("anchor "), XorStr("waithack"), XorStr("anchor"), 100, 5000, 100.f);
-			ImGui::SliderInt(XorStr("attack num"), &sdk::game::c_waithack::Instance().attack_num, 0, 100);
+			this->checkbox(XorStr("use_bow "), XorStr("waithack"), XorStr("bow_mode"));
 
 			ImGui::End();
 		}
@@ -296,6 +296,7 @@ bool SliderFloatWithSteps(const char* label, float* v, float v_min, float v_max,
 }
 void main::c_ui::checkbox(std::string label, std::string varhead, std::string varbod, std::function<void()> fn)
 {
+	
 	const auto var = sdk::util::c_config::Instance().get_var(varhead.c_str(), varbod.c_str());
 	if (!var) return;
 	bool b_var = false;

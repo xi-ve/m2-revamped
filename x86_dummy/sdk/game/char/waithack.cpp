@@ -13,6 +13,7 @@ void sdk::game::c_waithack::setup()
 	this->on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("on_attack"));
 	this->boost = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("boost"));
 	this->bp_on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bp_on_attack"));
+	this->bow_mode = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bow_mode"));
 
 	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking, (void*)sdk::game::hooks::f_IsPlayerAttacking, (void**)&sdk::game::hooks::o_IsPlayerAttacking);
 	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking);
@@ -81,6 +82,12 @@ int sdk::game::c_waithack::get_bp_on_attack()
 int sdk::game::c_waithack::get_boost()
 {
 	auto r = (sdk::util::json_cfg::s_config_value*)(this->boost);
+	return std::stoi(r->container.c_str());
+}
+
+int sdk::game::c_waithack::get_bow_mode()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->bow_mode);
 	return std::stoi(r->container.c_str());
 }
 
@@ -224,12 +231,12 @@ void sdk::game::c_waithack::selective_attack()
 			if (mob_dst_to_me > 300) this->interpolate_to_pos(main_pos, mob_pos);
 			if (sdk::game::func::c_funcs::Instance().f_SendAttackPacket)
 			{
-				if (this->attack_num == 0)
+				if (this->get_bow_mode() == 0)
 				{
 					sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
 					if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
 				}
-				if (this->attack_num == 1)
+				else
 				{
 					sdk::util::metin_structs::Point2D p(mob_pos.x, mob_pos.y);
 					p.absoluteY();
