@@ -198,6 +198,7 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::chr::c_misc::Instance().setup();
 	sdk::game::chr::c_pull::Instance().setup();
 	sdk::game::chr::c_tp_point::Instance().setup();
+	sdk::game::c_reducer::Instance().setup();
 	//sdk::game::file::c_dump::Instance().setup();
 
 	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket, (void*)p_SetShootPacket, (void**)&o_SendShoot);

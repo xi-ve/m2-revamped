@@ -29,6 +29,7 @@ namespace sdk
 			extern uint32_t		off_CPythonNetworkStream;
 			extern uint32_t		off_CPythonCharacterManager;
 			extern uint32_t		off_CPythonPlayer;
+			extern uint32_t		off_CPythonApplication;
 			extern uint32_t		off_CPythonPlayerEventHandler;
 			extern uint32_t		off_CPythonItem;
 			extern uint32_t		off_CItemManager;

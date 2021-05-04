@@ -71,6 +71,7 @@
 #include <game/accconnector/login.h>
 #include <game/hardware_id.h>
 #include <game/char/waithack.h>
+#include <game/char/reducer.h>
 #include <game/char/pull.h>
 #include <game/char/tp_point.h>
 #include <game/file/dump.h>

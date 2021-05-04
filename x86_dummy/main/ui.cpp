@@ -63,6 +63,7 @@ void main::c_ui::render()
 				if (ImGui::Button(XorStr("login "))) sdk::game::accconnector::c_login::Instance().set_details();
 				if (ImGui::Button(XorStr("select"))) sdk::game::accconnector::c_login::Instance().set_connect();
 			}
+			this->checkbox(XorStr("GPU reducer"), XorStr("reducer"), XorStr("toggle"));
 
 			//TODO: selector for accounts, slot, ch
 
