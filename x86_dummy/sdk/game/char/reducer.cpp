@@ -10,7 +10,10 @@ void sdk::game::c_reducer::work()
 {
 	if (!this->get_toggle()) return;
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SetFrameSkip %04x ]\n"), sdk::game::func::c_funcs::Instance().f_SetFrameSkip);
-	sdk::game::func::c_funcs::Instance().f_SetFrameSkip(true);
+	auto CPythonApplication = sdk::game::c_utils::Instance().baseclass_python_application();
+	sdk::util::c_log::Instance().duo(XorStr("[ CPythonApplication %04x ]\n"), CPythonApplication);
+
+	//sdk::game::func::c_funcs::Instance().f_SetFrameSkip(CPythonApplication,true);
 }
 
 int sdk::game::c_reducer::get_toggle()

@@ -22,7 +22,7 @@ namespace sdk
 				typedef void(__thiscall* t_OnHit)(uint32_t, UINT, uint32_t, BOOL);
 				typedef bool(__thiscall* t_SendItemPickUpPacket)(uint32_t, uint32_t);
 				typedef bool(__thiscall* t_EterPackGet)(uint32_t, uint32_t, const char*, const void**);
-				typedef void(__thiscall* t_SetFrameSkil)(bool);
+				typedef void(__thiscall* t_SetFrameSkil)(uint32_t,bool);
 			}
 			class c_funcs : public s<c_funcs>
 			{

@@ -1000,6 +1000,8 @@ bool sdk::util::c_address_gathering::gather_reducer_related()
 	auto SetFrameSkip = sdk::util::c_fn_discover::Instance().discover_fn(
 		SetFrameSkip_fn, 0x04, 0x10, 0);
 	sdk::game::func::c_funcs::Instance().f_SetFrameSkip = decltype(game::func::c_funcs::Instance().f_SetFrameSkip)(SetFrameSkip);
+	auto CPythonApplication_instance = this->find_singleton_or_instance(SetFrameSkip_fn);
+	sdk::game::pointer_offsets::off_CPythonBackgroundManager = CPythonApplication_instance;
 }
 
 bool sdk::util::c_address_gathering::check_baseclasses()

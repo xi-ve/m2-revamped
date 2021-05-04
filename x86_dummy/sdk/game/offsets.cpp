@@ -16,6 +16,7 @@ uint32_t sdk::game::pointer_offsets::off_CAccountConnector = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonNetworkStream = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonCharacterManager = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonPlayer = 0x0;
+uint32_t sdk::game::pointer_offsets::off_CPythonApplication = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonPlayerEventHandler = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CPythonItem = 0x0;
 uint32_t sdk::game::pointer_offsets::off_CItemManager = 0x0;
