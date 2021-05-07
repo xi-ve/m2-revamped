@@ -29,13 +29,12 @@ namespace sdk
 			extern uint32_t		off_CPythonNetworkStream;
 			extern uint32_t		off_CPythonCharacterManager;
 			extern uint32_t		off_CPythonPlayer;
-			extern uint32_t		off_CPythonApplication;
 			extern uint32_t		off_CPythonPlayerEventHandler;
 			extern uint32_t		off_CPythonItem;
 			extern uint32_t		off_CItemManager;
-			extern uint32_t		off_CPythonBackgroundManager;
 			extern uint32_t		off_CPythonMiniMap;
 			extern uint32_t		off_CEterPackManager;
+			extern uint32_t		off_CPythonBackgroundManager;
 		}
 		namespace actor_offsets
 		{

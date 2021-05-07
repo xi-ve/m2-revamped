@@ -20,10 +20,7 @@ uint32_t sdk::game::c_utils::baseclass_python_player()
     return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonPlayer);
 }
 
-uint32_t sdk::game::c_utils::baseclass_python_application()
-{
-    return *(uint32_t*)(sdk::game::pointer_offsets::off_CPythonApplication);
-}
+
 
 uint32_t sdk::game::c_utils::baseclass_event_handler()
 {

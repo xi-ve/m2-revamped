@@ -995,13 +995,16 @@ bool sdk::util::c_address_gathering::gather_pointer_scans()
 
 bool sdk::util::c_address_gathering::gather_reducer_related()
 {
-	auto SetFrameSkip_fn = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SetFrameSkip"));
-	if (!SetFrameSkip_fn) return this->error_out(__LINE__);
-	auto SetFrameSkip = sdk::util::c_fn_discover::Instance().discover_fn(
-		SetFrameSkip_fn, 0x04, 0x10, 0);
-	sdk::game::func::c_funcs::Instance().f_SetFrameSkip = decltype(game::func::c_funcs::Instance().f_SetFrameSkip)(SetFrameSkip);
-	auto CPythonApplication_instance = this->find_singleton_or_instance(SetFrameSkip_fn);
-	sdk::game::pointer_offsets::off_CPythonBackgroundManager = CPythonApplication_instance;
+	auto SkipFrame = sdk::util::c_fn_discover::Instance().get_fn(XorStr("SkipFrame"));
+	if (!SkipFrame) {
+		SkipFrame = sdk::util::c_fn_discover::Instance().get_fn(XorStr("FrameSkip"));
+		if (!SkipFrame)
+			return this->error_out(__LINE__);
+	}
+	sdk::game::func::c_funcs::Instance().f_CPythonApplicationProcess = decltype(sdk::game::func::c_funcs::Instance().f_CPythonApplicationProcess)(SkipFrame);
+	sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess = SkipFrame;
+
+	
 }
 
 bool sdk::util::c_address_gathering::check_baseclasses()
