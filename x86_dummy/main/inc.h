@@ -26,10 +26,14 @@
 #include <filesystem>
 #include <io.h>
 #include <fcntl.h>
+#include <iphlpapi.h>
+
 //libs
 #include <d3d9.h>
 #include "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include\d3dx9.h"
 #pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "IPHLPAPI.lib")
+
 #include <zydis/Zydis/Zydis.h>
 #include <zydis/Zycore/LibC.h>
 #pragma comment(lib, "zydis/Zydis.lib")
