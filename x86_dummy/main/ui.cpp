@@ -280,6 +280,7 @@ void main::c_ui::render()
 				{
 				ImGui::Text("missing Map folder");
 				}
+				ImGui::Text("Actors: %d", sdk::game::chr::c_char::Instance().get_alive().size());
 			ImGui::End();
 		}
 		ImGui::End();

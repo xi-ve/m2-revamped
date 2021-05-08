@@ -26,12 +26,12 @@ void sdk::util::c_address_gathering::setup()
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_background_related ]\n"));
 		return;
 	}
-	r = this->gather_pack_related();
-	if (!r)
-	{
-		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_pack_related ]\n"));
-		return;
-	}
+	//r = this->gather_pack_related();
+	//if (!r)
+	//{
+	//	sdk::util::c_log::Instance().duo(XorStr("[ failed gather_pack_related ]\n"));
+	//	return;
+	//}
 	r = this->gather_reducer_related();
 	if (!r)
 	{
@@ -1003,7 +1003,7 @@ bool sdk::util::c_address_gathering::gather_reducer_related()
 	}
 	sdk::game::func::c_funcs::Instance().f_CPythonApplicationProcess = decltype(sdk::game::func::c_funcs::Instance().f_CPythonApplicationProcess)(SkipFrame);
 	sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess = SkipFrame;
-
+	return 1;
 	
 }
 
