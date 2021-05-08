@@ -12,8 +12,9 @@ namespace sdk
 				start = s;
 				end = e;
 			}
-			uint32_t start;
-			uint32_t end;
+			byte		section_id;
+			uint32_t	start;
+			uint32_t	end;
 			std::unordered_map<uint32_t, std::vector<std::string>> listing;
 			bool done = false;
 		};
@@ -64,10 +65,11 @@ namespace sdk
 			void			save_py_fn_db();
 			void			load_py_fn_db();
 		private:
+			byte			text_run = 0;
 			t_list			fns;
 			t_list			fns_py;
 			t_list			offs_singletons;
-			bool			text_section();
+			int				text_section();
 			bool			data_section();
 			bool			singletons();
 		public:

@@ -24,6 +24,21 @@ bool sdk::util::c_mem::is_valid(uint32_t adr, size_t field_mem_size)
 	return true;
 }
 
+sdk::util::t_size sdk::util::c_mem::get_section_idx(byte i, HMODULE base_module)
+{
+	auto dos_header = (IMAGE_DOS_HEADER*)(base_module);
+	auto nt_headers = (IMAGE_NT_HEADERS*)((BYTE*)dos_header + dos_header->e_lfanew);
+	auto image_section = (PIMAGE_SECTION_HEADER)(nt_headers + 1);
+	return { image_section[i].VirtualAddress, image_section[i].SizeOfRawData };
+}
+
+size_t sdk::util::c_mem::get_section_count(HMODULE base_module)
+{
+	auto dos_header = (IMAGE_DOS_HEADER*)(base_module);
+	auto nt_headers = (IMAGE_NT_HEADERS*)((BYTE*)dos_header + dos_header->e_lfanew);
+	return nt_headers->FileHeader.NumberOfSections;
+}
+
 sdk::util::t_size sdk::util::c_mem::get_section(const char* section, HMODULE base_module)
 {
 	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra"))

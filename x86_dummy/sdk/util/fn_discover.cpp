@@ -3,7 +3,40 @@ using namespace std::chrono;
 void sdk::util::c_fn_discover::setup()
 {
 	this->get_server();
+	//control ConnectToAccountServer
+retry_text:
 	auto text_res = this->text_section();
+	auto base = GetModuleHandleA(0);
+
+	//check if we have our control pyfunc
+	for (auto a : this->fns)
+	{
+		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ID3DXMeshOptimize: Cannot do AttributeSort")))) goto text_done;//quick jumpout
+	}
+	//failed to find control pyfunc, we failed!
+	if (this->text_run > sdk::util::c_mem::Instance().get_section_count(base))
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ text discovery failed! ]\n"));
+		return;
+	}
+	else
+	{
+		this->text_run++;
+		sdk::util::c_log::Instance().duo(XorStr("[ text discovery scanning section %i ]\n"), this->text_run);
+		goto retry_text;
+	}
+text_done:
+	sdk::util::c_log::Instance().duo(XorStr("[ text discovery OK! ]\n"));
+
+	auto current_crc32 = this->get_crc();
+	auto conf_crc32 = sdk::util::c_config::Instance().get_var(XorStr("dynamics"), XorStr("last_file_crc"));
+
+	this->save_fn_db();
+	conf_crc32->container = std::to_string(current_crc32);
+	sdk::util::c_config::Instance().save();
+
+	//
+
 	auto data_res = this->data_section();
 	if (!text_res) { sdk::util::c_log::Instance().duo(XorStr("[ text discovery failed! ]\n")); return; }
 	if (!data_res) { sdk::util::c_log::Instance().duo(XorStr("[ data discovery failed! ]\n")); return; }
@@ -264,22 +297,26 @@ void sdk::util::c_fn_discover::add_singleton(uint32_t address)
 
 void sdk::util::worker_thread(s_mem* mem)
 {
-	auto base = GetModuleHandleA(0);
-	auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
-	auto rdata_section = sdk::util::c_mem::Instance().get_section(XorStr(".rdata"), base);
-	auto data1_section = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
-	auto max_text = (uintptr_t)base + text_section.first + text_section.second;
-	auto max_rdata = (uintptr_t)base + rdata_section.first + rdata_section.second;
-
 	MEMORY_BASIC_INFORMATION m_info;
-	auto page_size = VirtualQueryEx(GetCurrentProcess(), (void*)(mem->start + (uintptr_t)base), &m_info, sizeof(m_info));
+	auto base = GetModuleHandleA(0);
+
+	auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
+	VirtualQueryEx(GetCurrentProcess(), (void*)(mem->start + (uintptr_t)base), &m_info, sizeof(m_info));
+
+	if (mem->section_id != 0)
+	{
+		text_section = sdk::util::c_mem::Instance().get_section_idx(mem->section_id, base);
+		m_info.RegionSize = text_section.second;
+	}
 
 	if (m_info.State != MEM_COMMIT) { mem->done = 1; return; }
 	if (m_info.Protect & PAGE_NOACCESS) { mem->done = 1; return; }
 
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra")) m_info.RegionSize = text_section.second;
-
-	sdk::util::c_log::Instance().duo(XorStr("[ (%04x) mem page: %04x, %04x ]\n"), mem->start, (uint32_t)m_info.AllocationBase + mem->start, ((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize));
+	sdk::util::c_log::Instance().duo(XorStr("[ (%04x) mem page: %04x, %04x ]\n"),
+		mem->start,
+		(uint32_t)m_info.AllocationBase + mem->start,
+		((uint32_t)m_info.AllocationBase + mem->start + m_info.RegionSize)
+	);
 
 	auto fns = std::vector<std::pair<uint32_t, uint8_t*>>();
 
@@ -290,16 +327,19 @@ void sdk::util::worker_thread(s_mem* mem)
 		if (!b) continue;
 		if (b[0] == 0x55 && b[1] == 0x8B && b[2] == 0xEC)
 		{
-			fns.push_back({ a, b });			
+			fns.push_back({ a, b });
 		}
 	}
+
+	int count_had_pushes = 0;
 
 	for (auto&& a : fns)
 	{
 		auto size_of_function = sdk::util::c_mem::Instance().find_size(a.first);
-		if (!size_of_function) continue;		
-		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function);
-		if (!asm_fn.size()) continue;
+		if (!size_of_function) continue;
+		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, mem->section_id);
+		if (asm_fn.empty()) continue;
+		count_had_pushes++;
 		for (auto b : asm_fn)
 		{
 			if (!b || IsBadCodePtr((FARPROC)b)) continue;
@@ -311,44 +351,76 @@ void sdk::util::worker_thread(s_mem* mem)
 	}
 
 	mem->done = 1;
-	sdk::util::c_log::Instance().duo(XorStr("[ worker %04x to %04x has finished with %i fns and %i fns with strings ]\n"), mem->start, mem->end, fns.size(), mem->listing.size());
+	sdk::util::c_log::Instance().duo(XorStr("[ worker %04x to %04x has finished with %i fns and %i fns with strings (%i) ]\n"), mem->start, mem->end, fns.size(), mem->listing.size(), count_had_pushes);
 }
 
-bool sdk::util::c_fn_discover::text_section()
+int sdk::util::c_fn_discover::text_section()
 {
 	auto current_crc32 = this->get_crc();
 	auto conf_crc32 = sdk::util::c_config::Instance().get_var(XorStr("dynamics"), XorStr("last_file_crc"));
 	if (std::stoul(conf_crc32->container) != current_crc32)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ new file detected, %04x to %04x ]\n[ running dynamics system, please wait ]\n"), std::stoul(conf_crc32->container), current_crc32);
-doit:
+	doit:
 		DeleteFileA(XorStr("M2++_PY_DYNAMICS.DB"));
-		auto base = GetModuleHandleA(0);
-		auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
-		auto rdata_section = sdk::util::c_mem::Instance().get_section(XorStr(".rdata"), base);
-		auto per_block_size = (text_section.first + text_section.second);
-		auto block_next = 0x1000;
-		std::vector<sdk::util::s_mem*> worker_data;
-
-		auto p = new sdk::util::s_mem(block_next, block_next + per_block_size);
-		worker_data.push_back(p);
-		sdk::util::worker_thread(p);
-
-		while (1)
+		if (this->text_run == 0)
 		{
-			auto all_done = true;
-			for (auto a : worker_data) if (!a->done) all_done = false;
-			if (all_done) break;
+			this->fns.clear();
+
+			auto base = GetModuleHandleA(0);
+			auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
+			auto per_block_size = (text_section.first + text_section.second);
+			auto block_next = 0x1000;
+			std::vector<sdk::util::s_mem*> worker_data;
+
+			auto p = new sdk::util::s_mem(block_next, block_next + per_block_size);
+			p->section_id = this->text_run;
+			worker_data.push_back(p);
+			sdk::util::worker_thread(p);
+
+			while (1)
+			{
+				auto all_done = true;
+				for (auto a : worker_data) if (!a->done) all_done = false;
+				if (all_done) break;
+			}
+			for (auto a : worker_data)
+			{
+				for (auto b : a->listing) this->fns.push_back({ b.first,b.second });
+			}
+			sdk::util::c_log::Instance().duo(XorStr("[ found %i total dynamics ]\n"), this->fns.size());
+			if (!this->fns.size()) return 0;
+			return 1;
 		}
-		for (auto a : worker_data)
+		else
 		{
-			for (auto b : a->listing) this->fns.push_back({ b.first,b.second });
+			this->fns.clear();
+
+			auto base = GetModuleHandleA(0);
+			auto text_section = sdk::util::c_mem::Instance().get_section_idx(this->text_run, base);
+			auto per_block_size = (text_section.first + text_section.second);
+			auto block_next = 0x1000;
+			std::vector<sdk::util::s_mem*> worker_data;
+
+			auto p = new sdk::util::s_mem(block_next, block_next + per_block_size);
+			p->section_id = this->text_run;
+
+			worker_data.push_back(p);
+			sdk::util::worker_thread(p);
+
+			while (1)
+			{
+				auto all_done = true;
+				for (auto a : worker_data) if (!a->done) all_done = false;
+				if (all_done) break;
+			}
+			for (auto a : worker_data)
+			{
+				for (auto b : a->listing) this->fns.push_back({ b.first,b.second });
+			}
+			sdk::util::c_log::Instance().duo(XorStr("[ found %i total dynamics ]\n"), this->fns.size());
+			if (!this->fns.size()) return 0;
 		}
-		sdk::util::c_log::Instance().duo(XorStr("[ found %i total dynamics ]\n"), this->fns.size());
-		if (!this->fns.size()) return 0;
-		this->save_fn_db();
-		conf_crc32->container = std::to_string(current_crc32);
-		sdk::util::c_config::Instance().save();
 	}
 	else
 	{
