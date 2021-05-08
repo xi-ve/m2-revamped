@@ -22,6 +22,8 @@ int sdk::game::c_reducer::get_toggle()
 decltype(sdk::game::hooks::o_CPythonApplicationProcess) sdk::game::hooks::o_CPythonApplicationProcess = 0;
 bool __fastcall sdk::game::hooks::f_CPythonApplicationProcess(uint32_t base)
 {
-	if (sdk::game::c_reducer::Instance().get_toggle()) return true;
+	if (sdk::game::c_reducer::Instance().get_toggle()) 
+		return true;
+	
 	return sdk::game::hooks::o_CPythonApplicationProcess(base);
 }
