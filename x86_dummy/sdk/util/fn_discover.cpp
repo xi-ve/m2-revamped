@@ -38,7 +38,6 @@ text_done:
 	//
 
 	auto data_res = this->data_section();
-	if (!text_res) { sdk::util::c_log::Instance().duo(XorStr("[ text discovery failed! ]\n")); return; }
 	if (!data_res) { sdk::util::c_log::Instance().duo(XorStr("[ data discovery failed! ]\n")); return; }
 	sdk::util::c_log::Instance().duo(XorStr("[ c_fn_discover::setup completed ]\n"));
 }
@@ -345,6 +344,8 @@ void sdk::util::worker_thread(s_mem* mem)
 			if (!b || IsBadCodePtr((FARPROC)b)) continue;
 			char cstring[0x256] = { };
 			if (!ReadProcessMemory(GetCurrentProcess(), (void*)b, cstring, 0x128, nullptr)) continue;
+			if (strstr(cstring, XorStr("FrameSkip"))) strcpy(cstring, "FrameSkip");
+			
 			if (!cstring || !sdk::util::c_fn_discover::Instance().is_ascii(cstring)) continue;
 			mem->listing[a.first].push_back(cstring);
 		}

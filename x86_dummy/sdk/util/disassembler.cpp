@@ -33,6 +33,40 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_movs(uint32_t address, size_
 	return ret;
 }
 
+sdk::util::t_asm_inf sdk::util::c_disassembler::get_asm_inf(uint32_t address, size_t size)
+{
+	auto ret = sdk::util::t_asm_inf();
+
+	if (!size || size >= 0x1256) return ret;
+
+	uint8_t cbytes[0x1598] = { };
+	memcpy(cbytes, (void*)(address), size);
+	if (!cbytes) return ret;
+
+	ZydisDecoder decoder;
+	ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_COMPAT_32, ZYDIS_ADDRESS_WIDTH_32);
+
+	ZydisFormatter formatter;
+	if (!ZYAN_SUCCESS(ZydisFormatterInit(&formatter, ZYDIS_FORMATTER_STYLE_INTEL))) return ret;
+
+	ZyanU64 runtime_address = address;
+	ZyanUSize offset = 0;
+	const ZyanUSize length = size;
+	ZydisDecodedInstruction instruction;
+	ZyanStatus sta = 0;
+	while (ZYAN_SUCCESS(sta = ZydisDecoderDecodeBuffer(&decoder, cbytes + offset, length - offset, &instruction)))
+	{
+		char buffer[256];
+		ZydisFormatterFormatInstruction(&formatter, &instruction, buffer, sizeof(buffer), runtime_address);
+		
+		offset += instruction.length;
+		runtime_address += instruction.length;
+
+		ret.push_back({ runtime_address - address , buffer });
+	}
+
+	return ret;
+}
 sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t size)
 {
 	auto ret = sdk::util::t_asm_raw();
@@ -256,8 +290,14 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 sdk::util::t_asm_raw sdk::util::c_disassembler::dump_asm(uint32_t address, size_t size)
 {
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
-	sdk::util::c_log::Instance().duo("[ %04x - %04x ]\n", address, size);
 	auto raw_asm = this->get_asm(address, size);
+	return raw_asm;
+}
+
+sdk::util::t_asm_inf sdk::util::c_disassembler::dump_asm_inf(uint32_t address, size_t size)
+{
+	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
+	auto raw_asm = this->get_asm_inf(address, size);
 	return raw_asm;
 }
 

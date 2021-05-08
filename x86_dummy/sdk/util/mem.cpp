@@ -178,14 +178,12 @@ size_t sdk::util::c_mem::find_size(uint32_t address)
 		if (!b) return 0;
 		memcpy(b, (void*)a, 8);
 		if (!b) return 0;
-		if (b[0] == 0xe9 && b[5] == 0xCC && b[6] == 0xCC) return a - address;
-		if (b[0] == 0xc3 && b[1] == 0x56 && b[2] == 0x8B && b[3] == 0xF1) return a - address;
+		if (b[0] == 0xCC && b[1] == 0xCC && b[2] == 0xCC && b[3] == 0xCC && b[4] == 0xCC) return a - address;
 		if (b[0] == 0xc3 && b[1] == 0x55) return a - address;
 		if (b[0] == 0xc3 && b[1] == 0xcc) return a - address;
 		if (b[0] == 0xc2 && b[1] == 0x04 && b[3] != 0x8B) return a - address;
 		if (b[0] == 0xc2 && b[3] == 0xCC && b[4] == 0xCC) return a - address;
 		if (b[0] == 0xc2 && b[2] == 0x00 && b[5] == 0xCC) return a;
-		if (b[0] == 0xe9 && b[5] == 0x55) return a - address;
 		if (b[0] == 0xc3 && b[1] == 0x55) return a - address;
 	}
 	return 0;
