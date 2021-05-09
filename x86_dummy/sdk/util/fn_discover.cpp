@@ -336,17 +336,24 @@ void sdk::util::worker_thread(s_mem* mem)
 	{
 		auto size_of_function = sdk::util::c_mem::Instance().find_size(a.first);
 		if (!size_of_function) continue;
-		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, mem->section_id);
+		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, 0xFFF, mem->section_id);
 		if (asm_fn.empty()) continue;
+
+		sdk::util::c_log::Instance().duo(XorStr("\n[ FN (%04x, %i) ]\n"), a.first, asm_fn.size());
+
 		count_had_pushes++;
 		for (auto b : asm_fn)
 		{
 			if (!b || IsBadCodePtr((FARPROC)b)) continue;
 			char cstring[0x256] = { };
 			if (!ReadProcessMemory(GetCurrentProcess(), (void*)b, cstring, 0x128, nullptr)) continue;
-			if (strstr(cstring, XorStr("FrameSkip"))) strcpy(cstring, "FrameSkip");
-			
-			if (!cstring || !sdk::util::c_fn_discover::Instance().is_ascii(cstring)) continue;
+			if (strstr(cstring, XorStr("FrameSkip"))) strcpy(cstring, "FrameSkip");			
+			if (!cstring) continue;
+			if (!sdk::util::c_fn_discover::Instance().is_ascii(cstring))
+			{
+				sdk::util::c_log::Instance().duo(XorStr("[ (%04x) invalid string filtered: %s ]\n"), b, cstring);
+				continue;
+			}
 			mem->listing[a.first].push_back(cstring);
 		}
 	}

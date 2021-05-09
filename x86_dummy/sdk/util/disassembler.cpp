@@ -102,13 +102,17 @@ sdk::util::t_asm_raw sdk::util::c_disassembler::get_asm(uint32_t address, size_t
 	return ret;
 }
 
-sdk::util::t_asm_res sdk::util::c_disassembler::get_pushes(uint32_t address, size_t size, size_t min)
+sdk::util::t_asm_res sdk::util::c_disassembler::get_pushes(uint32_t address, size_t size, size_t min, byte section)
 {
 	if (!size) size = sdk::util::c_mem::Instance().find_size(address);
 	auto raw_asm = this->get_asm(address, size);
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	if (section != 0)
+	{
+		data1_sec = sdk::util::c_mem::Instance().get_section_idx(section, base);
+	}
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto ret = sdk::util::t_asm_res();
 	for (auto& a : raw_asm)
@@ -122,7 +126,8 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_pushes(uint32_t address, siz
 			for (auto b : match)
 			{
 				auto hex = std::stoull(b, nullptr, 16);
-				if (hex > data1_max || hex < min) continue;
+				if (section == 0) if (hex > data1_max || hex < min) continue;
+				if (section != 0) if (hex < (uintptr_t)base) continue;
 				ret.push_back((uint32_t)hex);
 			}
 		}

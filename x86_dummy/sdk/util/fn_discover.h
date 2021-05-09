@@ -51,6 +51,7 @@ namespace sdk
 			bool			should_gen_advanced_str_refs = false;
 		public:
 			bool			is_ascii(const std::string& in);
+			bool			is_ascii(const std::wstring& in);
 		private:
 			std::ifstream	fstream;
 			std::ofstream	ofstream;
