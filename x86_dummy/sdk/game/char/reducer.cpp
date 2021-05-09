@@ -2,15 +2,17 @@
 
 void sdk::game::c_reducer::setup()
 {
-	sdk::util::c_log::Instance().duo(XorStr("[ o_CPythonApplicationProcess %04x ]\n"), sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess);
-	this->toggle = sdk::util::c_config::Instance().get_var(XorStr("reducer"), XorStr("toggle"));
+	if (sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess)
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ o_CPythonApplicationProcess %04x ]\n"), sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess);
+		this->toggle = sdk::util::c_config::Instance().get_var(XorStr("reducer"), XorStr("toggle"));
+		MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess, (void*)sdk::game::hooks::f_CPythonApplicationProcess, (void**)&sdk::game::hooks::o_CPythonApplicationProcess);
+		MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess);
+	}
 }
 
 void sdk::game::c_reducer::work()
 {
-	if (!this->get_toggle()) return;
-	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess, (void*)sdk::game::hooks::f_CPythonApplicationProcess, (void**)&sdk::game::hooks::o_CPythonApplicationProcess);
-	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_CPythonApplicationProcess);
 }
 
 int sdk::game::c_reducer::get_toggle()

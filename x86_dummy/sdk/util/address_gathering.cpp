@@ -36,7 +36,6 @@ void sdk::util::c_address_gathering::setup()
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_reducer_related ]\n"));
-		return;
 	}
 	sdk::util::c_log::Instance().duo(XorStr("[ c_address_gathering::setup completed ]\n"));
 

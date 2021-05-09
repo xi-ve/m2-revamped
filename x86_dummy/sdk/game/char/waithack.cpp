@@ -15,6 +15,7 @@ void sdk::game::c_waithack::setup()
 	this->bp_on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bp_on_attack"));
 	this->bow_mode = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bow_mode"));
 	this->skill = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("skill"));
+	this->minatk = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("minatk"));
 
 	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking, (void*)sdk::game::hooks::f_IsPlayerAttacking, (void**)&sdk::game::hooks::o_IsPlayerAttacking);
 	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking);
@@ -98,6 +99,12 @@ int sdk::game::c_waithack::get_skill()
 	return std::stoi(r->container.c_str());
 }
 
+int sdk::game::c_waithack::get_minatk()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->minatk);
+	return std::stoi(r->container.c_str());
+}
+
 void sdk::game::c_waithack::work()
 {
 	if (!this->get_toggle()) return;
@@ -112,7 +119,7 @@ void sdk::game::c_waithack::work()
 
 void sdk::game::c_waithack::force_position(float x, float y)
 {
-	sdk::util::metin_structs::Point2D p(x,y);
+	sdk::util::metin_structs::Point2D p(x, y);
 	p.absoluteY();
 	auto net_base = sdk::game::c_utils::Instance().baseclass_networking();
 	if (!net_base) return;
@@ -169,7 +176,7 @@ bool sdk::game::c_waithack::populate()
 		if (!obj_pos.valid()) continue;
 		auto dst_to_us = sdk::game::chr::c_char::Instance().get_distance(obj_pos, main_pos);
 		if (dst_to_us >= this->get_range()) continue;
-		alive_attackables.push_back({obj, target.first});
+		alive_attackables.push_back({ obj, target.first });
 	}
 
 	if (alive_attackables.empty()) return 0;
@@ -205,7 +212,7 @@ bool sdk::game::c_waithack::populate()
 			if (dst_to_close_target > this->get_anchor()) continue;
 			mob_group.mobs.push_back(obj.second);
 			if ((int)mob_group.mobs.size() >= this->get_targets()) break;
-			/*			mark actor as used up		 */	
+			/*			mark actor as used up		 */
 			obj.first = 0;
 		}
 
@@ -221,7 +228,6 @@ void sdk::game::c_waithack::selective_attack()
 
 	auto main_pos = sdk::game::chr::c_char::Instance().get_pos(this->main_actor);
 	auto network_base = sdk::game::c_utils::Instance().baseclass_networking();
-	auto event_base = sdk::game::c_utils::Instance().baseclass_event_handler();
 
 	if (!network_base) return;
 
@@ -234,19 +240,17 @@ void sdk::game::c_waithack::selective_attack()
 			if (!mob_instance || sdk::game::chr::c_char::Instance().is_dead_actor(mob_instance)) continue;
 			auto mob_pos = sdk::game::chr::c_char::Instance().get_pos(mob_instance);
 			if (!mob_pos.valid()) continue;
-			
-			auto mob_dst_to_me = sdk::game::chr::c_char::Instance().get_distance(mob_pos, main_pos);
-			if (this->get_bow_mode() == 0)
-			{
-				if (mob_dst_to_me > 300) this->interpolate_to_pos(main_pos, mob_pos);
 
+			auto mob_dst_to_me = sdk::game::chr::c_char::Instance().get_distance(mob_pos, main_pos);
+			
+			if (mob_dst_to_me > this->get_minatk()) this->interpolate_to_pos(main_pos, mob_pos);
+
+			if (this->get_bow_mode() == 0)
+			{				
 				if (sdk::game::func::c_funcs::Instance().f_SendAttackPacket)
 				{
-					
-						sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
-						if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
-					
-					
+					sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
+					if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendAttackPacket(network_base, 0, mob);
 				}
 				else
 				{
@@ -255,8 +259,6 @@ void sdk::game::c_waithack::selective_attack()
 					sdk::game::func::c_funcs::Instance().f_OnHit(event_base, 0, mob_graph, TRUE);
 					if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_OnHit(event_base, 0, mob_graph, TRUE);
 				}
-				if (mob_dst_to_me > 300) this->interpolate_to_pos(mob_pos, main_pos);
-
 			}
 			else
 			{
@@ -266,8 +268,9 @@ void sdk::game::c_waithack::selective_attack()
 				sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket(network_base, mob, p);
 
 				sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, this->get_skill());
-				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, this->get_skill());
+				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, this->get_skill());				
 			}
+			if (mob_dst_to_me > this->get_minatk()) this->interpolate_to_pos(mob_pos, main_pos);
 		}
 	}
 }

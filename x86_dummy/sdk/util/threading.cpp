@@ -202,8 +202,8 @@ void __stdcall sdk::util::init_worker()
 	//sdk::game::file::c_dump::Instance().setup();
 
 	/*MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket, (void*)p_SetShootPacket, (void**)&o_SendShoot);
-	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket);*/	
-	
+	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket);
+	*/
 	main::c_ui::Instance().setup();
 
 	sdk::util::c_thread::Instance().append([]()

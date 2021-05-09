@@ -11,7 +11,7 @@ retry_text:
 	//check if we have our control pyfunc
 	for (auto a : this->fns)
 	{
-		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ID3DXMeshOptimize: Cannot do AttributeSort"))) || strstr(b.c_str(), XorStr("FrameSkip"))) goto text_done;//quick jumpout
+		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ID3DXMeshOptimize: Cannot do AttributeSort"))) || strstr(b.c_str(), XorStr("inGameWikiUI.WikiCategory.OnSelectSubCategory"))) goto text_done;//quick jumpout
 	}
 	//failed to find control pyfunc, we failed!
 	if (this->text_run > sdk::util::c_mem::Instance().get_section_count(base))
