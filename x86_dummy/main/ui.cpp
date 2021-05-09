@@ -162,6 +162,8 @@ void main::c_ui::render()
 			this->slider(XorStr("targets"), XorStr("waithack"), XorStr("targets"), 1, 25, 1.f);
 			this->slider(XorStr("speed  "), XorStr("waithack"), XorStr("speed"), 1, 100, 1.f);
 			this->slider(XorStr("anchor "), XorStr("waithack"), XorStr("anchor"), 100, 5000, 100.f);
+			this->slider(XorStr("skill "), XorStr("waithack"), XorStr("skill"), 0, 500, 1.f);
+
 			this->checkbox(XorStr("use_bow "), XorStr("waithack"), XorStr("bow_mode"));
 
 			ImGui::End();

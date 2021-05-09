@@ -14,6 +14,7 @@ void sdk::game::c_waithack::setup()
 	this->boost = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("boost"));
 	this->bp_on_attack = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bp_on_attack"));
 	this->bow_mode = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("bow_mode"));
+	this->skill = sdk::util::c_config::Instance().get_var(XorStr("waithack"), XorStr("skill"));
 
 	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking, (void*)sdk::game::hooks::f_IsPlayerAttacking, (void**)&sdk::game::hooks::o_IsPlayerAttacking);
 	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_IsAttacking);
@@ -88,6 +89,12 @@ int sdk::game::c_waithack::get_boost()
 int sdk::game::c_waithack::get_bow_mode()
 {
 	auto r = (sdk::util::json_cfg::s_config_value*)(this->bow_mode);
+	return std::stoi(r->container.c_str());
+}
+
+int sdk::game::c_waithack::get_skill()
+{
+	auto r = (sdk::util::json_cfg::s_config_value*)(this->skill);
 	return std::stoi(r->container.c_str());
 }
 
@@ -258,8 +265,8 @@ void sdk::game::c_waithack::selective_attack()
 
 				sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket(network_base, mob, p);
 
-				sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, 0);
-				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, 0);
+				sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, this->get_skill());
+				if (this->get_boost()) sdk::game::func::c_funcs::Instance().f_SendShootPacket(network_base, this->get_skill());
 			}
 		}
 	}
