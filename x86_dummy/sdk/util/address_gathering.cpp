@@ -6,25 +6,25 @@ void sdk::util::c_address_gathering::setup()
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_connection_related ]\n"));
-		return;
+		
 	}
 	r = this->gather_actor_related();
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_actor_related ]\n"));
-		return;
+		
 	}
 	r = this->gather_item_related();
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_item_related ]\n"));
-		return;
+		
 	}
 	r = this->gather_background_related();
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_background_related ]\n"));
-		return;
+		
 	}
 	//r = this->gather_pack_related();
 	//if (!r)

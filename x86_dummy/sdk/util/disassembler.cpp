@@ -11,6 +11,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_movs(uint32_t address, size_
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	if (sdk::util::c_fn_discover::Instance().data_run != 0) data1_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uint32_t)base + data1_sec.first;
 	auto ret = sdk::util::t_asm_res();
@@ -142,6 +143,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_addrs(uint32_t address, size
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	if (sdk::util::c_fn_discover::Instance().data_run != 0) data1_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base;
 	auto ret = sdk::util::t_asm_res();
@@ -171,8 +173,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_calls(uint32_t address, size
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
 	auto text_sec = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
-	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
-	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
+	if (sdk::util::c_fn_discover::Instance().text_run != 0) text_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().text_run, base);
 	auto text_max = (uintptr_t)base + text_sec.first + text_sec.second;
 	if (!min) min = (uintptr_t)base;
 	auto ret = sdk::util::t_asm_res();
@@ -206,6 +207,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_jumps(uint32_t address, size
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	if (sdk::util::c_fn_discover::Instance().data_run != 0) data1_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	auto ret = sdk::util::t_asm_res();
 	if (!min) min = (uintptr_t)base;
@@ -235,6 +237,7 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_offsets(uint32_t address, si
 	if (!raw_asm.size()) return {};
 	auto base = GetModuleHandleA(0);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	if (sdk::util::c_fn_discover::Instance().data_run != 0) data1_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base;
 	if (!max) max = data1_max;
@@ -267,6 +270,11 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 	auto base = GetModuleHandleA(0);
 	auto data_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data"), base);
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
+	if (sdk::util::c_fn_discover::Instance().data_run != 0)
+	{
+		data_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
+		data1_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
+	}
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base + data_sec.first;
 	if (!max) max = data1_max;

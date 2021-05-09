@@ -159,7 +159,7 @@ void __stdcall sdk::util::init_worker()
 	void* rr;
 	MH_Initialize();
 	
-	CreateDirectoryA((LPCSTR)XorStr("client_dump_hsh"), 0);
+	//CreateDirectoryA((LPCSTR)XorStr("client_dump_hsh"), 0);
 
 	sdk::util::c_log::Instance().setup();
 	main::s_startup::Instance().setup();
@@ -201,9 +201,8 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::c_reducer::Instance().setup();
 	//sdk::game::file::c_dump::Instance().setup();
 
-	MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket, (void*)p_SetShootPacket, (void**)&o_SendShoot);
-	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket);
-	
+	/*MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket, (void*)p_SetShootPacket, (void**)&o_SendShoot);
+	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket);*/	
 	
 	main::c_ui::Instance().setup();
 

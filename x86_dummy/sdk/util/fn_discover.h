@@ -65,13 +65,15 @@ namespace sdk
 			void			load_fn_db();
 			void			save_py_fn_db();
 			void			load_py_fn_db();
-		private:
+		public:
 			byte			text_run = 0;
+			byte			data_run = 0;
+		private:			
 			t_list			fns;
 			t_list			fns_py;
 			t_list			offs_singletons;
 			int				text_section();
-			bool			data_section();
+			int				data_section();
 			bool			singletons();
 		public:
 			bool			is_python_fn(uint32_t address);

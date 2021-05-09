@@ -11,7 +11,7 @@ retry_text:
 	//check if we have our control pyfunc
 	for (auto a : this->fns)
 	{
-		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ID3DXMeshOptimize: Cannot do AttributeSort")))) goto text_done;//quick jumpout
+		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ID3DXMeshOptimize: Cannot do AttributeSort"))) || strstr(b.c_str(), XorStr("FrameSkip"))) goto text_done;//quick jumpout
 	}
 	//failed to find control pyfunc, we failed!
 	if (this->text_run > sdk::util::c_mem::Instance().get_section_count(base))
@@ -37,8 +37,32 @@ text_done:
 
 	//
 
+retry_data:
 	auto data_res = this->data_section();
-	if (!data_res) { sdk::util::c_log::Instance().duo(XorStr("[ data discovery failed! ]\n")); return; }
+
+	//check if we have our control pyfunc
+	for (auto a : this->fns_py)
+	{
+		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ConnectToAccountServer")))) goto data_done;//quick jumpout
+	}
+	//failed to find control pyfunc, we failed!
+	if (this->data_run > sdk::util::c_mem::Instance().get_section_count(base))
+	{
+		sdk::util::c_log::Instance().duo(XorStr("[ data discovery failed! ]\n"));
+		return;
+	}
+	else
+	{
+		this->data_run++;
+		sdk::util::c_log::Instance().duo(XorStr("[ data discovery scanning section %i ]\n"), this->data_run);
+		goto retry_data;
+	}
+data_done:
+	sdk::util::c_log::Instance().duo(XorStr("[ data discovery OK! ]\n"));
+	this->save_py_fn_db();
+
+	//
+
 	sdk::util::c_log::Instance().duo(XorStr("[ c_fn_discover::setup completed ]\n"));
 }
 
@@ -339,8 +363,6 @@ void sdk::util::worker_thread(s_mem* mem)
 		auto asm_fn = sdk::util::c_disassembler::Instance().get_pushes(a.first, size_of_function, 0xFFF, mem->section_id);
 		if (asm_fn.empty()) continue;
 
-		sdk::util::c_log::Instance().duo(XorStr("\n[ FN (%04x, %i) ]\n"), a.first, asm_fn.size());
-
 		count_had_pushes++;
 		for (auto b : asm_fn)
 		{
@@ -351,7 +373,6 @@ void sdk::util::worker_thread(s_mem* mem)
 			if (!cstring) continue;
 			if (!sdk::util::c_fn_discover::Instance().is_ascii(cstring))
 			{
-				sdk::util::c_log::Instance().duo(XorStr("[ (%04x) invalid string filtered: %s ]\n"), b, cstring);
 				continue;
 			}
 			mem->listing[a.first].push_back(cstring);
@@ -439,7 +460,7 @@ int sdk::util::c_fn_discover::text_section()
 	return 1;
 }
 
-bool sdk::util::c_fn_discover::data_section()
+int sdk::util::c_fn_discover::data_section()
 {
 	this->fstream.open(this->py_file_name);
 	if (this->fstream.is_open())
@@ -454,145 +475,84 @@ yes:
 
 	sdk::util::c_log::Instance().duo(XorStr("[ py dynamics system started ]\n"));
 
-	auto base = GetModuleHandleA(0);
-	auto data_section = sdk::util::c_mem::Instance().get_section(XorStr(".data"), base);
-	auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
+	if (this->data_run == 0)
+	{
+		auto base = GetModuleHandleA(0);
+		auto data_section = sdk::util::c_mem::Instance().get_section(XorStr(".data"), base);
+		auto text_section = sdk::util::c_mem::Instance().get_section(XorStr(".text"), base);
 
-	struct s_string_container
-	{
-		char string[32] = "";
-	};
-	struct s_function_container
-	{
-		uint32_t function = 0;
-	};
-	struct s_register
-	{
-		s_string_container*		str_ptr = 0;
-		uint32_t				fnc_ptr = 0;
-		uint8_t					validator = 0;
-	};
-
-	for (auto a = data_section.first; a < data_section.first + data_section.second; a += 1)
-	{
-		auto addr = a + (uintptr_t)base;
-		if (!sdk::util::c_mem::Instance().is_valid(addr, sizeof(s_register))) continue;
-		auto reg = s_register();
-		if (!ReadProcessMemory(GetCurrentProcess(), (void*)addr, &reg, sizeof(s_register), nullptr)) continue;
-		if (reg.validator != 1) continue;
-		if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
-		if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
-		if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
-		this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });
-	}
-
-	if (!this->fns_py.size()) return 0;
-	sdk::util::c_log::Instance().duo(XorStr("[ py dynamics system completed with %i results ]\n"), this->fns_py.size());
-
-	auto has_refs = [this](uint32_t a, sdk::util::t_list l) -> std::vector<std::string>
-	{
-		for (auto w : l)
+		struct s_string_container
 		{
-			if (w.address == a && w.strings.size()) return w.strings;
-		}
-		return {};
-	};
-
-	if (this->should_gen_fn_list)
-	{
-		this->ofstream.open("M2++_PY_FN_DUMP.DB");
-		for (auto&& a : this->fns_py)
+			char string[32] = "";
+		};
+		struct s_function_container
 		{
-			if (a.strings.empty()) continue;
+			uint32_t function = 0;
+		};
+		struct s_register
+		{
+			s_string_container*		str_ptr = 0;
+			uint32_t				fnc_ptr = 0;
+			uint8_t					validator = 0;
+		};
 
-			auto calls = sdk::util::c_disassembler::Instance().get_calls(a.address, 0, text_section.first);
-			auto pushes = sdk::util::c_disassembler::Instance().get_pushes(a.address, 0, 0x10);
-			auto offsets = sdk::util::c_disassembler::Instance().get_custom(a.address, 0, text_section.first, text_section.first + text_section.second, { XorStr("push") });
-
-			this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ function: %04x, python name: %s ]\n"), a.address, a.strings[0].c_str());
-
-			if (calls.empty()) this->ofstream << XorStr("[ no calls ]\n");
-			else for (auto b : calls)
-			{
-				if (this->should_gen_advanced_str_refs)
-				{
-					auto strings_in_call = has_refs(b, this->fns);
-					if (strings_in_call.empty())
-					{
-						this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ call to: %04x ]\n"), b);
-					}
-					else
-					{
-						std::stringstream s; s << "";
-						for (auto c : strings_in_call) if (c.size() > 4) s << c.c_str() << ", ";
-
-						this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ call to: %04x ]~[ direct refs: %s ]\n"), b, s.str().c_str());
-					}
-
-					auto calls_inside = sdk::util::c_disassembler::Instance().get_calls(b, 0, text_section.first);
-					if (calls_inside.size())
-					{
-						std::stringstream sss; sss << "";
-						std::stringstream table; table << "";
-						for (auto c : calls_inside)
-						{
-							auto str_inside = has_refs(c, this->fns);
-							//auto movs_inside = sdk::util::c_disassembler::Instance().get_custom(c, 0, data_section.first + (uintptr_t)base, data_section.first + data_section.second + (uintptr_t)base, { "mov" });
-							//auto calls_in_in = sdk::util::c_disassembler::Instance().get_calls(c, 0, text_section.first + (uintptr_t)base);
-
-							if (str_inside.size())
-							{
-								sss << "[ " << std::hex << c << std::dec << XorStr(" ]~[ ");
-								for (auto d : str_inside)
-								{
-									if (d.size() > 2)
-									{
-										sss << d.c_str() << ", ";
-									}
-								}
-								sss << "] ";
-							}
-							//if (movs_inside.size())
-							//{
-							//	for (auto d : movs_inside)
-							//	{
-							//		auto p = *(uint32_t*)(d);
-							//		if (!p || IsBadCodePtr((FARPROC)p)) continue;					
-							//		sdk::util::c_log::Instance().duo("[ %04x %04x ]\n", d, p);
-							//		//auto bc = (sdk::util::_base_class*)(p);
-							//		auto w = new sdk::util::_base_class();
-							//		memcpy(w, (void*)p, sizeof(sdk::util::_base_class));
-							//		if (!w) continue;
-							//		//if (!bc || !bc->pVFTable || IsBadCodePtr((FARPROC)bc) || IsBadCodePtr((FARPROC)bc->pVFTable)) continue;
-							//		auto rtti_info = sdk::util::get(w);
-							//		if (!rtti_info || !rtti_info->pTypeDescriptor || IsBadCodePtr((FARPROC)rtti_info) || IsBadCodePtr((FARPROC)rtti_info->pTypeDescriptor)) continue;
-							//		table << "[ table ref: " << std::hex << c << "=>" << d << std::dec << " " << rtti_info->pTypeDescriptor->pname << " ]\n";
-							//	}
-							//}
-						}
-						if (sss.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ indirect refs: %s ]\n"), sss.str().c_str());
-						if (table.str().size() > 4) this->ofstream << sdk::util::c_log::Instance().string(table.str().c_str());
-					}
-				}
-				else
-				{
-					this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ call to: %04x ]\n"), b);
-				}
-			}
-
-			if (pushes.empty()) this->ofstream << XorStr("[ no pushes ]\n");
-			else for (auto b : pushes) this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ push: %04x ]\n"), b);
-
-			if (offsets.empty()) this->ofstream << XorStr("[ no offsets ]\n");
-			else for (auto b : offsets) this->ofstream << sdk::util::c_log::Instance().string(XorStr("[ offset: %04x ]\n"), b);
-
-			this->ofstream << "\n";
+		for (auto a = data_section.first; a < data_section.first + data_section.second; a += 1)
+		{
+			auto addr = a + (uintptr_t)base;
+			if (!sdk::util::c_mem::Instance().is_valid(addr, sizeof(s_register))) continue;
+			auto reg = s_register();
+			if (!ReadProcessMemory(GetCurrentProcess(), (void*)addr, &reg, sizeof(s_register), nullptr)) continue;
+			if (reg.validator != 1) continue;
+			if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
+			if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
+			if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
+			this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });
 		}
-		this->ofstream.close();
+
+		if (!this->fns_py.size()) return 0;
+		
+		sdk::util::c_log::Instance().duo(XorStr("[ py dynamics system completed with %i results ]\n"), this->fns_py.size());
 	}
+	else
+	{
+		this->fns_py.clear();
+		
+		auto base = GetModuleHandleA(0);
+		auto data_section = sdk::util::c_mem::Instance().get_section_idx(this->data_run, base);
 
-	this->save_py_fn_db();
+		struct s_string_container
+		{
+			char string[32] = "";
+		};
+		struct s_function_container
+		{
+			uint32_t function = 0;
+		};
+		struct s_register
+		{
+			s_string_container*		str_ptr = 0;
+			uint32_t				fnc_ptr = 0;
+			uint8_t					validator = 0;
+		};
 
+		for (auto a = data_section.first; a < data_section.first + data_section.second; a += 1)
+		{
+			auto addr = a + (uintptr_t)base;
+			if (!sdk::util::c_mem::Instance().is_valid(addr, sizeof(s_register))) continue;
+			auto reg = s_register();
+			if (!ReadProcessMemory(GetCurrentProcess(), (void*)addr, &reg, sizeof(s_register), nullptr)) continue;
+			if (reg.validator != 1) continue;
+			if (IsBadCodePtr((FARPROC)reg.fnc_ptr) || !reg.fnc_ptr) continue;
+			if (IsBadCodePtr((FARPROC)reg.str_ptr) || !reg.str_ptr) continue;
+			if (!reg.str_ptr->string || strlen(reg.str_ptr->string) < 4 || !sdk::util::c_fn_discover::Instance().is_ascii(reg.str_ptr->string) || strstr(reg.str_ptr->string, ".")) continue;
+			this->fns_py.push_back({ reg.fnc_ptr, { reg.str_ptr->string } });
+		}
+
+		if (!this->fns_py.size()) return 0;
+
+		sdk::util::c_log::Instance().duo(XorStr("[ py dynamics system completed with %i results ]\n"), this->fns_py.size());
+	}
+	
 	return 1;
 }
 

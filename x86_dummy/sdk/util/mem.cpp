@@ -41,10 +41,6 @@ size_t sdk::util::c_mem::get_section_count(HMODULE base_module)
 
 sdk::util::t_size sdk::util::c_mem::get_section(const char* section, HMODULE base_module)
 {
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra"))
-	{
-		if (strstr(section, ".data")) section = ".text";
-	}
 	auto dos_header = (IMAGE_DOS_HEADER*)(base_module);
 	auto nt_headers = (IMAGE_NT_HEADERS*)((BYTE*)dos_header + dos_header->e_lfanew);
 	auto image_section = (PIMAGE_SECTION_HEADER)(nt_headers + 1);
@@ -55,8 +51,7 @@ sdk::util::t_size sdk::util::c_mem::get_section(const char* section, HMODULE bas
 		string[sizeof image_section[a].Name] = 0;
 		if (strstr(string, section))
 		{
-			if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Aeldra")) return { image_section[a].VirtualAddress, 0x1E10DCC };
-			else return { image_section[a].VirtualAddress, image_section[a].SizeOfRawData };
+			return { image_section[a].VirtualAddress, image_section[a].SizeOfRawData };
 		}
 	}
 	return { 0,0 };
