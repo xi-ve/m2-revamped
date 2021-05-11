@@ -13,6 +13,7 @@ retry_text:
 	{
 		for (auto b : a.strings) if (strstr(b.c_str(), (XorStr("ID3DXMeshOptimize: Cannot do AttributeSort"))) || strstr(b.c_str(), XorStr("inGameWikiUI.WikiCategory.OnSelectSubCategory"))) goto text_done;//quick jumpout
 	}
+	if (this->fns.size() > 1000) goto text_done;//should be ok too
 	//failed to find control pyfunc, we failed!
 	if (this->text_run > sdk::util::c_mem::Instance().get_section_count(base))
 	{
@@ -92,7 +93,8 @@ void sdk::util::c_fn_discover::get_server()
 		"Calliope2",
 		"Rosaria2",
 		"Kuba2",
-		"Metin2 SG"
+		"Metin2 SG",
+		"Rodnia"
 	};
 
 	auto cur_server = std::string("generic-server");

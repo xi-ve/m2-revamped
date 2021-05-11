@@ -185,7 +185,7 @@ void __stdcall sdk::util::init_worker()
 
 		sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk executed ]\n"));
 	}
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("xaleas")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Ekstasia")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Metin2 SG")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Ekstasia")))
 	{
 		sdk::game::c_hwid::Instance().setup();
 	}
@@ -199,11 +199,13 @@ void __stdcall sdk::util::init_worker()
 	sdk::game::chr::c_pull::Instance().setup();
 	sdk::game::chr::c_tp_point::Instance().setup();
 	sdk::game::c_reducer::Instance().setup();
+	
 	//sdk::game::file::c_dump::Instance().setup();
 
 	/*MH_CreateHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket, (void*)p_SetShootPacket, (void**)&o_SendShoot);
 	MH_EnableHook((void*)sdk::game::func::c_funcs::Instance().o_SendShootPacket);
 	*/
+	
 	main::c_ui::Instance().setup();
 
 	sdk::util::c_thread::Instance().append([]()

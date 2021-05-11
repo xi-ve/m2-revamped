@@ -6,25 +6,25 @@ void sdk::util::c_address_gathering::setup()
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_connection_related ]\n"));
-		
+		return;
 	}
 	r = this->gather_actor_related();
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_actor_related ]\n"));
-		
+		return;
 	}
 	r = this->gather_item_related();
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_item_related ]\n"));
-		
+		return;
 	}
 	r = this->gather_background_related();
 	if (!r)
 	{
 		sdk::util::c_log::Instance().duo(XorStr("[ failed gather_background_related ]\n"));
-		
+		return;
 	}
 	//r = this->gather_pack_related();
 	//if (!r)
@@ -109,6 +109,13 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 		if (!CAccountConnector_connect) return this->error_out(__LINE__);
 	}
 
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Rodnia")))
+	{
+		CAccountConnector_connect = sdk::util::c_fn_discover::Instance().discover_fn(
+			connectaccountserver_fn, 0x45, 0x50, 4);
+		if (!CAccountConnector_connect) return this->error_out(__LINE__);
+	}
+
 	auto CAccountConnector_instance = this->find_singleton_or_instance(connectaccountserver_fn);
 	if (!CAccountConnector_instance) return this->error_out(__LINE__);
 
@@ -117,7 +124,11 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 	if (!((int)offsets.size() >= 2)) return this->error_out(__LINE__);
 
 	auto CNetworkStream__Connect = sdk::util::c_fn_discover::Instance().get_fn(XorStr("error != WSAEWOULDBLOCK"));
-	if (!CNetworkStream__Connect) return this->error_out(__LINE__);
+	if (!CNetworkStream__Connect)
+	{
+		CNetworkStream__Connect = sdk::util::c_mem::Instance().find_pattern((uintptr_t)GetModuleHandleA(0), XorStr("66 90 51 56 57 8B F1 E8 ? ? ? ? 8B 44 24 ?"));
+		if (!CNetworkStream__Connect) return this->error_out(__LINE__);
+	}
 	auto CNetworkStream__Connect_off = sdk::util::c_disassembler::Instance().get_custom(
 		CNetworkStream__Connect, 0, 0x40, 0xA0, {"mov", "add", "push", "lea"});
 	if (!CNetworkStream__Connect_off.size()) return this->error_out(__LINE__);
@@ -278,7 +289,11 @@ bool sdk::util::c_address_gathering::gather_connection_related()
 
 	auto CPythonNetworkStream_SendSelectCharacterPacket = sdk::util::c_fn_discover::Instance().get_fn(
 		XorStr("SendSelectCharacterPacket - Error"));
-	if (!CPythonNetworkStream_SendSelectCharacterPacket) return this->error_out(__LINE__);
+	if (!CPythonNetworkStream_SendSelectCharacterPacket)
+	{
+		CPythonNetworkStream_SendSelectCharacterPacket = sdk::util::c_mem::Instance().find_pattern((uintptr_t)GetModuleHandleA(0), XorStr("83 EC ? 8A 44 24 ? 88 44 24 ? 8D 44 24 ? 50 6A ? C6 44 24 ? ? E8 ? ? ? ? 84 C0 75 ? B9 ? ? ? ? E8 ? ? ? ? 32 C0 83 C4 ? C2 ? ? B0 ? 83 C4 ? C2 ? ? ? ? ? ? ? ? 83 EC ? A1 ? ? ? ?"));
+		if (!CPythonNetworkStream_SendSelectCharacterPacket) return this->error_out(__LINE__);
+	}
 
 	sdk::game::func::c_funcs::Instance().f_SendSelectCharacter = decltype(sdk::game::func::c_funcs::Instance().
 		f_SendSelectCharacter)(CPythonNetworkStream_SendSelectCharacterPacket);
@@ -406,7 +421,11 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 		{
 			possible_NEW_GetMainActorPtr = sdk::util::c_fn_discover::Instance().get_adr_str(XorStr("SetPCTargetBoard"),
 				4); //singletona assert
-			if (possible_NEW_GetMainActorPtr.empty()) return this->error_out(__LINE__);
+			if (possible_NEW_GetMainActorPtr.empty())
+			{
+				possible_NEW_GetMainActorPtr.push_back(sdk::util::c_mem::Instance().find_pattern((uintptr_t)GetModuleHandleA(0), XorStr("66 90 51 53 8B D9 8B 0D ? ? ? ?")));
+				if (possible_NEW_GetMainActorPtr.empty()) return this->error_out(__LINE__);
+			}
 		}
 	}
 
@@ -438,7 +457,11 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	{
 		CInstanceBase_SetVirtualID = sdk::util::c_disassembler::Instance().get_jumps(
 			SetVirtualID_calls[SetVirtualID_calls.size() - 2], 0, 0);
-		if (CInstanceBase_SetVirtualID.empty()) return this->error_out(__LINE__);
+		if (CInstanceBase_SetVirtualID.empty())
+		{
+			CInstanceBase_SetVirtualID.push_back(sdk::util::c_mem::Instance().find_pattern((uintptr_t)GetModuleHandleA(0), XorStr("8B 44 24 ? 89 81 ? ? ? ? C2 ? ? ? ? ? 66 90 56 8B F1 8B 8E ? ? ? ?")));
+			if (!CInstanceBase_SetVirtualID.size()) return this->error_out(__LINE__);
+		}
 	}
 
 	auto SetVirtualID_offs = sdk::util::c_disassembler::Instance().get_custom(
@@ -464,7 +487,11 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	{
 		CInstanceBase_SetNameString = sdk::util::c_disassembler::Instance().get_custom(
 			SetNameString_calls[SetNameString_calls.size() - 2], 0, 0x30, 0x65, {"add", "lea"});
-		if (CInstanceBase_SetNameString.empty()) return this->error_out(__LINE__);
+		if (CInstanceBase_SetNameString.empty())
+		{
+			CInstanceBase_SetNameString.push_back(sdk::util::c_mem::Instance().find_pattern((uintptr_t)GetModuleHandleA(0), XorStr("66 90 53 55 56 8B F1 57 8B 7C 24 ? 8B 6E ? 3B FD 77 ? 8B DE 83 FD ? 72 ? 8B 1E 57")));
+			if (CInstanceBase_SetNameString.empty()) return this->error_out(__LINE__);
+		}
 	}
 
 	sdk::game::actor_offsets::off_NAME = CInstanceBase_SetNameString.front();
@@ -497,7 +524,11 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 	{
 		CInstanceBase_NEW_GetPixelPosition_off = sdk::util::c_disassembler::Instance().get_custom(
 			CInstanceBase_NEW_GetPixelPosition_calls.back(), 0, 0x200, 0x3000, {"mov"});
-		if (CInstanceBase_NEW_GetPixelPosition_off.empty()) return this->error_out(__LINE__);
+		if (CInstanceBase_NEW_GetPixelPosition_off.empty())
+		{
+			CInstanceBase_NEW_GetPixelPosition_off.push_back(sdk::util::c_mem::Instance().find_pattern((uintptr_t)GetModuleHandleA(0), XorStr("8B 91 ? ? ? ? 8D 81 ? ? ? ?")));
+			if (CInstanceBase_NEW_GetPixelPosition_off.empty()) return this->error_out(__LINE__);
+		}
 	}
 
 	sdk::game::actor_offsets::off_POSITION = CInstanceBase_NEW_GetPixelPosition_off.front();
