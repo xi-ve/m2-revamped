@@ -172,118 +172,120 @@ void main::c_ui::render()
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(XorStr("debug"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
 		{
-			if(std::filesystem::exists("Maps") && std::filesystem::is_directory("Maps")){
-			auto background_base = sdk::game::c_utils::Instance().baseclass_background();
-			if (background_base)
+			if (std::filesystem::exists("Maps") && std::filesystem::is_directory("Maps"))
 			{
-				const auto bg_name = *(std::string*)(background_base + sdk::game::background::off_CUR_MAP_NAME);
-				ImGui::Text("current map: %s", bg_name.c_str());
-
-				const auto tex = sdk::game::map::c_map_files::Instance().find(bg_name);
-				if (tex && tex->texture && ImGui::GetCurrentWindow()->DrawList)
+				auto background_base = sdk::game::c_utils::Instance().baseclass_background();
+				if (background_base)
 				{
-					ImGui::Text("map scale: x %i  y %i", tex->width, tex->height);
+					const auto bg_name = *(std::string*)(background_base + sdk::game::background::off_CUR_MAP_NAME);
+					ImGui::Text("current map: %s", bg_name.c_str());
 
-					ImGui::Image((void*)tex->texture, { (float)tex->width / 4, (float)tex->height / 4 });
-					
-					auto main_actor = sdk::game::chr::c_char::Instance().get_main_actor();
-					if (main_actor)
+					const auto tex = sdk::game::map::c_map_files::Instance().find(bg_name);
+					if (tex && tex->texture && ImGui::GetCurrentWindow()->DrawList)
 					{
-						auto self_pos = sdk::game::chr::c_char::Instance().get_pos(main_actor);
-						self_pos.x /= 100.f;
-						self_pos.y *= -1.f;
-						self_pos.y /= 100.f;
+						ImGui::Text("map scale: x %i  y %i", tex->width, tex->height);
 
-						auto map_pos = self_pos;
-						map_pos.x /= 4;
-						map_pos.y /= 4;
+						ImGui::Image((void*)tex->texture, { (float)tex->width / 4, (float)tex->height / 4 });
 
-						auto main_map_pos = ImGui::GetItemRectMin();
-
-						ImGui::Image(
-							(void*)tex->texture,
-							{ tex->width / 4.f, tex->height / 4.f },
-							{ (float)(map_pos.x / (tex->width / 4.f)) - 0.10f, (float)((map_pos.y / (tex->height / 4.f))) - 0.10f },
-							{ (float)(map_pos.x / (tex->width / 4.f)) + 0.10f, (float)((map_pos.y / (tex->height / 4.f))) + 0.10f }
-						);	
-
-						auto zoom_start = ImGui::GetItemRectMin();//zoom image start imgui pos
-					
-						auto zoom_area_start = ImVec2(
-							((float)(map_pos.x / (tex->width / 4.f)) - 0.10f) * (tex->width / 4.f),
-							((float)((map_pos.y / (tex->height / 4.f))) - 0.10f) * (tex->height / 4.f));
-						
-						for (auto a : sdk::game::chr::c_char::Instance().get_alive())
+						auto main_actor = sdk::game::chr::c_char::Instance().get_main_actor();
+						if (main_actor)
 						{
-							auto p = (uint32_t)a.second;
-							if (!p || p == main_actor) continue;
-							if (sdk::game::chr::c_char::Instance().is_dead_actor(p)) continue;
+							auto self_pos = sdk::game::chr::c_char::Instance().get_pos(main_actor);
+							self_pos.x /= 100.f;
+							self_pos.y *= -1.f;
+							self_pos.y /= 100.f;
 
-							auto act_pos = sdk::game::chr::c_char::Instance().get_pos(p);
-							act_pos.x /= 100.f;
-							act_pos.y *= -1.f;
-							act_pos.y /= 100.f;
+							auto map_pos = self_pos;
+							map_pos.x /= 4;
+							map_pos.y /= 4;
 
-							auto act_pos_map = act_pos;
-							act_pos_map.x /= 4;
-							act_pos_map.y /= 4;
+							auto main_map_pos = ImGui::GetItemRectMin();
 
-							auto c = zoom_area_start;
-							
-							//draw on big map
-							auto type = sdk::game::chr::c_char::Instance().get_type(p);
-							switch (type)
+							ImGui::Image(
+								(void*)tex->texture,
+								{ tex->width / 4.f, tex->height / 4.f },
+								{ (float)(map_pos.x / (tex->width / 4.f)) - 0.10f, (float)((map_pos.y / (tex->height / 4.f))) - 0.10f },
+								{ (float)(map_pos.x / (tex->width / 4.f)) + 0.10f, (float)((map_pos.y / (tex->height / 4.f))) + 0.10f }
+							);
+
+							auto zoom_start = ImGui::GetItemRectMin();//zoom image start imgui pos
+
+							auto zoom_area_start = ImVec2(
+								((float)(map_pos.x / (tex->width / 4.f)) - 0.10f) * (tex->width / 4.f),
+								((float)((map_pos.y / (tex->height / 4.f))) - 0.10f) * (tex->height / 4.f));
+
+							for (auto a : sdk::game::chr::c_char::Instance().get_alive())
 							{
-							case sdk::util::metin_structs::TYPE_ENEMY://mob
-								draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 0, 0, 255), 2);
-								break;
-							case sdk::util::metin_structs::TYPE_NPC://npc
-								draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 255, 0, 255), 2);
-								break;
-							case sdk::util::metin_structs::TYPE_STONE://metin
-								draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 255, 255, 255), 2);
-								break;
-							case sdk::util::metin_structs::TYPE_PC://player
-								draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(0, 255, 0, 255), 2);
-								break;
-							default://anything else
-								draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 0, 255, 255), 2);
-								break;
+								auto p = (uint32_t)a.second;
+								if (!p || p == main_actor) continue;
+								if (sdk::game::chr::c_char::Instance().is_dead_actor(p)) continue;
+
+								auto act_pos = sdk::game::chr::c_char::Instance().get_pos(p);
+								act_pos.x /= 100.f;
+								act_pos.y *= -1.f;
+								act_pos.y /= 100.f;
+
+								auto act_pos_map = act_pos;
+								act_pos_map.x /= 4;
+								act_pos_map.y /= 4;
+
+								auto c = zoom_area_start;
+
+								//draw on big map
+								auto type = sdk::game::chr::c_char::Instance().get_type(p);
+								switch (type)
+								{
+								case sdk::util::metin_structs::TYPE_ENEMY://mob
+									draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 0, 0, 255), 2);
+									break;
+								case sdk::util::metin_structs::TYPE_NPC://npc
+									draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 255, 0, 255), 2);
+									break;
+								case sdk::util::metin_structs::TYPE_STONE://metin
+									draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 255, 255, 255), 2);
+									break;
+								case sdk::util::metin_structs::TYPE_PC://player
+									draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(0, 255, 0, 255), 2);
+									break;
+								default://anything else
+									draw_point(main_map_pos, zoom_start, c, act_pos_map, ImColor(255, 0, 255, 255), 2);
+									break;
+								}
 							}
+							//self over all
+							ImGui::GetWindowDrawList()->AddCircleFilled(
+								{
+								main_map_pos.x + map_pos.x,
+								main_map_pos.y + map_pos.y
+								},
+								4, ImColor(0, 255, 0, 255));
+							ImGui::GetWindowDrawList()->AddCircleFilled(
+								{
+								zoom_start.x + (map_pos.x - zoom_area_start.x) * 5.f,
+								zoom_start.y + (map_pos.y - zoom_area_start.y) * 5.f
+								},
+								4, ImColor(0, 255, 0, 255));
 						}
-						//self over all
-						ImGui::GetWindowDrawList()->AddCircleFilled(
-							{
-							main_map_pos.x + map_pos.x,
-							main_map_pos.y + map_pos.y
-							},
-							4, ImColor(0, 255, 0, 255));
-						ImGui::GetWindowDrawList()->AddCircleFilled(
-							{
-							zoom_start.x + (map_pos.x - zoom_area_start.x) * 5.f,
-							zoom_start.y + (map_pos.y - zoom_area_start.y) * 5.f
-							},
-							4, ImColor(0, 255, 0, 255));
-					}
 
-				}
-				else
-				{
-					if (ImGui::Button("attempt dump map"))
-					{
-						auto n = new sdk::game::map::c_map_grabber();
-						n->work();
 					}
-					/*auto n = new sdk::game::map::c_map_grabber();
-					printf("A %04x\n", (uint32_t)D3DXSaveTextureToFileA);
-					n->work();*/
+					else
+					{
+						if (ImGui::Button("attempt dump map"))
+						{
+							auto n = new sdk::game::map::c_map_grabber();
+							n->work();
+						}
+						/*auto n = new sdk::game::map::c_map_grabber();
+						printf("A %04x\n", (uint32_t)D3DXSaveTextureToFileA);
+						n->work();*/
+					}
 				}
 			}
-				}else
-				{
+			else
+			{
 				ImGui::Text("missing Map folder");
-				}
-				ImGui::Text("Actors: %d", sdk::game::chr::c_char::Instance().get_alive().size());
+			}
+			ImGui::Text("Actors: %d", sdk::game::chr::c_char::Instance().get_alive().size());
 			ImGui::End();
 		}
 		ImGui::End();
@@ -305,7 +307,7 @@ bool SliderFloatWithSteps(const char* label, float* v, float v_min, float v_max,
 }
 void main::c_ui::checkbox(std::string label, std::string varhead, std::string varbod, std::function<void()> fn)
 {
-	
+
 	const auto var = sdk::util::c_config::Instance().get_var(varhead.c_str(), varbod.c_str());
 	if (!var) return;
 	bool b_var = false;
@@ -438,9 +440,9 @@ void main::c_ui::setup()
 
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
-	if (std::filesystem::exists("Maps") && std::filesystem::is_directory("Maps")) 
+	if (std::filesystem::exists("Maps") && std::filesystem::is_directory("Maps"))
 		sdk::game::map::c_map_files::Instance().setup();
-	
+
 	for (auto a : sdk::game::map::c_map_files::Instance().files)
 	{
 		sdk::game::map::s_img_data i;

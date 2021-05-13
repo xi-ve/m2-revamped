@@ -272,8 +272,12 @@ sdk::util::t_asm_res sdk::util::c_disassembler::get_custom(uint32_t address, siz
 	auto data1_sec = sdk::util::c_mem::Instance().get_section(XorStr(".data1"), base);
 	if (sdk::util::c_fn_discover::Instance().data_run != 0)
 	{
-		data_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
-		data1_sec = sdk::util::c_mem::Instance().get_section_idx(sdk::util::c_fn_discover::Instance().data_run, base);
+		MODULEINFO r;
+		GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(0), &r, sizeof(r));
+
+		data_sec.first = (uintptr_t)GetModuleHandleA(0);
+		data1_sec.first = (uintptr_t)GetModuleHandleA(0);
+		data1_sec.second = (uint32_t)r.lpBaseOfDll + (uint32_t)r.SizeOfImage;
 	}
 	auto data1_max = (uintptr_t)base + data1_sec.first + data1_sec.second;
 	if (!min) min = (uintptr_t)base + data_sec.first;
