@@ -75,6 +75,19 @@ sdk::util::math::c_vector3 sdk::game::chr::c_char::get_pos(uint32_t instance_bas
 	return r;
 }
 
+
+void sdk::game::chr::c_char::set_pos(uint32_t instance_base,float x,float y,float z)
+{
+	auto graph = this->get_graphic_thing(instance_base);
+	if (!graph) return;
+
+	*(float*)(graph + sdk::game::actor_offsets::off_POSITION) = x;
+	*(float*)(graph + sdk::game::actor_offsets::off_POSITION + 4) = y;
+	*(float*)(graph + sdk::game::actor_offsets::off_POSITION + 8) = z;
+
+	return;
+}
+
 float sdk::game::chr::c_char::get_distance(vec f, vec t)
 {
 	auto a = f.x - t.x; auto b = f.y - t.y;

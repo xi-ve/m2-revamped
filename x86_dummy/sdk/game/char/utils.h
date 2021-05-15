@@ -32,6 +32,8 @@ namespace sdk
 				bool							is_dead_actor(uint32_t instance_base);
 				uint32_t						get_type(uint32_t instance_base);
 				vec								get_pos(uint32_t instance_base);
+				void							set_pos(uint32_t instance_base,float x,float y,float z);
+
 				float							get_distance(vec from, vec to);
 				std::string						get_name(uint32_t instance_base);
 				bool							is_attackable(uint32_t instance_base);

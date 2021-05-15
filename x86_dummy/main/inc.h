@@ -41,6 +41,7 @@
 #include <minhook/MinHook.h>
 #pragma comment(lib, "minhook/libMinHook.lib")
 #include <json/json.h>
+#include "bytebuffer/bytebuffer.h"
 //
 #include "..\\lib\\imgui\\imgui_impl_win32.h"
 #include "..\\lib\\imgui\\imgui_impl_dx9.h"
