@@ -725,11 +725,46 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 	auto SendFlyTargetingPacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Send FlyTargeting Packet Error"));
 	if (!SendFlyTargetingPacket) return this->error_out(__LINE__);
+	auto c = sdk::util::c_disassembler::Instance().get_calls(
+		SendFlyTargetingPacket, 0, 0, 0);
 
+
+	auto func = c.front();
+	sdk::game::func::c_funcs::Instance().f___LocalPositionToGlobalPosition = decltype(sdk::game::func::c_funcs::Instance().f___LocalPositionToGlobalPosition)(func);
+
+
+
+	auto EnterFrontGamePacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Send EnterFrontGamePacket"));
+	if (!SendFlyTargetingPacket) return this->error_out(__LINE__);
+	auto enterfrontcalls = sdk::util::c_disassembler::Instance().get_calls(
+		EnterFrontGamePacket, 0, 0, 0);
+
+
+	auto enterfrontcall = c.back();
+	sdk::game::func::c_funcs::Instance().f___SendInternalBuffer = decltype(sdk::game::func::c_funcs::Instance().f___SendInternalBuffer)(enterfrontcall);
+
+	
 	sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket = decltype(sdk::game::func::c_funcs::Instance().f_SendFlyTargetingPacket)(SendFlyTargetingPacket);
 	
 	sdk::util::c_log::Instance().duo(XorStr("[ f_SendFlyTargetingPacket: %04x ]\n"), SendFlyTargetingPacket);
 
+	
+	auto CPyhtonNetworkStream_SendMessengerAddByNamePacket = sdk::util::c_fn_discover::Instance().get_fn(
+		"SendSelectCharacterPacket - Error");
+	auto SendMessenger_calls = sdk::util::c_disassembler::Instance().get_calls(
+		CPyhtonNetworkStream_SendMessengerAddByNamePacket, 0, 0, 0);
+	auto seq = SendMessenger_calls.back();
+	sdk::game::func::c_funcs::Instance().f_SendSequence = decltype(sdk::game::func::c_funcs::Instance().f_SendSequence)(seq);
+	auto seq_calls = sdk::util::c_disassembler::Instance().get_calls(
+		seq, 0, 0, 0);
+	auto send = SendMessenger_calls.front();
+	sdk::game::func::c_funcs::Instance().f_Send = decltype(sdk::game::func::c_funcs::Instance().f_Send)(send);
+
+	sdk::util::c_log::Instance().duo(XorStr("[ sendseq: %04x ]\n"), seq);
+	sdk::util::c_log::Instance().duo(XorStr("[ send: %04x ]\n"), send);
+
+	
+	
 	return 1;
 }
 

@@ -34,6 +34,8 @@ void sdk::util::c_config::registrant()
 	this->add_variable(XorStr("waithack"), XorStr("bow_mode"), "0", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("skill"), "0", CONF_TYPE_INT);
 	this->add_variable(XorStr("waithack"), XorStr("minatk"), "300", CONF_TYPE_INT);
+	this->add_variable(XorStr("waithack"), XorStr("magnet"), "1", CONF_TYPE_INT);
+
 
 
 	this->add_variable(XorStr("reducer"), XorStr("toggle"), "0", CONF_TYPE_INT);
