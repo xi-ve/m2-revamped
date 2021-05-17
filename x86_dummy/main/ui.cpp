@@ -167,6 +167,8 @@ void main::c_ui::render()
 
 			this->checkbox(XorStr("use_bow "), XorStr("waithack"), XorStr("bow_mode"));
 			this->checkbox(XorStr("magnet "), XorStr("waithack"), XorStr("magnet"));
+			this->checkbox(XorStr("force "), XorStr("waithack"), XorStr("force"));
+
 			ImGui::End();
 		}
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);

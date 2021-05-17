@@ -24,7 +24,7 @@ namespace sdk
 		class c_waithack : public s<c_waithack>
 		{
 		private:
-			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack, *boost, *player,*bow_mode,*skill, *minatk ,*magnet;
+			void*							range, *targets, *speed, *toggle, *metins, *mobs_, *anchor, *on_attack, *bp_on_attack, *boost, *player,*bow_mode,*skill, *minatk ,*magnet,*force;
 			int last_tick = 0;
 			int timer = 100;
 		private:
@@ -56,7 +56,8 @@ namespace sdk
 			int								get_skill();
 			int								get_minatk();
 			int								get_magnet();
-		private:
+			int								get_force();
+		private:							
 			int								get_mobs();
 			int								get_metins();
 			int								get_player();
