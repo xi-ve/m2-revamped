@@ -171,6 +171,19 @@ void main::c_ui::render()
 
 			ImGui::End();
 		}
+		if (ImGui::Begin(XorStr("exploit"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
+		{
+			if (ImGui::Button("sitdown"))
+			{
+				auto n = new sdk::game::c_exploit;
+				n->standup();
+			}
+			if (ImGui::Button("standup"))
+			{
+				auto n = new sdk::game::c_exploit;
+				n->standup();
+			}
+		}
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(XorStr("debug"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
 		{

@@ -36,7 +36,6 @@ namespace sdk
 			int								flag_num = 0;
 		private:
 			void							force_position(float x, float y);
-			bool							Send(uint32_t netbase, int len, const void* pSrcBuf);
 			bool							should_attack(uint32_t a);
 			bool							populate();
 			void							selective_attack();

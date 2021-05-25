@@ -8,19 +8,13 @@ bool sdk::game::c_hwid::GetVolumeInformationA_type()
 
 	if (MH_CreateHook((void*)GetAdaptersInfo, (void*)sdk::game::fn_GetAdaptersInfo, (void**)&sdk::game::hooks::o_GetAdaptersInfo) != MH_OK) return 0;
 	if (MH_EnableHook((void*)GetAdaptersInfo) != MH_OK) return 0;
+	if (MH_CreateHook((void*)GetSystemFirmwareTable, (void*)sdk::game::fn_GetSystemFirmwareTable, (void**)&sdk::game::hooks::o_GetSystemFirmwareTable) != MH_OK) return 0;
+	if (MH_EnableHook((void*)GetSystemFirmwareTable) != MH_OK) return 0;
+	
 	
 	return 1;
 }
 
-decltype(sdk::game::hooks::o_SG_HWID) sdk::game::hooks::o_SG_HWID = 0;
-uint32_t* __fastcall sdk::game::hooks::f_SG_HWID(uint32_t a1, uint32_t* a2)
-{
-	auto orig = sdk::game::hooks::o_SG_HWID(a1, a2);
-
-
-	
-	return nullptr;
-}
 
 void PrintMACaddress(BYTE* addr)
 {
@@ -112,4 +106,47 @@ ULONG __stdcall sdk::game::fn_GetAdaptersInfo(PIP_ADAPTER_INFO AdapterInfo, PULO
 		}
 	}
 	return l;
+}
+decltype(sdk::game::hooks::o_GetSystemFirmwareTable) sdk::game::hooks::o_GetSystemFirmwareTable = 0;
+
+UINT __stdcall sdk::game::fn_GetSystemFirmwareTable(DWORD FirmwareTableProviderSignature, DWORD FirmwareTableID, PVOID pFirmwareTableBuffer, DWORD BufferSize)
+{
+	
+	if (pFirmwareTableBuffer == nullptr) { 
+		return hooks::o_GetSystemFirmwareTable(FirmwareTableProviderSignature, FirmwareTableID, pFirmwareTableBuffer, BufferSize);
+	}
+	sdk::util::c_log::Instance().print("[ request for smbios by client! ]\n");
+	const auto ret = hooks::o_GetSystemFirmwareTable(FirmwareTableProviderSignature, FirmwareTableID, pFirmwareTableBuffer, BufferSize);
+	auto* Smbios = reinterpret_cast<RawSMBIOSData*>(pFirmwareTableBuffer);
+	auto p = 0;
+	auto sidcount = 0;
+	for (auto i = 0; i < Smbios->Length; i++) {
+		const auto h = reinterpret_cast<dmi_header*>(Smbios->SMBIOSTableData + p);
+		srand(time(nullptr));
+		if (h->type == 1)
+		{
+			if (sidcount == 0) { // mac is always first
+				(Smbios->SMBIOSTableData + p + 0x8)[0] = rand() % 0xff;
+				(Smbios->SMBIOSTableData + p + 0x8)[1] = rand() % 0xff;
+				(Smbios->SMBIOSTableData + p + 0x8)[2] = rand() % 0xff;
+				(Smbios->SMBIOSTableData + p + 0x8)[3] = rand() % 0xff;
+				(Smbios->SMBIOSTableData + p + 0x8)[4] = rand() % 0xff;
+				(Smbios->SMBIOSTableData + p + 0x8)[5] = rand() % 0xff;
+				sidcount++;
+				continue;
+			}
+		}
+		for (auto x = 0; x < h->length; x++)
+		{
+			if (*(Smbios->SMBIOSTableData + p + x) != 0 && *(Smbios->SMBIOSTableData + p + x) != 0xff && *(Smbios->SMBIOSTableData + p + x) >= 0x30 && *(Smbios->SMBIOSTableData + p + x) <= 0x39) // is a number?
+			{
+				*(Smbios->SMBIOSTableData + p + x) = rand() % (0x39 - 0x30 + 1) + 0x30;
+			}
+		}
+		p += h->length;
+	}
+	return ret;
+
+
+
 }
