@@ -171,6 +171,7 @@ void main::c_ui::render()
 
 			ImGui::End();
 		}
+		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(XorStr("exploit"), 0, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize))
 		{
 			if (ImGui::Button("sitdown"))
@@ -182,6 +183,11 @@ void main::c_ui::render()
 			{
 				auto n = new sdk::game::c_exploit;
 				n->standup();
+			}
+			if (ImGui::Button("version"))
+			{
+				auto n = new sdk::game::c_exploit;
+				n->version();
 			}
 		}
 		ImGui::SetNextWindowDockID(idx, ImGuiCond_::ImGuiCond_FirstUseEver);
