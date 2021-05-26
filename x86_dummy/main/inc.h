@@ -75,6 +75,7 @@
 #include <game/char/misc.h>
 #include <game/accconnector/login.h>
 #include <game/hardware_id.h>
+#include <game/char/exploit.h>
 #include <game/char/waithack.h>
 #include <game/char/reducer.h>
 #include <game/char/pull.h>

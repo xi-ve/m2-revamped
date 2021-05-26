@@ -204,6 +204,7 @@
     <ClCompile Include="main\startup.cpp" />
     <ClCompile Include="main\ui.cpp" />
     <ClCompile Include="sdk\game\accconnector\login.cpp" />
+    <ClCompile Include="sdk\game\char\exploit.cpp" />
     <ClCompile Include="sdk\game\char\misc.cpp" />
     <ClCompile Include="sdk\game\char\pull.cpp" />
     <ClCompile Include="sdk\game\char\reducer.cpp" />
@@ -311,6 +312,7 @@
     <ClInclude Include="main\ui.h" />
     <ClInclude Include="main\win_strct.h" />
     <ClInclude Include="sdk\game\accconnector\login.h" />
+    <ClInclude Include="sdk\game\char\exploit.h" />
     <ClInclude Include="sdk\game\char\misc.h" />
     <ClInclude Include="sdk\game\char\pull.h" />
     <ClInclude Include="sdk\game\char\reducer.h" />

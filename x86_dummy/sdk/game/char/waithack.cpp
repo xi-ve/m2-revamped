@@ -183,8 +183,8 @@ void sdk::game::c_waithack::interpolate_to_pos_with_mob(uint32_t netbase, DWORD 
 		kSyncPos.putT<DWORD>(mob);
 		kSyncPos.putT<long>(mob_x);
 		kSyncPos.putT<long>(mob_y);
-		this->Send(netbase, 3, &kPacketSync.buf[0]);
-		this->Send(netbase, 12, &kSyncPos.buf[0]);
+		sdk::game::c_exploit::Instance().Send(netbase, 3, &kPacketSync.buf[0]);
+		sdk::game::c_exploit::Instance().Send(netbase, 12, &kSyncPos.buf[0]);
 		func::c_funcs::Instance().f_SendSequence(netbase);
 		Sleep(100);
 		this->force_position(static_cast<float>(x), static_cast<float>(y));
@@ -192,10 +192,7 @@ void sdk::game::c_waithack::interpolate_to_pos_with_mob(uint32_t netbase, DWORD 
 }
 
 
-bool sdk::game::c_waithack::Send(uint32_t netbase, int len, const void* pSrcBuf)
-{
-	return func::c_funcs::Instance().f_Send(netbase, len, static_cast<const char*>(pSrcBuf));
-}
+
 
 bool sdk::game::c_waithack::should_attack(uint32_t a)
 {
