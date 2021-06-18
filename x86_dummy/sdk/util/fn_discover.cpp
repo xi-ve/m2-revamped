@@ -96,7 +96,8 @@ void sdk::util::c_fn_discover::get_server()
 		"Metin2 SG",
 		"Rodnia",
 		"Omnium2",
-		"SevenWorld2"
+		"SevenWorld2",
+		"Original N2"
 	};
 
 	auto cur_server = std::string("generic-server");

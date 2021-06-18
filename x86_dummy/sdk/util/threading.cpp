@@ -185,7 +185,7 @@ void __stdcall sdk::util::init_worker()
 
 		sdk::util::c_log::Instance().duo(XorStr("[ CShield bonk executed ]\n"));
 	}
-	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Metin2 SG")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Ekstasia")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Omnium2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")))
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Arithra2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Realm2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Metin2 SG")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Kuba2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Ekstasia")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("Omnium2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SunshineMt2")) || strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), XorStr("SevenWorld2")))
 	{
 		sdk::game::c_hwid::Instance().setup();
 	}

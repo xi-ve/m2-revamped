@@ -167,6 +167,8 @@ void sdk::game::c_waithack::interpolate_to_pos_with_mob(uint32_t netbase, DWORD 
 	if (!steps) steps = 1;
 	for (auto i = 0; i <= steps; ++i)
 	{
+		if (!chr::c_char::Instance().get_instance(mob)) return;
+		if (get_skill() == 99) return;
 		auto t = static_cast<double>(i / steps);
 		double x = (1.0 - t) * from.x + t * to.x;
 		double y = (1.0 - t) * from.y + t * to.y;
@@ -186,8 +188,11 @@ void sdk::game::c_waithack::interpolate_to_pos_with_mob(uint32_t netbase, DWORD 
 		sdk::game::c_exploit::Instance().Send(netbase, 3, &kPacketSync.buf[0]);
 		sdk::game::c_exploit::Instance().Send(netbase, 12, &kSyncPos.buf[0]);
 		func::c_funcs::Instance().f_SendSequence(netbase);
-		Sleep(100);
+		Sleep(2500);
+		if (!chr::c_char::Instance().get_instance(mob)) return;
+
 		this->force_position(static_cast<float>(x), static_cast<float>(y));
+		
 	}
 }
 
@@ -310,8 +315,8 @@ void sdk::game::c_waithack::selective_attack()
 				if (this->get_force())
 				{
 					auto new_pos = mob_pos;
-					new_pos.x += 2000;
-					new_pos.y -= 2000;
+					new_pos.x += 1000000;
+					new_pos.y -= 1000000;
 					this->interpolate_to_pos_with_mob(net_base, mob, mob_pos, new_pos);
 					chr::c_char::Instance().set_pos(mob_instance, new_pos.x, new_pos.y, new_pos.z);
 					this->interpolate_to_pos(new_pos, main_pos);

@@ -665,15 +665,28 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 	//
 
+
+	
+	
 	auto CPythonCharacterManager_FaintTest = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("FaintTest"));
 	if (!CPythonCharacterManager_FaintTest) this->error_out(__LINE__);
 
 	auto CPythonCharacterManager_instance = this->find_singleton_or_instance(CPythonCharacterManager_FaintTest);
 	if (!CPythonCharacterManager_instance) this->error_out(__LINE__);
 
-	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0xC, 0xE, 0,
+	
+	
+	auto IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0x8, 0xF, 0,
 	                                                                   0, true, true, 1, 0, 0,
 	                                                                   sdk::game::actor_offsets::off_COMBO_INDEX);
+	if (strstr(sdk::util::c_fn_discover::Instance().server_name.c_str(), "Original N2"))
+	{
+		auto faint_calls = sdk::util::c_disassembler::Instance().get_calls(
+			CPythonCharacterManager_FaintTest, 0, 0, 1);
+		IsFaint_fn = faint_calls[2];
+
+	}
+
 	if (!IsFaint_fn)
 	{
 		IsFaint_fn = sdk::util::c_fn_discover::Instance().discover_fn(CPythonCharacterManager_FaintTest, 0x8, 0x12, 0,
@@ -691,13 +704,17 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 				2];
 		}
 	}
-
-	sdk::util::c_log::Instance().duo(XorStr("[ IsFaint_fn: %04x ]\n"), IsFaint_fn);
+	
+	sdk::util::c_log::Instance().duo(XorStr("[ IsFaint_fn: %04x ]\n"), IsFaint_fn - (uintptr_t)GetModuleHandleA(0));
 
 	auto IsFaint_off = sdk::util::c_disassembler::Instance().get_custom(IsFaint_fn, 0, 0x300, 0x2000,
 	                                                                    {"mov", "lea", "push"});
-	if (IsFaint_off.empty()) return this->error_out(__LINE__);
-
+	if (IsFaint_off.empty()) {
+		auto IsFaint_off = sdk::util::c_disassembler::Instance().get_custom(IsFaint_fn, 0, 0x150, 0x2000,
+			{ "mov", "lea", "push","add" });
+		if (IsFaint_off.empty())
+			return this->error_out(__LINE__);
+	}
 	sdk::game::actor_offsets::off_FAINT = IsFaint_off.front();
 	sdk::game::actor_offsets::off_SLEEP = IsFaint_off.front() - 0x4;
 	sdk::game::actor_offsets::off_STUN = IsFaint_off.front() + 0x8;
@@ -734,11 +751,25 @@ bool sdk::util::c_address_gathering::gather_actor_related()
 
 
 
-	auto EnterFrontGamePacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Send EnterFrontGamePacket"));
+	//auto EnterFrontGamePacket = sdk::util::c_fn_discover::Instance().get_fn(XorStr("Send EnterFrontGamePacket"));
 	if (!SendFlyTargetingPacket) return this->error_out(__LINE__);
+	
+
+	auto EnterFrontGamePacket = sdk::util::c_fn_discover::Instance().get_fn(
+		XorStr("Send EnterFrontGamePacket"));
+	if (!EnterFrontGamePacket)
+	{
+		EnterFrontGamePacket = sdk::util::c_fn_discover::Instance().get_fn_py(XorStr("SendEnterGamePacket"));
+		if (!EnterFrontGamePacket) return this->error_out(__LINE__);
+		//EnterFrontGamePacket = sdk::util::c_fn_discover::Instance().discover_fn(
+		//		EnterFrontGamePacket, 0x10, 0x160, 10);
+	}
+
+	
 	auto enterfrontcalls = sdk::util::c_disassembler::Instance().get_calls(
 		EnterFrontGamePacket, 0, 0, 0);
 
+	
 
 	auto enterfrontcall = c.back();
 	sdk::game::func::c_funcs::Instance().f___SendInternalBuffer = decltype(sdk::game::func::c_funcs::Instance().f___SendInternalBuffer)(enterfrontcall);
